@@ -8,13 +8,16 @@
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
         <Product>Archivarius</Product>
-        <Version>0.1.0-dev.1</Version>
+        <Version>0.1.0-dev.2</Version>
         <Title>Archivarius</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <LangVersion>12</LangVersion>
-        <PackageLicenseFile>COPYING.LESSER.txt</PackageLicenseFile>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageProjectUrl>https://github.com/FyodorZh/Archivarius</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/FyodorZh/Archivarius</RepositoryUrl>
+        <RepositoryUrl>https://github.com/FyodorZh/Archivarius.git</RepositoryUrl>
+        <Copyright>Copyright (c) Fyodor Zhmaev 2023 </Copyright>
+        <RepositoryType>git</RepositoryType>
+        <PackageReleaseNotes>Updated license to LGPLv3</PackageReleaseNotes>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -27,8 +30,7 @@
     
     <ItemGroup>
         <None Include="nuget.readme.md" Pack="true" PackagePath="\" />
-        <None Include="..\LICENSE.txt" Pack="true" PackagePath="LICENSE.txt" />
-        <None Include="..\COPYING.LESSER.txt" Pack="true" PackagePath="COPYING.LESSER.txt" />
+        <None Include="..\LICENSE" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>
