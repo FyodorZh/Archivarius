@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Authors>Fyodor Zhmaev</Authors>
+        <Company>FyodorZh</Company>
+        <Version>0.1.0-dev.0</Version>
+        <Title>Archivarius.Json</Title>
+        <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
+        <LangVersion>12</LangVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Archivarius\Archivarius.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="System.Text.Json" Version="8.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="nuget.readme.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+</Project>

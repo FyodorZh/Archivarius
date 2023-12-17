@@ -1,0 +1,28 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archivarius", "Archivarius\Archivarius.csproj", "{1581C4D5-ED47-42B6-872D-F014FA8BDD9D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archivarius.Json", "Archivarius.Json\Archivarius.Json.csproj", "{1858D46C-4E3B-400B-AFC1-73A98339F38B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archivarius.Tests", "Archivarius.Tests\Archivarius.Tests.csproj", "{17FC96D9-4268-4B06-A8C4-40BC7D2CC8C5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1581C4D5-ED47-42B6-872D-F014FA8BDD9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1581C4D5-ED47-42B6-872D-F014FA8BDD9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1581C4D5-ED47-42B6-872D-F014FA8BDD9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1581C4D5-ED47-42B6-872D-F014FA8BDD9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1858D46C-4E3B-400B-AFC1-73A98339F38B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1858D46C-4E3B-400B-AFC1-73A98339F38B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1858D46C-4E3B-400B-AFC1-73A98339F38B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1858D46C-4E3B-400B-AFC1-73A98339F38B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17FC96D9-4268-4B06-A8C4-40BC7D2CC8C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17FC96D9-4268-4B06-A8C4-40BC7D2CC8C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17FC96D9-4268-4B06-A8C4-40BC7D2CC8C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17FC96D9-4268-4B06-A8C4-40BC7D2CC8C5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
