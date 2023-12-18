@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
+        <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>Fyodor Zhmaev</Authors>
         <Description>Serialization library</Description>
@@ -17,7 +17,6 @@
         <RepositoryUrl>https://github.com/FyodorZh/Archivarius.git</RepositoryUrl>
         <Copyright>Copyright (c) Fyodor Zhmaev 2023 </Copyright>
         <RepositoryType>git</RepositoryType>
-        <PackageReleaseNotes>Updated license to LGPLv3</PackageReleaseNotes>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">

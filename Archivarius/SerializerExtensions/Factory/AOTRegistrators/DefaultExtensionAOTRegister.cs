@@ -1,4 +1,6 @@
-﻿namespace Archivarius
+﻿using System;
+
+namespace Archivarius
 {
     internal class DefaultExtensionAOTRegister // : IExtensionsAOTRegister
     {

@@ -2,26 +2,26 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
+        <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Authors>Fyodor Zhmaev</Authors>
-        <Company>FyodorZh</Company>
-        <Version>0.1.0-dev.0</Version>
-        <Title>Archivarius.Json</Title>
-        <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <LangVersion>12</LangVersion>
-        <Description>JSON backend for Archivarius library</Description>
+        <Version>0.1.0-dev.0</Version>
+        <Title>Archivarius extensions</Title>
+        <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
+        <Authors>Fyodor Zhmaev</Authors>
+        <Description>Extensions for Archivarius serialization library</Description>
         <Copyright>Copyright (c) Fyodor Zhmaev 2023 </Copyright>
         <PackageProjectUrl>https://github.com/FyodorZh/Archivarius</PackageProjectUrl>
         <RepositoryUrl>https://github.com/FyodorZh/Archivarius.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <Company>FyodorZh</Company>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
@@ -30,11 +30,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="System.Text.Json" Version="8.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Include="nuget.readme.md" Pack="true" PackagePath="\" />
+        <None Include="..\LICENSE" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>
