@@ -11,7 +11,7 @@ namespace Archivarius
             _elementSerializer = elementSerializer;
         }
 
-        public void Add(IOrderedSerializer serializer, ref List<T>? value)
+        public void Add(ISerializer serializer, ref List<T>? value)
         {
             if (serializer.IsWriter)
             {

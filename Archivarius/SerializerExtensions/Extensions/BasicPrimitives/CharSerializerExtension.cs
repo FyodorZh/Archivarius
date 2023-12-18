@@ -2,7 +2,7 @@
 {
     public class CharSerializerExtension : ISerializerExtension<char>
     {
-        public void Add(IOrderedSerializer serializer, ref char value)
+        public void Add(ISerializer serializer, ref char value)
         {
             serializer.Add(ref value);
         }

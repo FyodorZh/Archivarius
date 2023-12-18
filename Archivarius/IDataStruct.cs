@@ -2,6 +2,6 @@
 {
     public interface IDataStruct
     {
-        void Serialize(IOrderedSerializer serializer);
+        void Serialize(ISerializer serializer);
     }
 }

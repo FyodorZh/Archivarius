@@ -12,7 +12,7 @@
             _valueSerializer = valueSerializer;
         }
 
-        public void Add(IOrderedSerializer serializer, ref Dictionary<TKey, TValue>? value)
+        public void Add(ISerializer serializer, ref Dictionary<TKey, TValue>? value)
         {
             if (serializer.IsWriter)
             {

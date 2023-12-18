@@ -2,7 +2,7 @@
 {
     public class ByteSerializerExtension : ISerializerExtension<byte>
     {
-        public void Add(IOrderedSerializer serializer, ref byte value)
+        public void Add(ISerializer serializer, ref byte value)
         {
             serializer.Add(ref value);
         }

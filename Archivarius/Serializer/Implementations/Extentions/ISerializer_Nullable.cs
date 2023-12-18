@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Archivarius
 {
-    public static partial class IOrderedSerializer_Ext // Nullable
+    public static partial class ISerializer_Ext // Nullable
     {
         /// <summary>
         /// Nullable "primitive" value type 
@@ -40,7 +40,7 @@ namespace Archivarius
         /// <summary>
         /// Nullable "DataStruct" value type 
         /// </summary>
-        public static void Add<T>(this IOrderedSerializer serializer, ref T? value)
+        public static void Add<T>(this ISerializer serializer, ref T? value)
             where T : struct, IDataStruct
         {
             if (serializer.IsWriter)

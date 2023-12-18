@@ -78,7 +78,7 @@ namespace Archivarius.Tests
         private class A : IDataStruct
         {
             public int Data;
-            public void Serialize(IOrderedSerializer serializer)
+            public void Serialize(ISerializer serializer)
             {
                 serializer.Add(ref Data);
             }
@@ -90,7 +90,7 @@ namespace Archivarius.Tests
             public A? NestedA;
             public C? NestedC;
             
-            public void Serialize(IOrderedSerializer serializer)
+            public void Serialize(ISerializer serializer)
             {
                 serializer.Add(ref Data);
                 serializer.AddClass(ref NestedA);
@@ -101,7 +101,7 @@ namespace Archivarius.Tests
         private class C : IDataStruct
         {
             public int Data;
-            public void Serialize(IOrderedSerializer serializer)
+            public void Serialize(ISerializer serializer)
             {
                 serializer.Add(ref Data);
             }

@@ -1,13 +1,13 @@
 ﻿namespace Archivarius
 {
-    public interface ISerializer
+    public interface ISerializerCore
     {
         bool IsWriter { get; }
         ILowLevelReader Reader { get; }
         ILowLevelWriter Writer { get; }
     }
 
-    public interface IPrimitiveSerializer<T> : ISerializer
+    public interface IPrimitiveSerializer<T> : ISerializerCore
     {
         void Add(ref T value);
     }
@@ -35,7 +35,7 @@
     {
     }
 
-    public interface IOrderedSerializer : IPrimitiveSerializer
+    public interface ISerializer : IPrimitiveSerializer
     {
         byte Version { get; }
 

@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace Archivarius
 {
-    public class HierarchicalSerializer : PrimitiveSerializer, IOrderedSerializer
+    public class HierarchicalSerializer : PrimitiveSerializer, ISerializer
     {
         private readonly ITypeSerializer _typeSerializer;
 

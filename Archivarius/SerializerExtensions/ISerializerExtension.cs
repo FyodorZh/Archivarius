@@ -6,6 +6,6 @@
 
     public interface ISerializerExtension<T> : ISerializerExtension
     {
-        void Add(IOrderedSerializer serializer, ref T value);
+        void Add(ISerializer serializer, ref T value);
     }
 }

@@ -2,7 +2,7 @@
 {
     public class UIntSerializerExtension : ISerializerExtension<uint>
     {
-        public void Add(IOrderedSerializer serializer, ref uint value)
+        public void Add(ISerializer serializer, ref uint value)
         {
             serializer.Add(ref value);
         }

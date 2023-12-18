@@ -12,7 +12,7 @@ namespace Archivarius.Tests
         private class ClassSimple : IDataStruct
         {
             public int Data;
-            public void Serialize(IOrderedSerializer serializer)
+            public void Serialize(ISerializer serializer)
             {
                 serializer.Add(ref Data);
             }
@@ -24,7 +24,7 @@ namespace Archivarius.Tests
         {
             public T? Data;
             
-            public void Serialize(IOrderedSerializer serializer)
+            public void Serialize(ISerializer serializer)
             {
                 serializer.AddClass(ref Data);
             }
@@ -38,7 +38,7 @@ namespace Archivarius.Tests
 
             public string T1Name => typeof(T1).Name;
             
-            public void Serialize(IOrderedSerializer serializer)
+            public void Serialize(ISerializer serializer)
             {
                 serializer.AddClass(ref Data2);
             }

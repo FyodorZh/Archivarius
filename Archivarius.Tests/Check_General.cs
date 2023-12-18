@@ -9,7 +9,7 @@ namespace Archivarius.Tests
     {
         public int x;
 
-        public void Serialize(IOrderedSerializer serializer)
+        public void Serialize(ISerializer serializer)
         {
             serializer.Add(ref x);
         }
@@ -27,7 +27,7 @@ namespace Archivarius.Tests
         public int? pInt;
         public SA? pSA;
 
-        public void Serialize(IOrderedSerializer serializer)
+        public void Serialize(ISerializer serializer)
         {
             if (!serializer.IsWriter)
             {
@@ -52,7 +52,7 @@ namespace Archivarius.Tests
         public CA? a;
         public SA sa;
 
-        public void Serialize(IOrderedSerializer serializer)
+        public void Serialize(ISerializer serializer)
         {
             serializer.AddClass(ref a);
             serializer.AddStruct(ref sa);

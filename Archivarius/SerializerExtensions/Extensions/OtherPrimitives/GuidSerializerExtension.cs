@@ -14,7 +14,7 @@ namespace Archivarius
             [FieldOffset(8)] public ulong B;
         }
 
-        public void Add(IOrderedSerializer serializer, ref Guid value)
+        public void Add(ISerializer serializer, ref Guid value)
         {
             if (serializer.IsWriter)
             {

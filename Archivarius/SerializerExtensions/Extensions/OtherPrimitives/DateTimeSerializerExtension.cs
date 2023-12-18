@@ -4,7 +4,7 @@ namespace Archivarius
 {
     public class DateTimeSerializerExtension : ISerializerExtension<DateTime>
     {
-        public void Add(IOrderedSerializer serializer, ref DateTime value)
+        public void Add(ISerializer serializer, ref DateTime value)
         {
             if (serializer.IsWriter)
             {

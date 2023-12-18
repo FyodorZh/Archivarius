@@ -9,7 +9,7 @@
             _elementSerializer = elementSerializer;
         }
 
-        public void Add(IOrderedSerializer serializer, ref T[]? value)
+        public void Add(ISerializer serializer, ref T[]? value)
         {
             if (serializer.IsWriter)
             {

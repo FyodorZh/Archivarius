@@ -2,7 +2,7 @@ using System;
 
 namespace Archivarius
 {
-    public static partial class IOrderedSerializer_Ext // NotNull
+    public static partial class ISerializer_Ext // NotNull
     {
         /// <summary>
         /// NotNull primitive class 
@@ -18,7 +18,7 @@ namespace Archivarius
         /// <summary>
         /// NotNull DataStruct class
         /// </summary>
-        public static void AddClass<T>(this IOrderedSerializer serializer, ref T value, Func<T> defaultValue)
+        public static void AddClass<T>(this ISerializer serializer, ref T value, Func<T> defaultValue)
             where T : class, IDataStruct
         {
             T? pValue = value;

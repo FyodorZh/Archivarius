@@ -2,7 +2,7 @@
 {
     public class DoubleSerializerExtension : ISerializerExtension<double>
     {
-        public void Add(IOrderedSerializer serializer, ref double value)
+        public void Add(ISerializer serializer, ref double value)
         {
             serializer.Add(ref value);
         }
