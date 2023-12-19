@@ -8,6 +8,7 @@
         <Version>0.1.0-dev.0</Version>
         <Title>Archivarius extensions</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <Authors>Fyodor Zhmaev</Authors>
         <Description>Extensions for Archivarius serialization library</Description>
         <Copyright>Copyright (c) Fyodor Zhmaev 2023 </Copyright>
