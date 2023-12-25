@@ -49,4 +49,6 @@
 
         void AddAny<T>(ref T value);
     }
+    
+    public delegate void ISerializer_AddMethod<T>(ISerializer serializer, ref T value);
 }

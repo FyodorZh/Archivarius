@@ -6,36 +6,6 @@ namespace Archivarius
     public static partial class ISerializer_Ext // Containers
     {
         /// <summary>
-        /// Array of primitive type 
-        /// </summary>
-        public static void Add<T>(this IPrimitiveSerializer<T?> serializer, ref T?[]? array)
-        {
-            if (serializer.IsWriter)
-            {
-                WriteList(serializer, array);
-            }
-            else
-            {
-                array = ReadAsArray(serializer);
-            }
-        }
-        
-        /// <summary>
-        /// List of primitive type 
-        /// </summary>
-        public static void Add<T>(this IPrimitiveSerializer<T?> serializer, ref List<T?>? list)
-        {
-            if (serializer.IsWriter)
-            {
-                WriteList(serializer, list);
-            }
-            else
-            {
-                list = ReadAsList(serializer);
-            }
-        }
-        
-        /// <summary>
         /// IReadOnlyList of primitive type 
         /// </summary>
         public static void Add<T>(this IPrimitiveSerializer<T?> serializer, ref IReadOnlyList<T?>? list)
