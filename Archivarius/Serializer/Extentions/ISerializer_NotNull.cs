@@ -2,7 +2,7 @@ using System;
 
 namespace Archivarius
 {
-    public static partial class ISerializer_Ext // NotNull
+    public static class ISerializer_NotNull
     {
         /// <summary>
         /// NotNull primitive class 
@@ -12,7 +12,10 @@ namespace Archivarius
         {
             T? pValue = value;
             serializer.Add(ref pValue);
-            value = pValue ?? defaultValue.Invoke();
+            if (!serializer.IsWriter)
+            {
+                value = pValue ?? defaultValue.Invoke();
+            }
         }
         
         /// <summary>
@@ -23,7 +26,10 @@ namespace Archivarius
         {
             T? pValue = value;
             serializer.AddClass(ref pValue);
-            value = pValue ?? defaultValue.Invoke();
+            if (!serializer.IsWriter)
+            {
+                value = pValue ?? defaultValue.Invoke();
+            }
         }
     }
 }

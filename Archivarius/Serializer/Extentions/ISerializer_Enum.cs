@@ -2,7 +2,7 @@ using System;
 
 namespace Archivarius
 {
-    public static partial class ISerializer_Ext // Enums
+    public static class ISerializer_Enum
     {
         /// <summary>
         /// Enum of any base type

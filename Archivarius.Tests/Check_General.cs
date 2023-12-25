@@ -36,9 +36,9 @@ namespace Archivarius.Tests
             serializer.Add(ref y);
             serializer.Add(ref hello);
             serializer.Add(ref data);
-            serializer.Add(ref array);
-            serializer.Add(ref shortList);
-            serializer.Add(ref stringList);
+            serializer.AddArray(ref array);
+            serializer.AddList(ref shortList);
+            serializer.AddList(ref stringList);
             serializer.Add(ref pInt);
             serializer.Add(ref pSA);
             serializer.AddClass(ref self);

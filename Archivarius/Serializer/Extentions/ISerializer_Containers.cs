@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Archivarius
 {
-    public static partial class ISerializer_Ext // Containers
+    public static class ISerializer_Containers
     {
         /// <summary>
         /// IReadOnlyList of primitive type 

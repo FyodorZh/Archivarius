@@ -4,7 +4,7 @@ namespace Archivarius
 {
     public static class ISerializer_Dictionary
     {
-        public static void Add<TKey, TValue, TSerializer>(
+        public static void AddDictionary<TKey, TValue, TSerializer>(
             this TSerializer serializer, 
             ref Dictionary<TKey, TValue>? dictionary)
             where TKey : notnull
@@ -51,7 +51,7 @@ namespace Archivarius
             }
         }
 
-        public static void Add<TKey, TValue>(
+        public static void AddDictionary<TKey, TValue>(
             this ISerializer serializer, 
             ref Dictionary<TKey, TValue>? dictionary,
             ISerializer_AddMethod<TKey> addKey,

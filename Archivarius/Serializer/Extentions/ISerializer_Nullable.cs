@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Archivarius
 {
-    public static partial class ISerializer_Ext // Nullable
+    public static class ISerializer_Nullable
     {
         /// <summary>
         /// Nullable "primitive" value type 
