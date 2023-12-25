@@ -22,21 +22,21 @@ namespace Archivarius
         public static void AddCollection<T, TList>(this ISerializer serializer, ref TList list)
             where TList : class, IReadOnlyCollection<T>
         {
-            serializer.AddAny(ref list);
+            serializer.AddDynamic(ref list);
         }
 
         public static void AddStructCollection<T, TList>(this ISerializer serializer, ref TList list)
             where T : struct, IDataStruct
             where TList : class, IReadOnlyCollection<T>
         {
-            serializer.AddAny(ref list);
+            serializer.AddDynamic(ref list);
         }
 
         public static void AddClassCollection<T, TList>(this ISerializer serializer, ref TList list)
             where T : class, IDataStruct
             where TList : class, IReadOnlyCollection<T>
         {
-            serializer.AddAny(ref list);
+            serializer.AddDynamic(ref list);
         }
     }
 }

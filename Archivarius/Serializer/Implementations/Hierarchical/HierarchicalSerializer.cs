@@ -26,7 +26,7 @@ namespace Archivarius
             IReadOnlyList<Type>? defaultTypeSet = null)
             : base(writer)
         {
-            factory ??= SerializerExtensionsFactory.Instance;
+            factory ??= SerializerExtensionsEmptyFactory.Instance;
             factory.OnError += (type, exception) =>
             {
                 // TODO
@@ -98,7 +98,7 @@ namespace Archivarius
             }
         }
 
-        public void AddAny<T>(ref T value)
+        public void AddDynamic<T>(ref T value)
         {
             var extension = _factory.Construct<T>();
             if (extension == null)

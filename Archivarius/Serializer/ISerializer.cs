@@ -47,7 +47,7 @@
         /// </summary>
         void AddClass<T>(ref T? value) where T : class, IDataStruct;
 
-        void AddAny<T>(ref T value);
+        void AddDynamic<T>(ref T value);
     }
     
     public delegate void ISerializer_AddMethod<T>(ISerializer serializer, ref T value);
