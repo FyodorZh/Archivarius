@@ -1,9 +1,25 @@
+using System;
 using System.Collections.Generic;
 
 namespace Archivarius
 {
     public static class ISerializer_Dictionary
     {
+        public static void AddDictionary<TKey, TValue, TSerializer>(
+            this TSerializer serializer,
+            ref Dictionary<TKey, TValue> dictionary,
+            Func<Dictionary<TKey, TValue>> defaultValue)
+            where TKey : notnull
+            where TSerializer : IPrimitiveSerializer<TKey>, IPrimitiveSerializer<TValue>
+        {
+            var tmp = dictionary;
+            serializer.AddDictionary(ref tmp);
+            if (!serializer.IsWriter)
+            {
+                dictionary = tmp ?? defaultValue();
+            }
+        }
+
         public static void AddDictionary<TKey, TValue, TSerializer>(
             this TSerializer serializer, 
             ref Dictionary<TKey, TValue>? dictionary)
@@ -48,6 +64,22 @@ namespace Archivarius
                         dictionary.Add(k, v);
                     }
                 }
+            }
+        }
+        
+        public static void AddDictionary<TKey, TValue>(
+            this ISerializer serializer, 
+            ref Dictionary<TKey, TValue> dictionary,
+            Func<Dictionary<TKey, TValue>> defaultValue,
+            ISerializer_AddMethod<TKey> addKey,
+            ISerializer_AddMethod<TValue> addValue)
+            where TKey : notnull
+        {
+            var tmp = dictionary;
+            serializer.AddDictionary(ref tmp, addKey, addValue);
+            if (!serializer.IsWriter)
+            {
+                dictionary = tmp ?? defaultValue();
             }
         }
 

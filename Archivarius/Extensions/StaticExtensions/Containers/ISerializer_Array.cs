@@ -4,6 +4,7 @@ namespace Archivarius
 {
     public static class ISerializer_Array
     {
+        #region Primitive value types
         public static void AddArray<TValue>(
             this IPrimitiveSerializer<TValue> serializer,
             ref TValue[] array,
@@ -59,6 +60,23 @@ namespace Archivarius
                 }
             }
         }
+        #endregion
+        
+        #region Primitive class types
+        public static void AddArray<TValue>(
+            this IPrimitiveClassSerializer<TValue> serializer, 
+            ref TValue[] array,
+            Func<TValue[]> defaultValue,
+            Func<TValue> defaultElementValue)
+            where TValue : class
+        {
+            var tmpArray = array;
+            serializer.AddArray(ref tmpArray, defaultElementValue);
+            if (!serializer.IsWriter)
+            {
+                array = tmpArray ?? defaultValue();
+            }
+        }
         
         public static void AddArray<TValue>(
             this IPrimitiveClassSerializer<TValue> serializer, 
@@ -107,7 +125,22 @@ namespace Archivarius
                 }
             }
         }
+        #endregion
         
+        #region NonPrimitive types
+        public static void AddArray<TValue>(
+            this ISerializer serializer, 
+            ref TValue[] array,
+            Func<TValue[]> defaultValue,
+            ISerializer_AddMethod<TValue> addValue)
+        {
+            var tmpArray = array;
+            serializer.AddArray(ref tmpArray, addValue);
+            if (!serializer.IsWriter)
+            {
+                array = tmpArray ?? defaultValue();
+            }
+        }
         public static void AddArray<TValue>(
             this ISerializer serializer, 
             ref TValue[]? array,
@@ -150,5 +183,6 @@ namespace Archivarius
                 }
             }
         }
+        #endregion
     }
 }

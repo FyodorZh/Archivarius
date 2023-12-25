@@ -5,6 +5,7 @@ namespace Archivarius
 {
     public static class ISerializer_List
     {
+        #region Primitive value types
         public static void AddList<TValue>(
             this IPrimitiveSerializer<TValue> serializer,
             ref List<TValue> array,
@@ -58,7 +59,24 @@ namespace Archivarius
                 }
             }
         }
-        
+        #endregion
+
+        #region Primitive class types
+        public static void AddList<TValue>(
+            this IPrimitiveClassSerializer<TValue> serializer,
+            ref List<TValue> list,
+            Func<List<TValue>> defaultValue,
+            Func<TValue> defaultElementValue)
+            where TValue : class
+        {
+            List<TValue>? tmpList = list;
+            serializer.AddList(ref tmpList, defaultElementValue);
+            if (!serializer.IsWriter)
+            {
+                list = tmpList ?? defaultValue();
+            }
+        }
+
         public static void AddList<TValue>(
             this IPrimitiveClassSerializer<TValue> serializer, 
             ref List<TValue>? list,
@@ -99,6 +117,22 @@ namespace Archivarius
                         list.Add(element ?? defaultValue());
                     }
                 }
+            }
+        }
+        #endregion
+        
+        #region NonPrimitive types
+        public static void AddList<TValue>(
+            this ISerializer serializer, 
+            ref List<TValue> list,
+            Func<List<TValue>> defaultValue,
+            ISerializer_AddMethod<TValue> addValue)
+        {
+            List<TValue>? tmpList = list;
+            serializer.AddList(ref tmpList, addValue);
+            if (!serializer.IsWriter)
+            {
+                list = tmpList ?? defaultValue();
             }
         }
         
@@ -143,5 +177,6 @@ namespace Archivarius
                 }
             }
         }
+        #endregion
     }
 }
