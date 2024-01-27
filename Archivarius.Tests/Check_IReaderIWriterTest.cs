@@ -1,4 +1,5 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
 using Archivarius.JsonBackend;
 using Archivarius.StructuredBinaryBackend;
 using NUnit.Framework;

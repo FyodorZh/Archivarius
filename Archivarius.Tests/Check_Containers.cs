@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Archivarius.TypeSerializers;
 using NUnit.Framework;
 

@@ -5,16 +5,6 @@ using NUnit.Framework;
 
 namespace Archivarius.Tests
 {
-    public struct SA : IDataStruct
-    {
-        public int x;
-
-        public void Serialize(ISerializer serializer)
-        {
-            serializer.Add(ref x);
-        }
-    }
-
     class CA : IDataStruct, IVersionedData
     {
         public int y;
@@ -25,7 +15,7 @@ namespace Archivarius.Tests
         public List<short>? shortList;
         public List<string?>? stringList;
         public int? pInt;
-        public SA? pSA;
+        public StructInt? pSA;
 
         public void Serialize(ISerializer serializer)
         {
@@ -50,7 +40,7 @@ namespace Archivarius.Tests
     class Root : IDataStruct
     {
         public CA? a;
-        public SA sa;
+        public StructInt sa;
 
         public void Serialize(ISerializer serializer)
         {
@@ -65,12 +55,8 @@ namespace Archivarius.Tests
         [Test]
         public void DoTest()
         {
-            var guid = typeof(Root).GUID;
-
-
             Root r0 = new Root();
-            r0.sa = new SA();
-            r0.sa.x = 3;
+            r0.sa = new StructInt(3);
             r0.a = new CA();
             r0.a.self = r0.a;
             r0.a.y = 7;
