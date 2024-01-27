@@ -138,8 +138,8 @@ namespace Archivarius.JsonBackend
             CheckGrow();
             _cursorStack.Push(_cursor);
             _sectionStack.Push(_currentSection);
-            _cursor = 0;
             _currentSection = _currentSection[_cursor]?.AsArray() ?? throw new InvalidOperationException();
+            _cursor = 0;
         }
 
         public bool EndSection()
