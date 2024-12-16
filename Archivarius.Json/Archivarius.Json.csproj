@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <Authors>Fyodor Zhmaev</Authors>
         <Company>FyodorZh</Company>
-        <Version>0.1.0-dev.1</Version>
+        <Version>0.1.0-dev.2</Version>
         <Title>Archivarius.Json</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -24,6 +24,7 @@
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <DebugType>full</DebugType>
     </PropertyGroup>
 
     <ItemGroup>
