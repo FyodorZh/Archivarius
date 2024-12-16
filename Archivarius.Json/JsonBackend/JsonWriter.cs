@@ -75,6 +75,11 @@ namespace Archivarius.JsonBackend
             _currentSection.Add(value);
         }
 
+        public void WriteDecimal(decimal value)
+        {
+            _currentSection.Add(value);
+        }
+
         public void WriteString(string? value)
         {
             _currentSection.Add(value);

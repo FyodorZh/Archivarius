@@ -10,6 +10,7 @@
         long ReadLong();
         float ReadFloat();
         double ReadDouble();
+        decimal ReadDecimal();
         string? ReadString();
         byte[]? ReadBytes();
     }

@@ -67,6 +67,8 @@ namespace Archivarius.Tests
                 ulong.MaxValue,
                 0.25f,
                 0.5,
+                decimal.MinValue,
+                decimal.MaxValue,
                 "hello",
                 "world",
                 null,
@@ -121,6 +123,9 @@ namespace Archivarius.Tests
                         break;
                     case double doubleValue:
                         writer.WriteDouble(doubleValue);
+                        break;
+                    case decimal decimalValue:
+                        writer.WriteDecimal(decimalValue);
                         break;
                     case string stringValue:
                         writer.WriteString(stringValue);
@@ -178,6 +183,9 @@ namespace Archivarius.Tests
                         break;
                     case double doubleValue:
                         Assert.That(reader.ReadDouble(), Is.EqualTo(doubleValue));
+                        break;
+                    case decimal decimalValue:
+                        Assert.That(reader.ReadDecimal(), Is.EqualTo(decimalValue));
                         break;
                     case string stringValue:
                         Assert.That(reader.ReadString(), Is.EqualTo(stringValue));

@@ -113,6 +113,13 @@ namespace Archivarius.StructuredBinaryBackend
             return r.Value.DoubleValue;
         }
 
+        public decimal ReadDecimal()
+        {
+            Record r = _section[_position++];
+            CheckType(r, RecordType.Decimal);
+            return r.Value.DecimalValue;
+        }
+
         public string? ReadString()
         {
             Record r = _section[_position++];

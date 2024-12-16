@@ -77,6 +77,11 @@ namespace Archivarius
         {
             _writer.WriteDouble(value);
         }
+        
+        public void Add(ref decimal value)
+        {
+            _writer.WriteDecimal(value);
+        }
 
         public void Add(ref string? value)
         {

@@ -12,6 +12,7 @@ namespace Archivarius
         private readonly Queue<long> _longs = new Queue<long>();
         private readonly Queue<float> _floats = new Queue<float>();
         private readonly Queue<double> _doubles = new Queue<double>();
+        private readonly Queue<decimal> _decimals = new Queue<decimal>();
         private readonly Queue<string?> _strings = new Queue<string?>();
         private readonly Queue<byte[]?> _arrays = new Queue<byte[]?>();
 
@@ -24,6 +25,7 @@ namespace Archivarius
             _longs.Count == 0 &&
             _floats.Count == 0 &&
             _doubles.Count == 0 &&
+            _decimals.Count == 0 &&
             _strings.Count == 0 &&
             _arrays.Count == 0;
 
@@ -37,6 +39,7 @@ namespace Archivarius
             _longs.Clear();
             _floats.Clear();
             _doubles.Clear();
+            _decimals.Clear();
             _strings.Clear();
             _arrays.Clear();
         }
@@ -79,6 +82,11 @@ namespace Archivarius
         public double ReadDouble()
         {
             return _doubles.Dequeue();
+        }
+
+        public decimal ReadDecimal()
+        {
+            return _decimals.Dequeue();
         }
 
         public string? ReadString()
@@ -149,6 +157,11 @@ namespace Archivarius
         public void WriteDouble(double value)
         {
             _doubles.Enqueue(value);
+        }
+
+        public void WriteDecimal(decimal value)
+        {
+            _decimals.Enqueue(value);
         }
 
         public void WriteString(string? value)

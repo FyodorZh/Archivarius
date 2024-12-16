@@ -169,6 +169,32 @@ namespace Archivarius.BinaryBackend
             return block.Value;
         }
 
+        public decimal ReadDecimal()
+        {
+            Check(16);
+            DecimalToByte block = new DecimalToByte()
+            {
+                Byte0 = _buffer[_position++],
+                Byte1 = _buffer[_position++],
+                Byte2 = _buffer[_position++],
+                Byte3 = _buffer[_position++],
+                Byte4 = _buffer[_position++],
+                Byte5 = _buffer[_position++],
+                Byte6 = _buffer[_position++],
+                Byte7 = _buffer[_position++],
+                Byte8 = _buffer[_position++],
+                Byte9 = _buffer[_position++],
+                Byte10 = _buffer[_position++],
+                Byte11 = _buffer[_position++],
+                Byte12 = _buffer[_position++],
+                Byte13 = _buffer[_position++],
+                Byte14 = _buffer[_position++],
+                Byte15 = _buffer[_position++],
+            };
+
+            return block.Value;
+        }
+
         public string? ReadString()
         {
             int count = ReadInt();

@@ -42,9 +42,9 @@ namespace Archivarius.BinaryBackend
             Buffer.BlockCopy(_buffer, 0, res, 0, _size);
             return res;
         }
-        public byte[] GetBufferUnsafe(out int sise)
+        public byte[] GetBufferUnsafe(out int size)
         {
-            sise = _size;
+            size = _size;
             return _buffer;
         }
         public void BeginSection()
@@ -139,6 +139,28 @@ namespace Archivarius.BinaryBackend
             _buffer[_size++] = block.Byte5;
             _buffer[_size++] = block.Byte6;
             _buffer[_size++] = block.Byte7;
+        }
+
+        public void WriteDecimal(decimal value)
+        {
+            DecimalToByte block = new DecimalToByte() { Value = value };
+            Grow(16);
+            _buffer[_size++] = block.Byte0;
+            _buffer[_size++] = block.Byte1;
+            _buffer[_size++] = block.Byte2;
+            _buffer[_size++] = block.Byte3;
+            _buffer[_size++] = block.Byte4;
+            _buffer[_size++] = block.Byte5;
+            _buffer[_size++] = block.Byte6;
+            _buffer[_size++] = block.Byte7;
+            _buffer[_size++] = block.Byte8;
+            _buffer[_size++] = block.Byte9;
+            _buffer[_size++] = block.Byte10;
+            _buffer[_size++] = block.Byte11;
+            _buffer[_size++] = block.Byte12;
+            _buffer[_size++] = block.Byte13;
+            _buffer[_size++] = block.Byte14;
+            _buffer[_size++] = block.Byte15;
         }
 
         public void WriteString(string? value)

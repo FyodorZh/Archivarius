@@ -30,6 +30,7 @@
         IPrimitiveSerializer<ulong>,
         IPrimitiveSerializer<float>,
         IPrimitiveSerializer<double>,
+        IPrimitiveSerializer<decimal>,
         IPrimitiveClassSerializer<string>,
         IPrimitiveClassSerializer<byte[]>
     {

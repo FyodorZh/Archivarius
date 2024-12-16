@@ -10,6 +10,7 @@
         void WriteLong(long value);
         void WriteFloat(float value);
         void WriteDouble(double value);
+        void WriteDecimal(decimal value);
         void WriteString(string? value);
         void WriteBytes(byte[]? value);
     }

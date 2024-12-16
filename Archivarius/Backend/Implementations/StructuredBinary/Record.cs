@@ -13,6 +13,7 @@ namespace Archivarius.StructuredBinaryBackend
         Long,
         Float,
         Double,
+        Decimal,
         String,
         Array,
         Section
@@ -88,6 +89,15 @@ namespace Archivarius.StructuredBinaryBackend
             Bytes = null;
             Section = null;
         }
+        
+        public Record(decimal value)
+        {
+            Type = RecordType.Decimal;
+            Value = value;
+            Text = null;
+            Bytes = null;
+            Section = null;
+        }
 
         public Record(string? value)
         {
@@ -158,6 +168,9 @@ namespace Archivarius.StructuredBinaryBackend
                 case RecordType.Double:
                     writer.WriteDouble(Value.DoubleValue);
                     break;
+                case RecordType.Decimal:
+                    writer.WriteDecimal(Value.DecimalValue);
+                    break;
                 case RecordType.String:
                     writer.WriteString(Text);
                     break;
@@ -193,6 +206,12 @@ namespace Archivarius.StructuredBinaryBackend
                     return new Record(reader.ReadInt());
                 case RecordType.Long:
                     return new Record(reader.ReadLong());
+                case RecordType.Float:
+                    return new Record(reader.ReadFloat());
+                case RecordType.Double:
+                    return new Record(reader.ReadDouble());
+                case RecordType.Decimal:
+                    return new Record(reader.ReadDecimal());
                 case RecordType.String:
                     return new Record(reader.ReadString());
                 case RecordType.Array:
@@ -232,6 +251,8 @@ namespace Archivarius.StructuredBinaryBackend
                     return "float:" + Value.FloatValue;
                 case RecordType.Double:
                     return "double:" + Value.DoubleValue;
+                case RecordType.Decimal:
+                    return "decimal:" + Value.DecimalValue;
                 case RecordType.String:
                     return "text:" + Text;
                 case RecordType.Array:

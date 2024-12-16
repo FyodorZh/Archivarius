@@ -77,6 +77,11 @@ namespace Archivarius
         {
             value = _reader.ReadDouble();
         }
+        
+        public void Add(ref decimal value)
+        {
+            value = _reader.ReadDecimal();
+        }
 
         public void Add(ref string? value)
         {

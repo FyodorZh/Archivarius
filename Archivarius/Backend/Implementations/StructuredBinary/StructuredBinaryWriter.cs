@@ -98,6 +98,11 @@ namespace Archivarius.StructuredBinaryBackend
         {
             _section.Add(new Record(value));
         }
+        
+        public void WriteDecimal(decimal value)
+        {
+            _section.Add(new Record(value));
+        }
 
         public void WriteString(string? value)
         {

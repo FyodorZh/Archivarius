@@ -54,6 +54,7 @@ namespace Archivarius
             Register0(new ULongSerializerExtension());
             Register0(new FloatSerializerExtension());
             Register0(new DoubleSerializerExtension());
+            Register0(new DecimalSerializerExtension());
             Register0(new StringSerializerExtension());
 
             Register0(new GuidSerializerExtension());

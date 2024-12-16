@@ -104,6 +104,14 @@ namespace Archivarius.JsonBackend
             return res;
         }
 
+        public decimal ReadDecimal()
+        {
+            CheckGrow();
+            var res = _currentSection[_cursor]!.GetValue<decimal>();
+            _cursor += 1;
+            return res;
+        }
+
         public string? ReadString()
         {
             CheckGrow();

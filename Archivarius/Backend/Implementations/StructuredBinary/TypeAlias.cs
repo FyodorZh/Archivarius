@@ -12,6 +12,7 @@ namespace Archivarius.StructuredBinaryBackend
         [FieldOffset(0)] public long LongValue;
         [FieldOffset(0)] public float FloatValue;
         [FieldOffset(0)] public double DoubleValue;
+        [FieldOffset(0)] public decimal DecimalValue;
 
         public static implicit operator TypeAlias(byte value) => new TypeAlias() {ByteValue = value};
         public static implicit operator TypeAlias(char value) => new TypeAlias() {CharValue = value};
@@ -20,5 +21,6 @@ namespace Archivarius.StructuredBinaryBackend
         public static implicit operator TypeAlias(long value) => new TypeAlias() {LongValue = value};
         public static implicit operator TypeAlias(float value) => new TypeAlias() {FloatValue = value};
         public static implicit operator TypeAlias(double value) => new TypeAlias() {DoubleValue = value};
+        public static implicit operator TypeAlias(decimal value) => new TypeAlias() {DecimalValue = value};
     }
 }
