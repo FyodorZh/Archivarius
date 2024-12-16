@@ -1,4 +1,6 @@
-﻿namespace Archivarius
+﻿using System;
+
+namespace Archivarius
 {
     public interface ISerializerCore
     {
@@ -32,7 +34,8 @@
         IPrimitiveSerializer<double>,
         IPrimitiveSerializer<decimal>,
         IPrimitiveClassSerializer<string>,
-        IPrimitiveClassSerializer<byte[]>
+        IPrimitiveClassSerializer<byte[]>,
+        IPrimitiveSerializer<Guid>
     {
     }
 

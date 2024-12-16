@@ -1,11 +1,12 @@
 ﻿using System;
+using Archivarius.BinaryBackend;
 
 namespace Archivarius
 {
     public class PrimitiveDeserializer : IPrimitiveSerializer
     {
         protected readonly IReader _reader;
-
+        
         public bool IsWriter => false;
         public ILowLevelReader Reader => _reader;
         public ILowLevelWriter Writer => throw new InvalidOperationException();
@@ -91,6 +92,12 @@ namespace Archivarius
         public void Add(ref byte[]? value)
         {
             value = _reader.ReadBytes();
+        }
+
+        public void Add(ref Guid value)
+        {
+            GuidToDecimal map = new GuidToDecimal() { Decimal = _reader.ReadDecimal() };
+            value = map.Guid;
         }
     }
 }

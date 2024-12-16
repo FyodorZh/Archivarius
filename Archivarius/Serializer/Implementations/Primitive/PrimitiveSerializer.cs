@@ -1,4 +1,5 @@
 ﻿using System;
+using Archivarius.BinaryBackend;
 
 namespace Archivarius
 {
@@ -91,6 +92,12 @@ namespace Archivarius
         public void Add(ref byte[]? value)
         {
             _writer.WriteBytes(value);
+        }
+
+        public void Add(ref Guid value)
+        {
+            GuidToDecimal map = new GuidToDecimal() { Guid = value };
+            _writer.WriteDecimal(map.Decimal);
         }
     }
 }

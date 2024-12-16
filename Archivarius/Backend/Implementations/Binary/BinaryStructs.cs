@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Archivarius.BinaryBackend
 {
@@ -86,5 +87,12 @@ namespace Archivarius.BinaryBackend
         [FieldOffset(13)] public byte Byte13;
         [FieldOffset(14)] public byte Byte14;
         [FieldOffset(15)] public byte Byte15;
+    }
+    
+    [StructLayout(LayoutKind.Explicit)]
+    public struct GuidToDecimal
+    {
+        [FieldOffset(0)] public Guid Guid;
+        [FieldOffset(0)] public decimal Decimal;
     }
 }
