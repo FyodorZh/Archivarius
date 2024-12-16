@@ -59,6 +59,7 @@ namespace Archivarius
 
             Register0(new GuidSerializerExtension());
             Register0(new DateTimeSerializerExtension());
+            Register0(new TimeSpanSerializerExtension());
 
             AOTGuard.Instance.RegisterType(new DataClassSerializerExtension<IDataStruct>());
             AOTGuard.Instance.RegisterType(new ArraySerializerExtension<Object>(null!));

@@ -105,5 +105,11 @@ namespace Archivarius
             long v = _reader.ReadLong();
             value = DateTime.FromBinary(v);
         }
+        
+        public void Add(ref TimeSpan value)
+        {
+            long v = _reader.ReadLong();
+            value = TimeSpan.FromTicks(v);
+        }
     }
 }

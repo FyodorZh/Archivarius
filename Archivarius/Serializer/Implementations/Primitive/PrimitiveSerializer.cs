@@ -105,5 +105,11 @@ namespace Archivarius
             long v = value.ToBinary();
             _writer.WriteLong(v);
         }
+        
+        public void Add(ref TimeSpan value)
+        {
+            long v = value.Ticks;
+            _writer.WriteLong(v);
+        }
     }
 }
