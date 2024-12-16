@@ -35,7 +35,8 @@ namespace Archivarius
         IPrimitiveSerializer<decimal>,
         IPrimitiveClassSerializer<string>,
         IPrimitiveClassSerializer<byte[]>,
-        IPrimitiveSerializer<Guid>
+        IPrimitiveSerializer<Guid>,
+        IPrimitiveSerializer<DateTime>
     {
     }
 

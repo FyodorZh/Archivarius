@@ -99,5 +99,11 @@ namespace Archivarius
             GuidToDecimal map = new GuidToDecimal() { Guid = value };
             _writer.WriteDecimal(map.Decimal);
         }
+        
+        public void Add(ref DateTime value)
+        {
+            long v = value.ToBinary();
+            _writer.WriteLong(v);
+        }
     }
 }

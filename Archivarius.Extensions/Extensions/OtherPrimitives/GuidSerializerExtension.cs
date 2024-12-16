@@ -1,5 +1,4 @@
 ﻿using System;
-using Archivarius.BinaryBackend;
 
 namespace Archivarius
 {
