@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Archivarius.JsonBackend;
 using Archivarius.StructuredBinaryBackend;
 using NUnit.Framework;
@@ -17,6 +18,17 @@ namespace Archivarius.Tests
                 BinaryBackend.BinaryWriter bw = (BinaryBackend.BinaryWriter)w;
                 var buffer = bw.GetBuffer();
                 return new BinaryBackend.BinaryReader(buffer);
+            });
+        }
+        
+        [Test]
+        public void Test_BinaryStream()
+        {
+            Check(GetList(), () => new BinaryBackend.BinaryWriter(), w =>
+            {
+                BinaryBackend.BinaryWriter bw = (BinaryBackend.BinaryWriter)w;
+                var buffer = bw.GetBuffer();
+                return new BinaryBackend.BinaryStreamReader(new MemoryStream(buffer));
             });
         }
 

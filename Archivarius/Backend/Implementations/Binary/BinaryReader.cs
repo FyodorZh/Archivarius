@@ -27,7 +27,7 @@ namespace Archivarius.BinaryBackend
             _position = 0;
         }
 
-        public virtual void Reset()
+        public void Reset()
         {
             _stackOfSections.Clear();
             _position = 0;
