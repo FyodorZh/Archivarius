@@ -99,6 +99,12 @@ namespace Archivarius
             return _arrays.Dequeue();
         }
 
+        public bool TrySetSectionUsage(bool useSections)
+        {
+            // DO NOTHING
+            return true;
+        }
+
         void IWriter.BeginSection()
         {
             // DO NOTHING

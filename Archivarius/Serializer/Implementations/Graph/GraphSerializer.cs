@@ -6,8 +6,9 @@ namespace Archivarius
     {
         private readonly Dictionary<object, int> _instanceMap = new Dictionary<object, int>(new ReferenceComparer());
 
-        public GraphSerializer(IWriter writer, ITypeSerializer typeSerializer, ISerializerExtensionsFactory? factory = null)
-            : base(writer, typeSerializer, factory)
+        public GraphSerializer(IWriter writer, ITypeSerializer typeSerializer, ISerializerExtensionsFactory? factory = null,
+            bool useAntiCorruptionSections = true)
+            : base(writer, typeSerializer, factory, useAntiCorruptionSections)
         {
         }
 

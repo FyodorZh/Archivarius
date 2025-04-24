@@ -97,6 +97,16 @@ namespace Archivarius.JsonBackend
             _currentSection.Add(base64);
         }
 
+        public bool TrySetSectionUsage(bool useSections)
+        {
+            if (useSections)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public void BeginSection()
         {
             var section = new JsonArray();

@@ -31,6 +31,16 @@ namespace Archivarius.StructuredBinaryBackend
             }
         }
 
+        public bool TrySetSectionUsage(bool useSections)
+        {
+            if (useSections)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public void BeginSection()
         {
             Record r = _section[_position];

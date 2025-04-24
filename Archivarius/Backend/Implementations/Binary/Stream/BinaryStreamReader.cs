@@ -11,6 +11,8 @@ namespace Archivarius.BinaryBackend
 
         private readonly Stack<long> _stackOfSections = new Stack<long>();
         private long _maxPosition;
+        
+        private bool _useSections;
 
         public BinaryStreamReader(Stream stream, long count = -1)
         {
@@ -30,16 +32,30 @@ namespace Archivarius.BinaryBackend
             _stackOfSections.Clear();
             _stream.Position = 0;
         }
-        
+
+        public bool TrySetSectionUsage(bool useSections)
+        {
+            _useSections = useSections;
+            return true;
+        }
+
         public void BeginSection()
         {
-            long size = ReadInt();
-            _stackOfSections.Push(_maxPosition);
-            _maxPosition = _stream.Position + size;
+            if (_useSections)
+            {
+                long size = ReadInt();
+                _stackOfSections.Push(_maxPosition);
+                _maxPosition = _stream.Position + size;
+            }
         }
 
         public bool EndSection()
         {
+            if (!_useSections)
+            {
+                return true;
+            }
+            
             if (_maxPosition != _stream.Position)
             {
                 _stream.Position = _maxPosition;

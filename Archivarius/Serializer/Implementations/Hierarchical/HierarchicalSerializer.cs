@@ -22,6 +22,7 @@ namespace Archivarius
             IWriter writer, 
             ITypeSerializer typeSerializer, 
             ISerializerExtensionsFactory? factory = null,
+            bool useAntiCorruptionSections = true,
             int defaultTypeSetVersion = 0, 
             IReadOnlyList<Type>? defaultTypeSet = null)
             : base(writer)
@@ -35,11 +36,16 @@ namespace Archivarius
             _factory = factory;
 
             _typeSerializer = typeSerializer;
-            Prepare(defaultTypeSetVersion, defaultTypeSet);
+            Prepare(useAntiCorruptionSections, defaultTypeSetVersion, defaultTypeSet);
         }
         
-        public void Prepare(int defaultTypeSetVersion = 0, IReadOnlyList<Type>? defaultTypeSet = null)
+        public void Prepare(bool useAntiCorruptionSections = true, int defaultTypeSetVersion = 0, IReadOnlyList<Type>? defaultTypeSet = null)
         {
+            if (!_writer.TrySetSectionUsage(useAntiCorruptionSections))
+            {
+                throw new InvalidOperationException($"Writer doesn't support anti corruption sections option '{useAntiCorruptionSections}'");
+            }
+            
             if (defaultTypeSetVersion < 0)
             {
                 throw new InvalidOperationException(nameof(defaultTypeSetVersion) + " can't be negative");
@@ -54,8 +60,13 @@ namespace Archivarius
                     _typeMap.Add(defaultTypeSet[i], (short)(-i - 1));
                 }
             }
+
+            //byte protocolTypeId = 1; // First protocol (versions till 0.1.0-dev6)
+            byte protocolTypeId = 2;  // Added 'useAntiCorruptionSections' option
             
-            _writer.WriteByte(1); // Protocol type Id == 1
+            _writer.WriteByte(protocolTypeId);
+            _writer.WriteBool(useAntiCorruptionSections);
+            
             _writer.WriteInt(defaultTypeSet != null ? defaultTypeSetVersion : -1);
             _writer.WriteByte(0); // Protocol internal version
             _version = 0;

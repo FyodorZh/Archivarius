@@ -40,10 +40,25 @@ namespace Archivarius
 
         public void Prepare(Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null)
         {
-            if (_reader.ReadByte() != 1)
+            byte protocolTypeId = _reader.ReadByte();
+            bool useAntiCorruptionSections;
+            switch (protocolTypeId)
             {
-                throw new InvalidOperationException();
+                case 1:
+                    useAntiCorruptionSections = true;
+                    break;
+                case 2:
+                    useAntiCorruptionSections = _reader.ReadBool();
+                    break;
+                default:
+                    throw new InvalidOperationException();
             }
+
+            if (!_reader.TrySetSectionUsage(useAntiCorruptionSections))
+            {
+                throw new InvalidOperationException($"{_reader.GetType()} doesn't support section usage '{useAntiCorruptionSections}'");
+            }
+            
 
             int defaultTypeSetVersion = _reader.ReadInt();
 

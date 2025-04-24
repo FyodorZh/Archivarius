@@ -141,6 +141,16 @@ namespace Archivarius.JsonBackend
             return res;
         }
 
+        public bool TrySetSectionUsage(bool useSections)
+        {
+            if (useSections)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public void BeginSection()
         {
             CheckGrow();

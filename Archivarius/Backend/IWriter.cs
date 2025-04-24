@@ -17,6 +17,7 @@
 
     public interface IWriter : ILowLevelWriter
     {
+        bool TrySetSectionUsage(bool useSections);
         void BeginSection();
         void EndSection();
     }

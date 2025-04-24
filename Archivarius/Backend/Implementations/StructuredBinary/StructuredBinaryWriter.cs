@@ -46,6 +46,16 @@ namespace Archivarius.StructuredBinaryBackend
             _stack.Clear();
         }
 
+        public bool TrySetSectionUsage(bool useSections)
+        {
+            if (useSections)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public void BeginSection()
         {
             _stack.Push(_section);

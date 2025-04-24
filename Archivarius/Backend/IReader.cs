@@ -17,6 +17,7 @@
 
     public interface IReader : ILowLevelReader
     {
+        bool TrySetSectionUsage(bool useSections);
         void BeginSection();
         bool EndSection();
     }

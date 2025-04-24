@@ -10,7 +10,9 @@ namespace Archivarius.BinaryBackend
         private byte[] _buffer = new byte[1024];
         private int _size = 0;
 
+        private bool _useSections = true;
         private readonly Stack<int> _sectionsStack = new Stack<int>();
+        
 
         private void Grow(int value)
         {
@@ -47,22 +49,39 @@ namespace Archivarius.BinaryBackend
             size = _size;
             return _buffer;
         }
+
+        public bool TrySetSectionUsage(bool useSections)
+        {
+            if (_size != 0)
+            {
+                return false;
+            }
+            _useSections = useSections;
+            return true;
+        }
+
         public void BeginSection()
         {
-            _sectionsStack.Push(_size);
-            WriteInt(0);
+            if (_useSections)
+            {
+                _sectionsStack.Push(_size);
+                WriteInt(0);
+            }
         }
 
         public void EndSection()
         {
-            int pos = _sectionsStack.Pop();
-            int sectionSize = _size - pos - 4;
+            if (_useSections)
+            {
+                int pos = _sectionsStack.Pop();
+                int sectionSize = _size - pos - 4;
 
-            IntToByte block = new IntToByte() {Value = sectionSize};
-            _buffer[pos++] = block.Byte0;
-            _buffer[pos++] = block.Byte1;
-            _buffer[pos++] = block.Byte2;
-            _buffer[pos++] = block.Byte3;
+                IntToByte block = new IntToByte() { Value = sectionSize };
+                _buffer[pos++] = block.Byte0;
+                _buffer[pos++] = block.Byte1;
+                _buffer[pos++] = block.Byte2;
+                _buffer[pos++] = block.Byte3;
+            }
         }
 
         public void WriteBool(bool value)

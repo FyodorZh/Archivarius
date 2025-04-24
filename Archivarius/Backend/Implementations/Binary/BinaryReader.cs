@@ -13,6 +13,8 @@ namespace Archivarius.BinaryBackend
 
         private int _position = 0;
 
+        private bool _useSections = true;
+
         public BinaryReader(byte[] buffer, int count = -1)
         {
             _buffer = buffer;
@@ -32,16 +34,30 @@ namespace Archivarius.BinaryBackend
             _stackOfSections.Clear();
             _position = 0;
         }
-        
+
+        public bool TrySetSectionUsage(bool useSections)
+        {
+            _useSections = useSections;
+            return true;
+        }
+
         public void BeginSection()
         {
-            int size = ReadInt();
-            _stackOfSections.Push(_maxPosition);
-            _maxPosition = _position + size;
+            if (_useSections)
+            {
+                int size = ReadInt();
+                _stackOfSections.Push(_maxPosition);
+                _maxPosition = _position + size;
+            }
         }
 
         public bool EndSection()
         {
+            if (!_useSections)
+            {
+                return true;
+            }
+                
             if (_maxPosition != _position)
             {
                 _position = _maxPosition;

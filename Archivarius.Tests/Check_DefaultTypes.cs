@@ -20,7 +20,7 @@ namespace Archivarius.Tests
                 typeof(B)
             };
             
-            serializer.Prepare(3, defaultTypes);
+            serializer.Prepare(true, 3, defaultTypes);
             deserializer.Prepare(version =>
             {
                 if (version != 3)
