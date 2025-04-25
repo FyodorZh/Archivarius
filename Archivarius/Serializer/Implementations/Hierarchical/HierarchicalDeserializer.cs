@@ -6,17 +6,14 @@ namespace Archivarius
 {
     public class HierarchicalDeserializer : PrimitiveDeserializer, ISerializer
     {
-        private readonly ITypeDeserializer _typeDeserializer;
+        private readonly ITypeReader _typeReader;
 
-        private readonly List<IConstructor?> _typeMap = new List<IConstructor?>();
-        private readonly List<IConstructor> _defaultTypeMap = new List<IConstructor>();
-
-        private readonly Stack<byte> _versions = new Stack<byte>();
+        private readonly Stack<byte> _versions = new ();
         private byte _version;
+        
+        private readonly ISerializerExtensionsFactory? _factory;
 
         public event Action<Exception>? OnException;
-
-        private readonly ISerializerExtensionsFactory _factory;
 
         public byte Version => _version;
         
@@ -27,18 +24,49 @@ namespace Archivarius
             Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null)
             : base(reader)
         {
-            factory ??= SerializerExtensionsEmptyFactory.Instance;
-            factory.OnError += (type, exception) =>
+            var typeReader = new PolymorphicTypeReader(typeDeserializer);
+            typeReader.OnException += e => OnException?.Invoke(e);
+            _typeReader = typeReader;
+            
+            if (factory != null)
             {
-                OnException?.Invoke(exception);
-            };
-            _factory = factory;
-
-            _typeDeserializer = typeDeserializer;
+                factory.OnError += (type, exception) =>
+                {
+                    OnException?.Invoke(exception);
+                };
+                _factory = factory;
+            }
+            
             Prepare(defaultTypeSetProvider);
         }
 
         public void Prepare(Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null)
+        {
+            PrepareHeader();
+
+            if (_typeReader is PolymorphicTypeReader polymorphicTypeReader)
+            {
+                polymorphicTypeReader.Prepare(_reader, defaultTypeSetProvider);
+            }
+            else
+            {
+                throw new NotSupportedException($"Unsupported type reader '{_typeReader.GetType()}");
+            }
+            
+            switch (_reader.ReadByte()) // RESERVED
+            {
+                case 0:
+                    // OK
+                    break;
+                default:
+                    throw new InvalidOperationException();
+            }
+            
+            _versions.Clear();
+            _version = 0;
+        }
+
+        private void PrepareHeader()
         {
             byte protocolTypeId = _reader.ReadByte();
             bool useAntiCorruptionSections;
@@ -58,38 +86,8 @@ namespace Archivarius
             {
                 throw new InvalidOperationException($"{_reader.GetType()} doesn't support section usage '{useAntiCorruptionSections}'");
             }
-            
-
-            int defaultTypeSetVersion = _reader.ReadInt();
-
-            switch (_reader.ReadByte())
-            {
-                case 0:
-                    // OK
-                    break;
-                default:
-                    throw new InvalidOperationException();
-            }
-            
-            _versions.Clear();
-            _version = 0;
-            
-            _typeMap.Clear();
-            _defaultTypeMap.Clear();
-            
-            if (defaultTypeSetVersion >= 0)
-            {
-                if (defaultTypeSetProvider == null)
-                {
-                    throw new InvalidOperationException();
-                }
-                var defaultTypeSet = defaultTypeSetProvider(defaultTypeSetVersion);
-                for (var i = 0; i < defaultTypeSet.Count; ++i)
-                {
-                    _defaultTypeMap.Add(TypeConstructorBuilder.Build(defaultTypeSet[i]));
-                }
-            }
         }
+        
         public void AddStruct<T>(ref T value)
             where T : struct, IDataStruct
         {
@@ -109,41 +107,11 @@ namespace Archivarius
         public void AddClass<T>(ref T? value)
             where T : class, IDataStruct
         {
-            int flag = _reader.ReadShort();
-
-            if (flag == 0) // NULL
+            IConstructor? ctor = _typeReader.GetConstructor<T>(_reader);
+            if (ctor == null) // NULL
             {
                 value = null;
                 return;
-            }
-
-            IConstructor ctor;
-            if (flag > 0)
-            {   // dynamic type
-                int typeId = flag - 1;
-                while (typeId >= _typeMap.Count)
-                {
-                    _typeMap.Add(null);
-                }
-
-                IConstructor? dynamicTypeCtor = _typeMap[typeId];
-                if (dynamicTypeCtor == null)
-                {
-                    var type = _typeDeserializer.Deserialize(_reader);
-                    dynamicTypeCtor = type != null ? TypeConstructorBuilder.Build(type) : NullConstructor.Instance;
-                    _typeMap[typeId] = dynamicTypeCtor;
-
-                    if (!dynamicTypeCtor.IsValid)
-                    {
-                        OnException?.Invoke(new InvalidOperationException($"Failed to construct '{type}'. It must have private or public default constructor"));
-                    }
-                }
-
-                ctor = dynamicTypeCtor;
-            }
-            else
-            {   // default type
-                ctor = _defaultTypeMap[-(flag + 1)];
             }
 
             _reader.BeginSection();
@@ -158,7 +126,7 @@ namespace Archivarius
 
         public void AddDynamic<T>(ref T value)
         {
-            var extension = _factory.Construct<T>();
+            var extension = _factory?.Construct<T>();
             if (extension == null)
                 throw new InvalidOperationException($"{typeof(T)} must be recognizable by extensions factory");
             extension.Add(this, ref value);
@@ -222,7 +190,7 @@ namespace Archivarius
 
         private class ReflectionBasedConstructor : IConstructor
         {
-            private static readonly object[] VoidObjectList = Array.Empty<object>();
+            private static readonly object[] VoidObjectList = [];
 
             private readonly ConstructorInfo? _ctorInfo;
 
@@ -263,10 +231,91 @@ namespace Archivarius
                 {
                     Type genericCtor = typeof(TypeConstructor<>);
                     Type typeCtor = genericCtor.MakeGenericType(type);
-                    return (IConstructor)typeCtor.GetConstructor(Type.EmptyTypes)!.Invoke(Array.Empty<object>());
+                    return (IConstructor)typeCtor.GetConstructor(Type.EmptyTypes)!.Invoke([]);
                 }
 
                 return new ReflectionBasedConstructor(type);
+            }
+        }
+
+        private interface ITypeReader
+        {
+            IConstructor? GetConstructor<T>(IReader reader);
+        }
+
+        private class PolymorphicTypeReader : ITypeReader
+        {
+            private readonly ITypeDeserializer _typeDeserializer;
+
+            private readonly List<IConstructor?> _typeMap = new ();
+            private readonly List<IConstructor> _defaultTypeMap = new ();
+            
+            public event Action<Exception>? OnException;
+
+            public PolymorphicTypeReader(ITypeDeserializer typeDeserializer)
+            {
+                _typeDeserializer = typeDeserializer;
+            }
+
+            public void Prepare(IReader reader, Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null)
+            {
+                int defaultTypeSetVersion = reader.ReadInt();
+
+                _typeMap.Clear();
+                _defaultTypeMap.Clear();
+            
+                if (defaultTypeSetVersion >= 0)
+                {
+                    if (defaultTypeSetProvider == null)
+                    {
+                        throw new InvalidOperationException();
+                    }
+                    var defaultTypeSet = defaultTypeSetProvider(defaultTypeSetVersion);
+                    for (var i = 0; i < defaultTypeSet.Count; ++i)
+                    {
+                        _defaultTypeMap.Add(TypeConstructorBuilder.Build(defaultTypeSet[i]));
+                    }
+                }
+            }
+
+            public IConstructor? GetConstructor<T>(IReader reader)
+            {
+                int flag = reader.ReadShort();
+                if (flag == 0) // NULL
+                {
+                    return null;
+                }
+                
+                IConstructor ctor;
+                if (flag > 0)
+                {   // dynamic type
+                    int typeId = flag - 1;
+                    while (typeId >= _typeMap.Count)
+                    {
+                        _typeMap.Add(null);
+                    }
+
+                    IConstructor? dynamicTypeCtor = _typeMap[typeId];
+                    if (dynamicTypeCtor == null)
+                    {
+                        var type = _typeDeserializer.Deserialize(reader);
+                        dynamicTypeCtor = type != null ? TypeConstructorBuilder.Build(type) : NullConstructor.Instance;
+                        _typeMap[typeId] = dynamicTypeCtor;
+
+                        if (!dynamicTypeCtor.IsValid)
+                        {
+                            OnException?.Invoke(new InvalidOperationException($"Failed to construct '{type}'. It must have private or public default constructor"));
+                        }
+                    }
+
+                    ctor = dynamicTypeCtor;
+                }
+                else
+                {   // default type
+                    ctor = _defaultTypeMap[-(flag + 1)];
+                }
+
+                return ctor;
             }
         }
     }
