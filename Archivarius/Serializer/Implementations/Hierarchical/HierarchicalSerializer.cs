@@ -15,6 +15,10 @@ namespace Archivarius
 
         public byte Version => _version;
 
+        
+        /// <summary>
+        /// Construct polymorphic serializer 
+        /// </summary>
         public HierarchicalSerializer(
             IWriter writer, 
             ITypeSerializer typeSerializer, 
@@ -38,8 +42,15 @@ namespace Archivarius
 
             Prepare(useAntiCorruptionSections, defaultTypeSetVersion, defaultTypeSet);
         }
+
+        public HierarchicalSerializer(IWriter writer, bool useAntiCorruptionSections = true)
+            : base(writer)
+        {
+            _typeWriter = new TrivialTypeWriter();
+            Prepare(useAntiCorruptionSections);
+        }
         
-        public void Prepare(bool useAntiCorruptionSections = true, int defaultTypeSetVersion = 0, IReadOnlyList<Type>? defaultTypeSet = null)
+        public void Prepare(bool useAntiCorruptionSections, int defaultTypeSetVersion, IReadOnlyList<Type>? defaultTypeSet)
         {
             if (defaultTypeSetVersion < 0)
             {
@@ -50,17 +61,28 @@ namespace Archivarius
                 throw new InvalidOperationException($"Wrong TypeWriter type '{_typeWriter.GetType()}'");
             }
 
-
             PrepareHeader(useAntiCorruptionSections);
             typeWriter.Prepare(_writer, defaultTypeSetVersion, defaultTypeSet);
-            
-            
-            _writer.WriteByte(0); // RESERVED
-            _version = 0;
-            
-            _versionStack.Clear();
+            PostPrepareHeader();
         }
 
+        public void Prepare(bool useAntiCorruptionSections = true)
+        {
+            if (_typeWriter is PolymorphicTypeWriter)
+            {
+                Prepare(useAntiCorruptionSections, 0, null);
+                return;
+            }
+            
+            if (_typeWriter is not TrivialTypeWriter typeWriter)
+            {
+                throw new InvalidOperationException($"Wrong TypeWriter type '{_typeWriter.GetType()}'");
+            }
+
+            PrepareHeader(useAntiCorruptionSections);
+            PostPrepareHeader();
+        }
+        
         private void PrepareHeader(bool useAntiCorruptionSections)
         {
             if (!_writer.TrySetSectionUsage(useAntiCorruptionSections))
@@ -73,6 +95,14 @@ namespace Archivarius
             
             _writer.WriteByte(protocolTypeId);
             _writer.WriteBool(useAntiCorruptionSections);
+        }
+
+        private void PostPrepareHeader()
+        {
+            _writer.WriteByte(0); // RESERVED
+            _version = 0;
+            
+            _versionStack.Clear();
         }
 
         public void AddStruct<T>(ref T value)
@@ -196,6 +226,14 @@ namespace Archivarius
                 {
                     writer.WriteShort(typeId);
                 }
+            }
+        }
+
+        private class TrivialTypeWriter : ITypeWriter
+        {
+            public void WriteType<T>(IWriter writer, ref T? value)
+            {
+                writer.WriteByte(value == null ? (byte)0 : (byte)1);
             }
         }
     }

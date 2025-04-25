@@ -16,6 +16,11 @@ namespace Archivarius
             : base(reader, typeDeserializer, factory)
         {
         }
+        
+        public GraphDeserializer(IReader reader)
+            : base(reader)
+        {
+        }
 
         protected override T? DeserializeClass<T>(IConstructor ctor)
             where T : class

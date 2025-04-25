@@ -12,6 +12,11 @@ namespace Archivarius
         {
         }
 
+        public GraphSerializer(IWriter writer, bool useAntiCorruptionSections)
+            : base(writer, useAntiCorruptionSections)
+        {
+        }
+
         protected override void SerializeClass(IDataStruct value)
         {
             bool needToSerialize = false;

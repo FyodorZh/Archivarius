@@ -87,8 +87,6 @@ namespace Archivarius.Tests
                 Root? r1 = null;
                 reader.AddClass(ref r1);
             }
-
         }
-
     }
 }

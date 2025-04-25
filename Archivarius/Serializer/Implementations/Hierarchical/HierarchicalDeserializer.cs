@@ -40,7 +40,16 @@ namespace Archivarius
             Prepare(defaultTypeSetProvider);
         }
 
-        public void Prepare(Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null)
+        public HierarchicalDeserializer(IReader reader)
+            : base(reader)
+        {
+            var typeReader = new TrivialTypeReader();
+            _typeReader = typeReader;
+            
+            Prepare();
+        }
+        
+        public void Prepare(Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider)
         {
             PrepareHeader();
 
@@ -53,17 +62,23 @@ namespace Archivarius
                 throw new NotSupportedException($"Unsupported type reader '{_typeReader.GetType()}");
             }
             
-            switch (_reader.ReadByte()) // RESERVED
+            PostPrepareHeader();
+        }
+        
+        public void Prepare()
+        {
+            if (_typeReader is PolymorphicTypeReader)
             {
-                case 0:
-                    // OK
-                    break;
-                default:
-                    throw new InvalidOperationException();
+                Prepare(null);
+                return;
             }
             
-            _versions.Clear();
-            _version = 0;
+            PrepareHeader();
+            if (_typeReader is not TrivialTypeReader typeReader)
+            {
+                throw new NotSupportedException($"Unsupported type reader '{_typeReader.GetType()}");
+            }
+            PostPrepareHeader();
         }
 
         private void PrepareHeader()
@@ -86,6 +101,22 @@ namespace Archivarius
             {
                 throw new InvalidOperationException($"{_reader.GetType()} doesn't support section usage '{useAntiCorruptionSections}'");
             }
+        }
+
+        private void PostPrepareHeader()
+        {
+            byte x = _reader.ReadByte();
+            switch (x) // RESERVED
+            {
+                case 0:
+                    // OK
+                    break;
+                default:
+                    throw new InvalidOperationException();
+            }
+            
+            _versions.Clear();
+            _version = 0;
         }
         
         public void AddStruct<T>(ref T value)
@@ -316,6 +347,30 @@ namespace Archivarius
                 }
 
                 return ctor;
+            }
+        }
+
+        private class TrivialTypeReader : ITypeReader
+        {
+            private readonly Dictionary<Type, IConstructor> _typeMap = new ();
+            
+            public IConstructor? GetConstructor<T>(IReader reader)
+            {
+                switch (reader.ReadByte())
+                {
+                    case 0:
+                        return null;
+                    case 1:
+                        var type = typeof(T);
+                        if (!_typeMap.TryGetValue(type, out var constructor))
+                        {
+                            constructor = TypeConstructorBuilder.Build(type);
+                            _typeMap.Add(type, constructor);
+                        }
+                        return constructor;
+                    default:
+                        throw new InvalidOperationException();
+                }
             }
         }
     }
