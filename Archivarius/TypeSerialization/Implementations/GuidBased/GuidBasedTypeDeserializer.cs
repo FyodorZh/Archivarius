@@ -30,12 +30,20 @@ namespace Archivarius.TypeSerializers
         {
             foreach (var type in assembly.GetTypes())
             {
-                if (type.IsClass && _dataStructType.IsAssignableFrom(type))
+                if ((type is { IsClass: true, IsAbstract: false } || type.IsValueType) // If struct has [Guid] we need to store it too. Because it can be gerneric parameter 
+                    && _dataStructType.IsAssignableFrom(type))
                 {
-                    var attribute = Attribute.GetCustomAttribute(type, typeof(GuidAttribute), false) as GuidAttribute;
-                    if (attribute != null && Guid.TryParse(attribute.Value, out _))
+                    if (Attribute.GetCustomAttribute(type, typeof(GuidAttribute), false) is GuidAttribute attribute)
                     {
-                        _types.Add(attribute.Value, type);
+                        if (Guid.TryParse(attribute.Value, out _))
+                        {
+                            _types.Add(attribute.Value, type);
+                        }
+                        else
+                        {
+                            // TODO: throw ERRROR?
+                            // TOD: warning channel && errors channel
+                        }
                     }
                 }
             }
@@ -43,9 +51,9 @@ namespace Archivarius.TypeSerializers
 
         public void RegisterType(Type type)
         {
-            if (!type.IsClass || !_dataStructType.IsAssignableFrom(type))
+            if ((type is not { IsClass: true, IsAbstract: false } && !type.IsValueType) || !_dataStructType.IsAssignableFrom(type))
             {
-                throw new InvalidOperationException($"{type} must be a class that is inherited from IDataStruct");
+                throw new InvalidOperationException($"{type} must inherit from IDataStruct and be not abstract");
             }
 
             var attribute = Attribute.GetCustomAttribute(type, typeof(GuidAttribute), false) as GuidAttribute;
