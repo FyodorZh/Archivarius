@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archivarius.Tests", "Archiv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archivarius.Extensions", "Archivarius.Extensions\Archivarius.Extensions.csproj", "{E77CA58D-6A52-48D8-B439-C57628961209}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archivarius.Utils", "Archivarius.Utils\Archivarius.Utils.csproj", "{739D8F24-0DF3-474A-AFE1-57627C1667C9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{E77CA58D-6A52-48D8-B439-C57628961209}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E77CA58D-6A52-48D8-B439-C57628961209}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E77CA58D-6A52-48D8-B439-C57628961209}.Release|Any CPU.Build.0 = Release|Any CPU
+		{739D8F24-0DF3-474A-AFE1-57627C1667C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{739D8F24-0DF3-474A-AFE1-57627C1667C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{739D8F24-0DF3-474A-AFE1-57627C1667C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{739D8F24-0DF3-474A-AFE1-57627C1667C9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

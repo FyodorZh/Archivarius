@@ -31,6 +31,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Archivarius.Json\Archivarius.Json.csproj" />
+      <ProjectReference Include="..\Archivarius.Utils\Archivarius.Utils.csproj" />
       <ProjectReference Include="..\Archivarius\Archivarius.csproj" />
     </ItemGroup>
 
