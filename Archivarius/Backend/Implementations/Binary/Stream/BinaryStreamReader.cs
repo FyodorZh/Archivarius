@@ -17,13 +17,13 @@ namespace Archivarius.BinaryBackend
         public BinaryStreamReader(Stream stream, long count = -1)
         {
             _stream = stream;
-            _maxPosition = count >= 0 ? count : stream.Length;
+            _maxPosition = count >= 0 ? count : (stream.Length - stream.Position);
         }
 
         public void Reset(Stream stream, long count = -1)
         {
             _stream = stream;
-            _maxPosition = count >= 0 ? count : stream.Length;
+            _maxPosition = count >= 0 ? count : (stream.Length - stream.Position);
             _stackOfSections.Clear();
         }
 
