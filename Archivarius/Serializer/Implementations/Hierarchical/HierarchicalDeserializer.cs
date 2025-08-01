@@ -21,7 +21,8 @@ namespace Archivarius
             IReader reader, 
             ITypeDeserializer typeDeserializer, 
             ISerializerExtensionsFactory? factory = null,
-            Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null)
+            Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null,
+            bool autoPrepare = true)
             : base(reader)
         {
             var typeReader = new PolymorphicTypeReader(typeDeserializer);
@@ -36,8 +37,11 @@ namespace Archivarius
                 };
                 _factory = factory;
             }
-            
-            Prepare(defaultTypeSetProvider);
+
+            if (autoPrepare)
+            {
+                Prepare(defaultTypeSetProvider);
+            }
         }
 
         public HierarchicalDeserializer(IReader reader)
