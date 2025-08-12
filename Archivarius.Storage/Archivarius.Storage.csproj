@@ -7,9 +7,9 @@
         <Authors>Fyodor Zhmaev</Authors>
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
-        <Product>Archivarius</Product>
-        <Version>0.1.0-dev.9</Version>
-        <Title>Archivarius.Utils</Title>
+        <Product>Archivarius.Storage</Product>
+        <Version>0.1.0-dev.1</Version>
+        <Title>Archivarius</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <LangVersion>12</LangVersion>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -19,20 +19,21 @@
         <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <DebugType>full</DebugType>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Utils\" />
+      <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
+      <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0-preview.6.25358.103" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Archivarius.Tools\Archivarius.Tools.csproj" />
       <ProjectReference Include="..\Archivarius\Archivarius.csproj" />
     </ItemGroup>
 
