@@ -43,7 +43,7 @@ namespace Archivarius.Storage
         
         public static DirPath BuildDir(string path)
         {
-            if (path[path.Length - 1] != '/')
+            if (path[0] != '/' || path[path.Length - 1] != '/')
             {
                 throw new InvalidOperationException();
             }
@@ -61,7 +61,7 @@ namespace Archivarius.Storage
         
         public static FilePath BuildFile(string path)
         {
-            if (path[path.Length - 1] == '/')
+            if (path[0] != '/' || path[path.Length - 1] == '/')
             {
                 throw new InvalidOperationException();
             }

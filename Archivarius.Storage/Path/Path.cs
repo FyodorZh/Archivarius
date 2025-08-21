@@ -4,22 +4,21 @@ namespace Archivarius.Storage
 {
     public abstract class Path : IEquatable<Path>
     {
-        private readonly string _name;
+        protected readonly DirPath? _parent;
         private readonly string _path;
-
-        public DirPath? Parent { get; }
 
         public string FullName => _path;
 
-        public string Name => _name;
-        
-        public abstract bool IsDirectory { get; }
+        public string Name { get; }
 
-        protected Path(DirPath? parent, string name)
+        public bool IsDirectory { get; }
+
+        protected Path(DirPath? parent, string name, bool isDirectory)
         {
-            Parent = parent;
-            _name = name;
-            _path = (parent?.ToString() ?? "") + name;
+            _parent = parent;
+            Name = name;
+            _path = (parent?.ToString() ?? "") + name + (isDirectory ? "/" : "");
+            IsDirectory = isDirectory;
         }
 
         public override string ToString()
@@ -55,49 +54,6 @@ namespace Archivarius.Storage
         public static bool operator !=(Path? left, Path? right)
         {
             return !Equals(left, right);
-        }
-    }
-
-    public class FilePath : Path
-    {
-        public override bool IsDirectory => false;
-        
-        public FilePath(DirPath parent, string name)
-            :base(parent, name)
-        {
-            if (name.Contains("/"))
-            {
-                throw new InvalidOperationException();
-            }
-        }
-    }
-
-    public class DirPath : Path
-    {
-        public static readonly DirPath Root = new DirPath();
-
-        public override bool IsDirectory => true;
-
-        private DirPath()
-            : base(null, "/")
-        {}
-
-        public DirPath(DirPath parent, string name)
-            : base(parent, name + "/")
-        {
-            if (name.Contains("/"))
-            {
-                throw new InvalidOperationException();
-            }
-        }
-
-        public DirPath Dir(string name) => new DirPath(this, name);
-
-        public FilePath File(string name) => new FilePath(this, name);
-
-        public bool ContainsFile(FilePath file)
-        {
-            return file.FullName.StartsWith(FullName);
         }
     }
 }

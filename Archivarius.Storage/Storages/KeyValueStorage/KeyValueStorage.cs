@@ -6,12 +6,12 @@ namespace Archivarius.Storage
 {
     public class KeyValueStorage : IKeyValueStorage
     {
-        private enum StorageType : byte
-        {
-            Class = 0,
-            Struct = 1,
-            VersionedStruct = 2
-        }
+        // private enum StorageType : byte
+        // {
+        //     Class = 0,
+        //     Struct = 1,
+        //     VersionedStruct = 2
+        // }
         
         private readonly IStorageBackend _storage;
 
