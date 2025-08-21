@@ -21,9 +21,20 @@ namespace Archivarius.Storage
         public KeyValueStorage(IStorageBackend storage, ITypeSerializer typeSerializer, ITypeDeserializer typeDeserializer)
         {
             _storage = storage;
-
             _serializer = new MultiSerializer(() => typeSerializer);
             _deserializer = new MultiDeserializer(() => typeDeserializer);
+        }
+
+        private KeyValueStorage(IStorageBackend storage, MultiSerializer serializer, MultiDeserializer deserializer)
+        {
+            _storage = storage;
+            _serializer = serializer;
+            _deserializer = deserializer;
+        }
+
+        public IKeyValueStorage SubDirectory(DirPath path)
+        {
+            return new KeyValueStorage(_storage.SubDirectory(path), _serializer, _deserializer);
         }
 
         public async Task Set<TData>(FilePath path, TData data) where TData : class, IDataStruct

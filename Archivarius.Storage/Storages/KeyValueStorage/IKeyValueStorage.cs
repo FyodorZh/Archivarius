@@ -5,6 +5,7 @@ namespace Archivarius.Storage
 {
     public interface IKeyValueStorage
     {
+        IKeyValueStorage SubDirectory(DirPath path);
         Task Set<TData>(FilePath path, TData data) where TData : class, IDataStruct;
         Task SetStruct<TData>(FilePath path, TData data) where TData : struct, IDataStruct;
         Task SetVersionedStruct<TData>(FilePath path, TData data) where TData : struct, IVersionedDataStruct;
