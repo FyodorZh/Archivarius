@@ -8,8 +8,8 @@
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
         <Product>Archivarius</Product>
-        <Version>0.1.0-dev.9</Version>
-        <Title>Archivarius.Utils</Title>
+        <Version>0.2.0-dev.1</Version>
+        <Title>Archivarius.Tools</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <LangVersion>12</LangVersion>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -17,6 +17,7 @@
         <RepositoryUrl>https://github.com/FyodorZh/Archivarius.git</RepositoryUrl>
         <Copyright>Copyright (c) Fyodor Zhmaev 2023 </Copyright>
         <RepositoryType>git</RepositoryType>
+        <RootNamespace>Archivarius</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -29,11 +30,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Utils\" />
+      <ProjectReference Include="..\Archivarius\Archivarius.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Archivarius\Archivarius.csproj" />
+        <None Include="nuget.readme.md" Pack="true" PackagePath="\" />
+        <None Include="..\LICENSE" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>

@@ -9,7 +9,7 @@
         <IsTestProject>true</IsTestProject>
         <Authors>Fyodor Zhmaev</Authors>
         <Company>FyodorZh</Company>
-        <Version>0.1.0-dev.0</Version>
+        <Version>0.2.0-dev.1</Version>
         <Title>Archivarius.Tests</Title>
     </PropertyGroup>
 
@@ -31,7 +31,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Archivarius.Json\Archivarius.Json.csproj" />
-      <ProjectReference Include="..\Archivarius.Utils\Archivarius.Utils.csproj" />
+      <ProjectReference Include="..\Archivarius.Storage\Archivarius.Storage.csproj" />
+      <ProjectReference Include="..\Archivarius.Tools\Archivarius.Tools.csproj" />
       <ProjectReference Include="..\Archivarius\Archivarius.csproj" />
     </ItemGroup>
 

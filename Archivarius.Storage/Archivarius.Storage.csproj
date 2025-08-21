@@ -4,23 +4,23 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <LangVersion>12</LangVersion>
-        <Version>0.2.0-dev.1</Version>
-        <Title>Archivarius extensions</Title>
-        <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
-        <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <Authors>Fyodor Zhmaev</Authors>
-        <Description>Extensions for Archivarius serialization library</Description>
-        <Copyright>Copyright (c) Fyodor Zhmaev 2023 </Copyright>
+        <Description>Serialization library</Description>
+        <Company>FyodorZh</Company>
+        <Product>Archivarius.Storage</Product>
+        <Version>0.2.0-dev.1</Version>
+        <Title>Archivarius</Title>
+        <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
+        <LangVersion>12</LangVersion>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageProjectUrl>https://github.com/FyodorZh/Archivarius</PackageProjectUrl>
         <RepositoryUrl>https://github.com/FyodorZh/Archivarius.git</RepositoryUrl>
+        <Copyright>Copyright (c) Fyodor Zhmaev 2023 </Copyright>
         <RepositoryType>git</RepositoryType>
-        <Company>FyodorZh</Company>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-      <DebugType>full</DebugType>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -28,6 +28,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
+      <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0-preview.6.25358.103" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Archivarius.Tools\Archivarius.Tools.csproj" />
       <ProjectReference Include="..\Archivarius\Archivarius.csproj" />
     </ItemGroup>
 

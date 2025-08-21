@@ -6,14 +6,13 @@ using NUnit.Framework;
 namespace Archivarius.Tests
 {
     [TestFixture]
-    public class Check_ConcurrentSerialization
+    public class Check_MultiSerialization
     {
         [Test]
         public async Task Test()
         {
-            ConcurrentSerialization center = new ConcurrentSerialization(
-                () => new TypenameBasedTypeSerializer(),
-                () => new TypenameBasedTypeDeserializer());
+            MultiSerializer serializer = new MultiSerializer(() => new TypenameBasedTypeSerializer());
+            MultiDeserializer deserializer = new MultiDeserializer(() => new TypenameBasedTypeDeserializer());
 
             List<Task> tasks = new();
 
@@ -23,9 +22,9 @@ namespace Archivarius.Tests
                 Task task = Task.Run(async () =>
                 {
                     DataClass data = new DataClass() { Value = k };
-                    var bytes = await center.SerializeClass(data);
+                    var bytes = await serializer.SerializeClassAsync(data);
                     await Task.Yield();
-                    var newData = await center.DeserializeClass<DataClass>(bytes);
+                    var newData = await deserializer.DeserializeClass<DataClass>(bytes);
                     Assert.IsTrue(newData.Item1);
                     Assert.IsTrue(k == newData.Item2!.Value);
                 });
