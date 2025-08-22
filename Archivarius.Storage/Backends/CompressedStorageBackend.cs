@@ -43,19 +43,22 @@ namespace Archivarius.Storage
 
         async Task IStorageBackend.Read(FilePath path, Func<Stream, Task> reader)
         {
-            await _storage.Read(path, async stream =>
+            var decompressor = await _decompressors.GetAsync();
+            try
             {
-                var decompressor = await _decompressors.GetAsync();
-                try
+                MemoryStream? decompressed = null;
+                await _storage.Read(path, stream =>
                 {
-                    var decompressed = decompressor.Decompress(stream);
-                    await reader.Invoke(decompressed);
-                }
-                finally
-                {
-                    await _decompressors.ReleaseAsync(decompressor);
-                }
-            });
+                    decompressed = decompressor.Decompress(stream);
+                    return Task.CompletedTask;
+                });
+                
+                await reader.Invoke(decompressed ?? throw new Exception("Internal storage error"));
+            }
+            finally
+            {
+                await _decompressors.ReleaseAsync(decompressor);
+            }
         }
 
         Task IStorageBackend.Erase(FilePath path)
