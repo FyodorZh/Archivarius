@@ -17,7 +17,7 @@ namespace Archivarius.Storage
         {
             _parent = parent;
             Name = name;
-            _path = (parent?.ToString() ?? "") + name + (isDirectory ? "/" : "");
+            _path = parent == null ? "" : (parent + "/" + name);
             IsDirectory = isDirectory;
         }
 

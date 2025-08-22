@@ -15,15 +15,21 @@ namespace Archivarius.Storage
         public DirPath(DirPath parent, string name)
             : base(parent, name, true)
         {
-            if (name.Contains("/"))
+            if (name.Contains("/") || string.IsNullOrEmpty(name))
             {
                 throw new InvalidOperationException();
             }
         }
 
-        public DirPath Dir(string name) => new DirPath(this, name);
+        public DirPath Dir(string name)
+        {
+            return new DirPath(this, name);
+        }
 
-        public FilePath File(string name) => new FilePath(this, name);
+        public FilePath File(string name)
+        {
+            return new FilePath(this, name);
+        }
 
         public FilePath File(FilePath path)
         {
@@ -32,6 +38,10 @@ namespace Archivarius.Storage
         
         public DirPath Dir(DirPath path)
         {
+            if (path.Parent == null)
+            {
+                return this;
+            }
             return Combine(this, path);
         }
 

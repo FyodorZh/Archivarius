@@ -9,7 +9,7 @@ namespace Archivarius.Storage
         public FilePath(DirPath parent, string name)
             :base(parent, name, false)
         {
-            if (name.Contains("/"))
+            if (name.Contains("/") || string.IsNullOrEmpty(name))
             {
                 throw new InvalidOperationException();
             }

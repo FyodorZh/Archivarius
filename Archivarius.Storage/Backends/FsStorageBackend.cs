@@ -21,7 +21,12 @@ namespace Archivarius.Storage
 
         public async Task Write(FilePath path, Func<Stream, ValueTask> writer)
         {
-            using var file = File.Open(_root + path, FileMode.Create, FileAccess.Write);
+            string filePath = _root + path;
+            string dirPath = _root + path.Parent;
+            
+            Directory.CreateDirectory(dirPath);
+            
+            using var file = File.Open(filePath, FileMode.Create, FileAccess.Write);
             await writer(file);
         }
 

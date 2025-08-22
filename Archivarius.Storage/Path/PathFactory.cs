@@ -43,7 +43,7 @@ namespace Archivarius.Storage
         
         public static DirPath BuildDir(string path)
         {
-            if (path[0] != '/' || path[path.Length - 1] != '/')
+            if (path[0] != '/')
             {
                 throw new InvalidOperationException();
             }
@@ -51,7 +51,7 @@ namespace Archivarius.Storage
             var list = path.Split('/');
             
             DirPath dir = DirPath.Root;
-            for (int i = 1; i < list.Length - 1; ++i)
+            for (int i = 1; i < list.Length; ++i)
             {
                 dir = new DirPath(dir, list[i]);
             }
