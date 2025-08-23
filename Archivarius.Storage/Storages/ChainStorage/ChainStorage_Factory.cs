@@ -4,7 +4,7 @@ namespace Archivarius.Storage
 {
     public static class ChainStorage_Factory
     {
-        public static async Task<IChainStorage<TData>?> InitNewChain<TData>(this IKeyValueStorage storage, DirPath path,
+        public static async Task<IChainStorage<TData>?> CreateNewChain<TData>(this IKeyValueStorage storage, DirPath path,
             int packSize = 1000)
             where TData : class, IDataStruct
         {
@@ -20,9 +20,10 @@ namespace Archivarius.Storage
         public static async Task<IChainStorage<TData>?> OpenChain<TData>(this IKeyValueStorage storage, DirPath path)
             where TData : class, IDataStruct
         {
-            if (await storage.IsExists(path.File("index")))
+            var chain = ChainStorage<TData>.LoadFrom(storage, path);
+            if (await chain.IsValid())
             {
-                return ChainStorage<TData>.LoadFrom(storage, path);
+                return chain;
             }
 
             return null;

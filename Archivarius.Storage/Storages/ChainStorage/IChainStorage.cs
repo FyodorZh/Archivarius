@@ -9,6 +9,7 @@ namespace Archivarius.Storage
         Task<int> GetCount();
         Task<TData?> GetAt(int id);
         IAsyncEnumerable<IReadOnlyList<TData>> GetAll();
+        IAsyncEnumerable<IReadOnlyList<TData>> GetMany(int from, int till = -1);
         Task<int> Append(TData data);
     }
 }

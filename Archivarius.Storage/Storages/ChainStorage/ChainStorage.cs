@@ -13,11 +13,11 @@ namespace Archivarius.Storage
         
         private readonly SemaphoreSlim _locker = new(1, 1);
 
-        private bool _hasIndex = false;
-        private IndexData _index = default;
+        private bool _hasIndex;
+        private IndexData _index;
 
         private int _cachedPackId = -1;
-        private PackData? _cachedPack = null;
+        private PackData? _cachedPack;
 
         public static ChainStorage<TData> ConstructNew(IKeyValueStorage storage, DirPath path, int packSize = 1000)
         {
@@ -27,6 +27,16 @@ namespace Archivarius.Storage
         public static ChainStorage<TData> LoadFrom(IKeyValueStorage storage, DirPath path)
         {
             return new(storage, path, null);
+        }
+
+        public static async Task<ChainStorage<TData>> LoadOrConstruct(IKeyValueStorage storage, DirPath path, int packSize = 1000)
+        {
+            var chain = LoadFrom(storage, path);
+            if (!await chain.IsValid())
+            {
+                chain = ConstructNew(storage, path, packSize);
+            }
+            return chain;
         }
 
         private ChainStorage(IKeyValueStorage storage, DirPath rootPath, IndexData? index)
@@ -43,6 +53,12 @@ namespace Archivarius.Storage
                 _index = default;
                 _hasIndex = false;
             }
+        }
+
+        public async Task<bool> IsValid()
+        {
+            var index = await _storage.GetVersionedStruct<IndexData>(_rootPath.File("index"));
+            return index != null;
         }
 
         private async ValueTask<IndexData> GetIndex_Unsafe()
@@ -240,27 +256,89 @@ namespace Archivarius.Storage
             }
         }
 
-        public async IAsyncEnumerable<IReadOnlyList<TData>> GetAll()
+        public IAsyncEnumerable<IReadOnlyList<TData>> GetAll()
+        {
+            return GetMany(0);
+        }
+        
+        public async IAsyncEnumerable<IReadOnlyList<TData>> GetMany(int from, int till = -1)
         {
             await _locker.WaitAsync();
             try
             {
                 var index = await GetIndex_Unsafe();
-                int packsNumber = index.Count / index.PackSize;
-                for (int i = 0; i < packsNumber; ++i)
+
+                if (till < 0)
                 {
-                    var pack = await GetPack_Unsafe(i);
-                    yield return pack.List;
+                    till = index.Count - 1;
                 }
 
-                List<TData> list = new();
-                for (int i = packsNumber * index.PackSize; i < index.Count; ++i)
+                if (from < 0 || from > till || till >= index.Count)
                 {
-                    int id = i - packsNumber * index.PackSize;
-                    var element = await GetElement_Unsafe(id);
-                    list.Add(element);
+                    throw new Exception();
                 }
-                yield return list;
+
+                int packsNumber = index.Count / index.PackSize;
+                int fromPackId = from / index.PackSize;
+                int tillPackId =  Math.Min(till / index.PackSize, packsNumber - 1);
+                
+                for (int packId = fromPackId; packId <= tillPackId; ++packId)
+                {
+                    var pack = await GetPack_Unsafe(packId);
+                    int a, b;
+                    if (packId == fromPackId && packId == tillPackId)
+                    {
+                        a = from % index.PackSize;
+                        b = Math.Min(till, packsNumber * index.PackSize - 1) % index.PackSize;
+                    }
+                    else if (packId == fromPackId)
+                    {
+                        a = from % index.PackSize;
+                        b = index.PackSize - 1;
+                    }
+                    else if (packId == tillPackId)
+                    {
+                        a = 0;
+                        b = Math.Min(till, packsNumber * index.PackSize - 1) % index.PackSize;
+                    }
+                    else
+                    {
+                        a = 0;
+                        b = index.PackSize - 1;
+                    }
+
+                    if (b - a == index.PackSize - 1)
+                    {
+                        yield return pack.List;
+                    }
+                    else
+                    {
+                        TData[] range = new TData[b - a + 1];
+                        for (int i = a; i <= b; ++i)
+                        {
+                            range[i - a] = pack.List[i];
+                        }
+
+                        yield return range;
+                    }
+                }
+
+                if (till >= packsNumber * index.PackSize)
+                {
+                    int a = 0;
+                    if (from >= packsNumber * index.PackSize)
+                    {
+                        a = from % index.PackSize;
+                    }
+                    int b = till % index.PackSize;
+                    
+                    TData[] range = new TData[b - a + 1];
+                    for (int i = a; i <= b; ++i)
+                    {
+                        range[i - a] = await GetElement_Unsafe(i);
+                    }
+                    yield return range;
+                }
             }
             finally
             {
