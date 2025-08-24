@@ -108,6 +108,18 @@ namespace Archivarius.Storage
             return _cachedPack.Value;
         }
 
+        private Task SetPack_Unsafe(int packId, PackData packData)
+        {
+            string packName = string.Format(_index.PackName, packId);
+            return _storage.SetVersionedStruct(_rootPath.File(packName), packData);
+        }
+
+        private Task SetElement_Unsafe(int elementId, TData elementData)
+        {
+            string elementName = string.Format(_index.ElementName, elementId);
+            return _storage.Set(_rootPath.File(elementName), elementData);
+        }
+
         private async Task<TData> GetElement_Unsafe(int elementId)
         {
             string elementName = string.Format(_index.ElementName, elementId);
@@ -165,9 +177,7 @@ namespace Archivarius.Storage
                     list[index.PackSize - 1] = data;
                     
                     // Write pack data
-                    PackData pack = new PackData(list);
-                    string packName = string.Format(index.PackName, packsCount);
-                    await _storage.SetVersionedStruct(_rootPath.File(packName), pack);
+                    await SetPack_Unsafe(packsCount, new PackData(list));
 
                     // Update index
                     _index.Count += 1;
@@ -192,9 +202,7 @@ namespace Archivarius.Storage
                 else
                 {
                     // write element data
-                    string elementName = string.Format(index.ElementName, elementsCount);
-                    var path = _rootPath.File(elementName);
-                    await _storage.Set(path, data);
+                    await SetElement_Unsafe(elementsCount, data);
                     
                     // Update index
                     _index.Count += 1;
@@ -338,6 +346,48 @@ namespace Archivarius.Storage
                         range[i - a] = await GetElement_Unsafe(i);
                     }
                     yield return range;
+                }
+            }
+            finally
+            {
+                _locker.Release();
+            }
+        }
+
+        public async Task RewriteData(bool includeIndex, bool includePacks, bool includeElements, Action<int>? progress = null)
+        {
+            await _locker.WaitAsync();
+            try
+            {
+                var index = await GetIndex_Unsafe();
+                if (includeIndex)
+                {
+                    await SetIndex_Unsafe();
+                }
+
+                int processed = 0;
+
+                int totalPacks = index.Count / index.PackSize;
+                
+                if (includePacks)
+                {
+                    for (int i = 0; i < totalPacks; ++i)
+                    {
+                        var pack = await GetPack_Unsafe(i);
+                        await SetPack_Unsafe(i, pack);
+                        progress?.Invoke(processed += index.PackSize);
+                    }
+                }
+                if (includeElements)
+                {
+                    int fromId = totalPacks * index.PackSize;
+                    for (int i = fromId; i < index.Count; ++i)
+                    {
+                        int id = i - fromId;
+                        var element = await GetElement_Unsafe(id);
+                        await SetElement_Unsafe(id, element);
+                        progress?.Invoke(processed += 1);
+                    }
                 }
             }
             finally
