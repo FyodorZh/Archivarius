@@ -132,7 +132,15 @@ namespace Archivarius.Storage
 
             return element;
         }
-        
+
+        public async Task ClearCache()
+        {
+            await _locker.WaitAsync();
+            _cachedPackId = -1;
+            _cachedPack = null;
+            _locker.Release();
+        }
+
         public async Task<int> GetCount()
         {
             await _locker.WaitAsync();
