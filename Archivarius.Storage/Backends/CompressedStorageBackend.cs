@@ -41,7 +41,7 @@ namespace Archivarius.Storage
             }
         }
 
-        async Task IStorageBackend.Read(FilePath path, Func<Stream, Task> reader)
+        async Task IReadOnlyStorageBackend.Read(FilePath path, Func<Stream, Task> reader)
         {
             var decompressor = await _decompressors.GetAsync();
             try

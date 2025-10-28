@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Archivarius.Storage
 {
-    public interface IChainStorage<TData>
+    public interface IReadOnlyChainStorage<TData>
         where TData : class, IDataStruct
     {
         Task ClearCache();
@@ -12,6 +12,11 @@ namespace Archivarius.Storage
         Task<TData?> GetAt(int id);
         IAsyncEnumerable<IReadOnlyList<TData>> GetAll();
         IAsyncEnumerable<IReadOnlyList<TData>> GetMany(int from, int till = -1);
+    }
+    
+    public interface IChainStorage<TData> : IReadOnlyChainStorage<TData>
+        where TData : class, IDataStruct
+    {
         Task<int> Append(TData data);
         Task RewriteData(bool includeIndex, bool includePacks, bool includeElements, Action<int>? progress = null);
     }

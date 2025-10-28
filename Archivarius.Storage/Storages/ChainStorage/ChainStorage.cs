@@ -5,54 +5,33 @@ using System.Threading.Tasks;
 
 namespace Archivarius.Storage
 {
-    public class ChainStorage<TData> : IChainStorage<TData>
+    public class ReadOnlyChainStorage<TData> : IReadOnlyChainStorage<TData>
         where TData : class, IDataStruct
     {
-        private readonly IKeyValueStorage _storage;
-        private readonly DirPath _rootPath;
+        private readonly IReadOnlyKeyValueStorage _storage;
+        protected readonly DirPath _rootPath;
         
-        private readonly SemaphoreSlim _locker = new(1, 1);
+        protected readonly SemaphoreSlim _locker = new(1, 1);
 
-        private bool _hasIndex;
-        private IndexData _index;
+        private readonly bool _noIndexCache;
+        protected bool _hasIndex;
+        protected IndexData _index;
 
-        private int _cachedPackId = -1;
-        private PackData? _cachedPack;
-
-        public static ChainStorage<TData> ConstructNew(IKeyValueStorage storage, DirPath path, int packSize = 1000)
-        {
-            return new(storage, path, new IndexData(packSize));
-        }
+        protected int _cachedPackId = -1;
+        protected PackData? _cachedPack;
         
-        public static ChainStorage<TData> LoadFrom(IKeyValueStorage storage, DirPath path)
+        public static ReadOnlyChainStorage<TData> LoadFrom(IReadOnlyKeyValueStorage storage, DirPath path, bool noCache = false)
         {
-            return new(storage, path, null);
+            return new(storage, path, noCache);
         }
 
-        public static async Task<ChainStorage<TData>> LoadOrConstruct(IKeyValueStorage storage, DirPath path, int packSize = 1000)
-        {
-            var chain = LoadFrom(storage, path);
-            if (!await chain.IsValid())
-            {
-                chain = ConstructNew(storage, path, packSize);
-            }
-            return chain;
-        }
-
-        private ChainStorage(IKeyValueStorage storage, DirPath rootPath, IndexData? index)
+        protected ReadOnlyChainStorage(IReadOnlyKeyValueStorage storage, DirPath rootPath, bool noIndexCache)
         {
             _storage = storage;
             _rootPath = rootPath;
-            if (index != null)
-            {
-                _index = index.Value;
-                _hasIndex = true;
-            }
-            else
-            {
-                _index = default;
-                _hasIndex = false;
-            }
+            _index = default;
+            _hasIndex = false;
+            _noIndexCache = noIndexCache;
         }
 
         public async Task<bool> IsValid()
@@ -61,9 +40,9 @@ namespace Archivarius.Storage
             return index != null;
         }
 
-        private async ValueTask<IndexData> GetIndex_Unsafe()
+        protected async ValueTask<IndexData> GetIndex_Unsafe()
         {
-            if (!_hasIndex)
+            if (_noIndexCache || !_hasIndex)
             {
                 var index = await _storage.GetVersionedStruct<IndexData>(_rootPath.File("index"));
                 if (index != null)
@@ -79,17 +58,8 @@ namespace Archivarius.Storage
             }
             return _index;
         }
-        
-        private async Task SetIndex_Unsafe()
-        {
-            if (!_hasIndex)
-            {
-                throw new Exception();
-            }
-            await _storage.SetVersionedStruct(_rootPath.File("index"), _index);
-        }
 
-        private async ValueTask<PackData> GetPack_Unsafe(int packId)
+        protected async ValueTask<PackData> GetPack_Unsafe(int packId)
         {
             if (_cachedPackId != packId || _cachedPack == null)
             {
@@ -99,7 +69,6 @@ namespace Archivarius.Storage
                 _cachedPackId = packId;
             }
             
-            
             if (_cachedPack == null)
             {
                 throw new Exception("Failed to load data");
@@ -108,19 +77,7 @@ namespace Archivarius.Storage
             return _cachedPack.Value;
         }
 
-        private Task SetPack_Unsafe(int packId, PackData packData)
-        {
-            string packName = string.Format(_index.PackName, packId);
-            return _storage.SetVersionedStruct(_rootPath.File(packName), packData);
-        }
-
-        private Task SetElement_Unsafe(int elementId, TData elementData)
-        {
-            string elementName = string.Format(_index.ElementName, elementId);
-            return _storage.Set(_rootPath.File(elementName), elementData);
-        }
-
-        private async Task<TData> GetElement_Unsafe(int elementId)
+        protected async Task<TData> GetElement_Unsafe(int elementId)
         {
             string elementName = string.Format(_index.ElementName, elementId);
             var elementPath = _rootPath.File(elementName);
@@ -148,84 +105,6 @@ namespace Archivarius.Storage
             {
                 var index = await GetIndex_Unsafe();
                 return index.Count;
-            }
-            finally
-            {
-                _locker.Release();
-            }
-        }
-
-        public async Task<int> Append(TData data)
-        {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (data == null)
-            {
-                throw new ArgumentNullException();
-            }
-            
-            await _locker.WaitAsync();
-            try
-            {
-                var index = await GetIndex_Unsafe();
-
-                int elementsCount = index.Count % index.PackSize;
-                int packsCount = index.Count / index.PackSize;
-                
-                if (elementsCount + 1 == index.PackSize)
-                {
-                    // Prepare pack data
-                    TData[] list = new TData[index.PackSize];
-                    for (int i = 0; i < index.PackSize - 1; ++i)
-                    {
-                        string elementName = string.Format(index.ElementName, i);
-                        var path = _rootPath.File(elementName);
-                        var element = await _storage.Get<TData>(path);
-                        list[i] = element ?? throw new Exception($"Failed to load {path}");
-                    }
-                    list[index.PackSize - 1] = data;
-                    
-                    // Write pack data
-                    await SetPack_Unsafe(packsCount, new PackData(list));
-
-                    // Update index
-                    _index.Count += 1;
-                    try
-                    {
-                        await SetIndex_Unsafe();
-                    }
-                    catch (Exception)
-                    {
-                        _hasIndex = false;
-                        throw;
-                    }
-                    
-                    // Cleanup elements
-                    for (int i = 0; i < index.PackSize - 1; ++i)
-                    {
-                        string elementName = string.Format(index.ElementName, i);
-                        var path = _rootPath.File(elementName);
-                        await _storage.Erase(path);
-                    }
-                }
-                else
-                {
-                    // write element data
-                    await SetElement_Unsafe(elementsCount, data);
-                    
-                    // Update index
-                    _index.Count += 1;
-                    try
-                    {
-                        await SetIndex_Unsafe();
-                    }
-                    catch (Exception)
-                    {
-                        _hasIndex = false;
-                        throw;
-                    }
-                }
-
-                return _index.Count - 1;
             }
             finally
             {
@@ -362,6 +241,190 @@ namespace Archivarius.Storage
             }
         }
 
+        protected struct IndexData() : IVersionedDataStruct
+        {
+            public int PackSize = 0;
+            public string PackName = "";
+            public string ElementName = "";
+            
+            public int Count = 0;
+
+            public IndexData(int packSize, string packName = "pack-{0:000}", string elementName = "element-{0:00000}")
+                :this()
+            {
+                PackSize = packSize;
+                PackName = packName;
+                ElementName = elementName;
+            }
+
+            public void Serialize(ISerializer serializer)
+            {
+                serializer.Add(ref PackSize);
+                serializer.Add(ref PackName, () => throw new Exception());
+                serializer.Add(ref ElementName, () => throw new Exception());
+                serializer.Add(ref Count);
+            }
+
+            public byte Version => 0;
+        }
+        
+        protected struct PackData() : IVersionedDataStruct
+        {
+            public TData[] List = [];
+            
+            public PackData(TData[] list)
+                : this()
+            {
+                List = list;
+            }
+            
+            public void Serialize(ISerializer serializer)
+            {
+                serializer.AddArray(ref List, 
+                    () => throw new Exception(),
+                    (ISerializer s, ref TData value) => s.AddClass(ref value, 
+                        () => throw new Exception()));
+            }
+
+            public byte Version => 0;
+        }
+    }
+    
+    public class ChainStorage<TData> : ReadOnlyChainStorage<TData>, IChainStorage<TData>
+        where TData : class, IDataStruct
+    {
+        private readonly IKeyValueStorage _storage;
+
+        public static ChainStorage<TData> ConstructNew(IKeyValueStorage storage, DirPath path, int packSize = 1000)
+        {
+            return new(storage, path, new IndexData(packSize));
+        }
+        
+        public static ChainStorage<TData> LoadFrom(IKeyValueStorage storage, DirPath path)
+        {
+            return new(storage, path, null);
+        }
+
+        public static async Task<ChainStorage<TData>> LoadOrConstruct(IKeyValueStorage storage, DirPath path, int packSize = 1000)
+        {
+            var chain = LoadFrom(storage, path);
+            if (!await chain.IsValid())
+            {
+                chain = ConstructNew(storage, path, packSize);
+            }
+            return chain;
+        }
+
+        private ChainStorage(IKeyValueStorage storage, DirPath rootPath, IndexData? index)
+            :base(storage, rootPath, false)
+        {
+            _storage = storage;
+            if (index != null)
+            {
+                _index = index.Value;
+                _hasIndex = true;
+            }
+        }
+        
+        private async Task SetIndex_Unsafe()
+        {
+            if (!_hasIndex)
+            {
+                throw new Exception();
+            }
+            await _storage.SetVersionedStruct(_rootPath.File("index"), _index);
+        }
+
+        private Task SetPack_Unsafe(int packId, PackData packData)
+        {
+            string packName = string.Format(_index.PackName, packId);
+            return _storage.SetVersionedStruct(_rootPath.File(packName), packData);
+        }
+
+        private Task SetElement_Unsafe(int elementId, TData elementData)
+        {
+            string elementName = string.Format(_index.ElementName, elementId);
+            return _storage.Set(_rootPath.File(elementName), elementData);
+        }
+
+        public async Task<int> Append(TData data)
+        {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (data == null)
+            {
+                throw new ArgumentNullException();
+            }
+            
+            await _locker.WaitAsync();
+            try
+            {
+                var index = await GetIndex_Unsafe();
+
+                int elementsCount = index.Count % index.PackSize;
+                int packsCount = index.Count / index.PackSize;
+                
+                if (elementsCount + 1 == index.PackSize)
+                {
+                    // Prepare pack data
+                    TData[] list = new TData[index.PackSize];
+                    for (int i = 0; i < index.PackSize - 1; ++i)
+                    {
+                        string elementName = string.Format(index.ElementName, i);
+                        var path = _rootPath.File(elementName);
+                        var element = await _storage.Get<TData>(path);
+                        list[i] = element ?? throw new Exception($"Failed to load {path}");
+                    }
+                    list[index.PackSize - 1] = data;
+                    
+                    // Write pack data
+                    await SetPack_Unsafe(packsCount, new PackData(list));
+
+                    // Update index
+                    _index.Count += 1;
+                    try
+                    {
+                        await SetIndex_Unsafe();
+                    }
+                    catch (Exception)
+                    {
+                        _hasIndex = false;
+                        throw;
+                    }
+                    
+                    // Cleanup elements
+                    for (int i = 0; i < index.PackSize - 1; ++i)
+                    {
+                        string elementName = string.Format(index.ElementName, i);
+                        var path = _rootPath.File(elementName);
+                        await _storage.Erase(path);
+                    }
+                }
+                else
+                {
+                    // write element data
+                    await SetElement_Unsafe(elementsCount, data);
+                    
+                    // Update index
+                    _index.Count += 1;
+                    try
+                    {
+                        await SetIndex_Unsafe();
+                    }
+                    catch (Exception)
+                    {
+                        _hasIndex = false;
+                        throw;
+                    }
+                }
+
+                return _index.Count - 1;
+            }
+            finally
+            {
+                _locker.Release();
+            }
+        }
+
         public async Task RewriteData(bool includeIndex, bool includePacks, bool includeElements, Action<int>? progress = null)
         {
             await _locker.WaitAsync();
@@ -402,54 +465,6 @@ namespace Archivarius.Storage
             {
                 _locker.Release();
             }
-        }
-
-        private struct IndexData() : IVersionedDataStruct
-        {
-            public int PackSize = 0;
-            public string PackName = "";
-            public string ElementName = "";
-            
-            public int Count = 0;
-
-            public IndexData(int packSize, string packName = "pack-{0:000}", string elementName = "element-{0:00000}")
-                :this()
-            {
-                PackSize = packSize;
-                PackName = packName;
-                ElementName = elementName;
-            }
-
-            public void Serialize(ISerializer serializer)
-            {
-                serializer.Add(ref PackSize);
-                serializer.Add(ref PackName, () => throw new Exception());
-                serializer.Add(ref ElementName, () => throw new Exception());
-                serializer.Add(ref Count);
-            }
-
-            public byte Version => 0;
-        }
-        
-        private struct PackData() : IVersionedDataStruct
-        {
-            public TData[] List = [];
-            
-            public PackData(TData[] list)
-                : this()
-            {
-                List = list;
-            }
-            
-            public void Serialize(ISerializer serializer)
-            {
-                serializer.AddArray(ref List, 
-                    () => throw new Exception(),
-                    (ISerializer s, ref TData value) => s.AddClass(ref value, 
-                        () => throw new Exception()));
-            }
-
-            public byte Version => 0;
         }
     }
 }

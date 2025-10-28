@@ -4,67 +4,26 @@ using System.Threading.Tasks;
 
 namespace Archivarius.Storage
 {
-    public class KeyValueStorage : IKeyValueStorage
+    public class ReadOnlyKeyValueStorage : IReadOnlyKeyValueStorage
     {
-        // private enum StorageType : byte
-        // {
-        //     Class = 0,
-        //     Struct = 1,
-        //     VersionedStruct = 2
-        // }
-        
-        private readonly IStorageBackend _storage;
+        private readonly IReadOnlyStorageBackend _storage;
+        protected readonly MultiDeserializer _deserializer;
 
-        private readonly MultiSerializer _serializer;
-        private readonly MultiDeserializer _deserializer;
-
-        public KeyValueStorage(IStorageBackend storage, ITypeSerializer typeSerializer, ITypeDeserializer typeDeserializer)
+        public ReadOnlyKeyValueStorage(IReadOnlyStorageBackend storage, ITypeDeserializer typeDeserializer)
         {
             _storage = storage;
-            _serializer = new MultiSerializer(() => typeSerializer);
             _deserializer = new MultiDeserializer(() => typeDeserializer);
         }
 
-        private KeyValueStorage(IStorageBackend storage, MultiSerializer serializer, MultiDeserializer deserializer)
+        protected ReadOnlyKeyValueStorage(IReadOnlyStorageBackend storage, MultiDeserializer deserializer)
         {
             _storage = storage;
-            _serializer = serializer;
             _deserializer = deserializer;
         }
-
-        public IKeyValueStorage SubDirectory(DirPath path)
+        
+        IReadOnlyKeyValueStorage IReadOnlyKeyValueStorage.SubDirectory(DirPath path)
         {
-            return new KeyValueStorage(_storage.SubDirectory(path), _serializer, _deserializer);
-        }
-
-        public async Task Set<TData>(FilePath path, TData data) where TData : class, IDataStruct
-        {
-            var bytes = await _serializer.SerializeClassAsync(data);
-            await _storage.Write(path, dst =>
-            {
-                dst.Write(bytes, 0, bytes.Length);
-                return default;
-            });
-        }
-
-        public async Task SetStruct<TData>(FilePath path, TData data) where TData : struct, IDataStruct
-        {
-            var bytes = await _serializer.SerializeStructAsync(data);
-            await _storage.Write(path, dst =>
-            {
-                dst.Write(bytes, 0, bytes.Length);
-                return default;
-            });
-        }
-
-        public async Task SetVersionedStruct<TData>(FilePath path, TData data) where TData : struct, IVersionedDataStruct
-        {
-            var bytes = await _serializer.SerializeVersionedStructAsync(data);
-            await _storage.Write(path, dst =>
-            {
-                dst.Write(bytes, 0, bytes.Length);
-                return default;
-            });
+            return new ReadOnlyKeyValueStorage(_storage.SubDirectory(path), _deserializer);
         }
 
         public async Task<TData?> Get<TData>(FilePath path) where TData : class, IDataStruct
@@ -112,11 +71,6 @@ namespace Archivarius.Storage
             return result;
         }
 
-        public Task Erase(FilePath path)
-        {
-            return _storage.Erase(path);
-        }
-
         public Task<bool> IsExists(FilePath path)
         {
             return _storage.IsExists(path);
@@ -125,6 +79,65 @@ namespace Archivarius.Storage
         public Task<IReadOnlyCollection<FilePath>> GetElements(DirPath path)
         {
             return _storage.GetSubPaths(path);
+        }
+    }
+    
+    public class KeyValueStorage : ReadOnlyKeyValueStorage, IKeyValueStorage
+    {
+        private readonly IStorageBackend _storage;
+
+        private readonly MultiSerializer _serializer;
+
+        public KeyValueStorage(IStorageBackend storage, ITypeSerializer typeSerializer, ITypeDeserializer typeDeserializer)
+            : this(storage, new MultiSerializer(() => typeSerializer), new MultiDeserializer(() => typeDeserializer))
+        {
+        }
+
+        public KeyValueStorage(IStorageBackend storage, MultiSerializer serializer, MultiDeserializer deserializer)
+            : base(storage, deserializer)
+        {
+            _storage = storage;
+            _serializer = serializer;
+        }
+        
+        public IKeyValueStorage SubDirectory(DirPath path)
+        {
+            return new KeyValueStorage(_storage.SubDirectory(path), _serializer, _deserializer);
+        }
+
+        public async Task Set<TData>(FilePath path, TData data) where TData : class, IDataStruct
+        {
+            var bytes = await _serializer.SerializeClassAsync(data);
+            await _storage.Write(path, dst =>
+            {
+                dst.Write(bytes, 0, bytes.Length);
+                return default;
+            });
+        }
+
+        public async Task SetStruct<TData>(FilePath path, TData data) where TData : struct, IDataStruct
+        {
+            var bytes = await _serializer.SerializeStructAsync(data);
+            await _storage.Write(path, dst =>
+            {
+                dst.Write(bytes, 0, bytes.Length);
+                return default;
+            });
+        }
+
+        public async Task SetVersionedStruct<TData>(FilePath path, TData data) where TData : struct, IVersionedDataStruct
+        {
+            var bytes = await _serializer.SerializeVersionedStructAsync(data);
+            await _storage.Write(path, dst =>
+            {
+                dst.Write(bytes, 0, bytes.Length);
+                return default;
+            });
+        }
+
+        public Task Erase(FilePath path)
+        {
+            return _storage.Erase(path);
         }
     }
 }

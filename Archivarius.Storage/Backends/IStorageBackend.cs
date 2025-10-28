@@ -5,18 +5,22 @@ using System.Threading.Tasks;
 
 namespace Archivarius.Storage
 {
-    public interface IStorageBackend
+    public interface IReadOnlyStorageBackend
     {
-        Task Write(FilePath path, Func<Stream, ValueTask> writer);
         Task Read(FilePath path, Func<Stream, Task> reader);
-        Task Erase(FilePath path);
         Task<bool> IsExists(FilePath path);
         Task<IReadOnlyCollection<FilePath>> GetSubPaths(DirPath path);
+    }
+    
+    public interface IStorageBackend : IReadOnlyStorageBackend
+    {
+        Task Write(FilePath path, Func<Stream, ValueTask> writer);
+        Task Erase(FilePath path);
     }
 
     public static class IStorageBackend_Ext
     {
-        public static async Task<byte[]?> ReadAll(this IStorageBackend backend, FilePath path)
+        public static async Task<byte[]?> ReadAll(this IReadOnlyStorageBackend backend, FilePath path)
         {
             byte[]? bytes = null;
             
