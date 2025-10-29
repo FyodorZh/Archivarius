@@ -7,15 +7,16 @@ namespace Archivarius.Storage
 {
     public interface IReadOnlyStorageBackend
     {
-        Task Read(FilePath path, Func<Stream, Task> reader);
+        event Action<Exception> OnError;
+        Task<bool> Read(FilePath path, Func<Stream, Task> reader);
         Task<bool> IsExists(FilePath path);
         Task<IReadOnlyCollection<FilePath>> GetSubPaths(DirPath path);
     }
     
     public interface IStorageBackend : IReadOnlyStorageBackend
     {
-        Task Write(FilePath path, Func<Stream, ValueTask> writer);
-        Task Erase(FilePath path);
+        Task<bool> Write(FilePath path, Func<Stream, ValueTask> writer);
+        Task<bool> Erase(FilePath path);
     }
 
     public static class IStorageBackend_Ext

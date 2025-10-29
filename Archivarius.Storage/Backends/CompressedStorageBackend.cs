@@ -13,6 +13,8 @@ namespace Archivarius.Storage
 
         private readonly ObjectPool<Compressor> _compressors;
         private readonly ObjectPool<Decompressor> _decompressors;
+        
+        public event Action<Exception>? OnError;
 
         public CompressedStorageBackend(IStorageBackend storage)
         {
@@ -20,20 +22,26 @@ namespace Archivarius.Storage
 
             _compressors = new ObjectPool<Compressor>(() => new Compressor(), _ => { });
             _decompressors = new ObjectPool<Decompressor>(() => new Decompressor(), _ => { });
+            storage.OnError += e => OnError?.Invoke(e);
         }
 
-        async Task IStorageBackend.Write(FilePath path, Func<Stream, ValueTask> writer)
+        async Task<bool> IStorageBackend.Write(FilePath path, Func<Stream, ValueTask> writer)
         {
             var compressor = await _compressors.GetAsync();
             try
             {
                 await writer(compressor.PrepareToCompress());
                 var compressedStream = compressor.Compress();
-                await _storage.Write(path, dst =>
+                return await _storage.Write(path, dst =>
                 {
                     compressedStream.WriteTo(dst);
                     return default;
                 });
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke(ex);
+                return false;
             }
             finally
             {
@@ -41,19 +49,28 @@ namespace Archivarius.Storage
             }
         }
 
-        async Task IReadOnlyStorageBackend.Read(FilePath path, Func<Stream, Task> reader)
+        async Task<bool> IReadOnlyStorageBackend.Read(FilePath path, Func<Stream, Task> reader)
         {
             var decompressor = await _decompressors.GetAsync();
             try
             {
                 MemoryStream? decompressed = null;
-                await _storage.Read(path, stream =>
+                if (!await _storage.Read(path, stream =>
+                    {
+                        decompressed = decompressor.Decompress(stream);
+                        return Task.CompletedTask;
+                    }))
                 {
-                    decompressed = decompressor.Decompress(stream);
-                    return Task.CompletedTask;
-                });
-                
-                await reader.Invoke(decompressed ?? throw new Exception("Internal storage error"));
+                    return false;
+                }
+
+                await reader.Invoke(decompressed ?? throw new NullReferenceException());
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke(ex);
+                return false;           
             }
             finally
             {
@@ -61,7 +78,7 @@ namespace Archivarius.Storage
             }
         }
 
-        Task IStorageBackend.Erase(FilePath path)
+        Task<bool> IStorageBackend.Erase(FilePath path)
         {
             return _storage.Erase(path);
         }

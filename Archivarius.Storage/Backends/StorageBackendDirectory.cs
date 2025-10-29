@@ -9,6 +9,8 @@ namespace Archivarius.Storage
     {
         private readonly IReadOnlyStorageBackend _storage;
         protected readonly DirPath _path;
+        
+        public event Action<Exception>? OnError; 
 
         public ReadOnlyDirectoryStorageBackend(IReadOnlyStorageBackend storage, DirPath dir)
         {
@@ -22,9 +24,10 @@ namespace Archivarius.Storage
                 _storage = storage;
                 _path = dir;
             }
+            storage.OnError += e => OnError?.Invoke(e);
         }
         
-        public Task Read(FilePath path, Func<Stream, Task> reader)
+        public Task<bool> Read(FilePath path, Func<Stream, Task> reader)
         {
             return _storage.Read(_path.File(path), reader);
         }
@@ -50,12 +53,12 @@ namespace Archivarius.Storage
             _storage = (storage is DirectoryStorageBackend dirBackend) ? dirBackend._storage : storage;
         }
         
-        public Task Write(FilePath path, Func<Stream, ValueTask> writer)
+        public Task<bool> Write(FilePath path, Func<Stream, ValueTask> writer)
         {
             return _storage.Write(_path.File(path), writer);
         }
 
-        public Task Erase(FilePath path)
+        public Task<bool> Erase(FilePath path)
         {
             return _storage.Erase(_path.File(path));
         }

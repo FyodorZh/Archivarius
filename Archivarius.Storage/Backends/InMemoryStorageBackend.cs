@@ -11,8 +11,10 @@ namespace Archivarius.Storage
         private readonly Dictionary<FilePath, byte[]> _data = new();
         
         private readonly SemaphoreSlim _locker = new(1, 1);
+        
+        public event Action<Exception>? OnError;
 
-        public async Task Write(FilePath path, Func<Stream, ValueTask> writer)
+        public async Task<bool> Write(FilePath path, Func<Stream, ValueTask> writer)
         {
             await _locker.WaitAsync();
             try
@@ -20,6 +22,12 @@ namespace Archivarius.Storage
                 MemoryStream stream = new();
                 await writer(stream);
                 _data[path] = stream.ToArray();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke(ex);
+                return false;
             }
             finally
             {
@@ -27,7 +35,7 @@ namespace Archivarius.Storage
             }
         }
 
-        public async Task Read(FilePath path, Func<Stream, Task> reader)
+        public async Task<bool> Read(FilePath path, Func<Stream, Task> reader)
         {
             await _locker.WaitAsync();
             try
@@ -37,10 +45,15 @@ namespace Archivarius.Storage
                     var stream = new MemoryStream(bytes, false);
                     stream.Position = 0;
                     await reader(stream);
-                    return;
+                    return true;
                 }
 
                 throw new KeyNotFoundException(path.ToString());
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke(ex);
+                return false;
             }
             finally
             {
@@ -48,19 +61,40 @@ namespace Archivarius.Storage
             }
         }
 
-        public async Task Erase(FilePath path)
+        public async Task<bool> Erase(FilePath path)
         {
             await _locker.WaitAsync();
-            _data.Remove(path);
-            _locker.Release();
+            try
+            {
+                return _data.Remove(path);
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke(ex);
+                return false;
+            }
+            finally
+            {
+                _locker.Release();
+            }
         }
 
         public async Task<bool> IsExists(FilePath path)
         {
             await _locker.WaitAsync();
-            bool exists = _data.ContainsKey(path);
-            _locker.Release();
-            return exists;
+            try
+            {
+                return _data.ContainsKey(path);
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke(ex);
+                return false;
+            }
+            finally
+            {
+                _locker.Release();
+            }
         }
 
         public async Task<IReadOnlyCollection<FilePath>> GetSubPaths(DirPath path)
@@ -79,6 +113,11 @@ namespace Archivarius.Storage
                 }
 
                 return list;
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke(ex);
+                return [];
             }
             finally
             {
