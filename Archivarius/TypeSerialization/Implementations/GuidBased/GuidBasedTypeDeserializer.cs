@@ -38,7 +38,23 @@ namespace Archivarius.TypeSerializers
         {
             foreach (var type in assembly.GetTypes())
             {
-                RegisterType(type);
+                if ((type is { IsClass: true, IsAbstract: false } || type.IsValueType) // If struct has [Guid] we need to store it too. Because it can be gerneric parameter 
+                    && _dataStructType.IsAssignableFrom(type))
+                {
+                    if (Attribute.GetCustomAttribute(type, typeof(GuidAttribute), false) is GuidAttribute attribute)
+                    {
+                        if (Guid.TryParse(attribute.Value, out _))
+                        {
+                            _types.Add(attribute.Value, type);
+                        }
+                        else
+                        {
+                            // TODO: throw ERRROR?
+                            // TOD: warning channel && errors channel
+                        }
+                    }
+                }
+
             }
         }
 
