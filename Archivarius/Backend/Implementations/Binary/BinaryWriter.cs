@@ -50,6 +50,13 @@ namespace Archivarius.BinaryBackend
             return _buffer;
         }
 
+        public byte[] TakeBuffer()
+        {
+            var res = GetBuffer();
+            _size = 0;
+            return res;
+        }
+
         public bool TrySetSectionUsage(bool useSections)
         {
             if (_size != 0)

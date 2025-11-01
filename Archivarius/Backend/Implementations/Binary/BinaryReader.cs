@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Archivarius.BinaryBackend
 {
@@ -49,6 +50,16 @@ namespace Archivarius.BinaryBackend
                 _stackOfSections.Push(_maxPosition);
                 _maxPosition = _position + size;
             }
+        }
+
+        public ValueTask BeginSectionAsync()
+        {
+            if (!_useSections)
+            {
+                throw new InvalidOperationException("Trying to await for absent data section");
+            }
+            BeginSection();
+            return default;
         }
 
         public bool EndSection()

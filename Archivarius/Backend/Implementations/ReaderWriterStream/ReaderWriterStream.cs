@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Archivarius
 {
@@ -101,6 +103,10 @@ namespace Archivarius
 
         public bool TrySetSectionUsage(bool useSections)
         {
+            if (useSections)
+            {
+                return false;
+            }
             // DO NOTHING
             return true;
         }
@@ -118,6 +124,11 @@ namespace Archivarius
         void IReader.BeginSection()
         {
             // DO NOTHING
+        }
+        
+        ValueTask IReader.BeginSectionAsync()
+        {
+            throw new InvalidOperationException("Trying to await for absent data section");
         }
 
         bool IReader.EndSection()

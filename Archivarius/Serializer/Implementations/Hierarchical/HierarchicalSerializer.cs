@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Archivarius
 {
@@ -133,6 +134,19 @@ namespace Archivarius
                 SerializeClass(value);
                 _writer.EndSection();
             }
+        }
+        
+        public ValueTask<T?> AddClassAsync<T>(T? value)
+            where T : class, IDataStruct
+        {
+            _typeWriter.WriteType(_writer, ref value);
+            if (value != null)
+            {
+                _writer.BeginSection();
+                SerializeClass(value);
+                _writer.EndSection();
+            }
+            return new ValueTask<T?>(value);
         }
 
         public void AddDynamic<T>(ref T value)

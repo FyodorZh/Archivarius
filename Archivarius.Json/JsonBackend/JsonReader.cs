@@ -160,6 +160,12 @@ namespace Archivarius.JsonBackend
             _cursor = 0;
         }
 
+        public ValueTask BeginSectionAsync()
+        {
+            BeginSection();
+            return default;
+        }
+
         public bool EndSection()
         {
             bool result = _cursor == _currentSection.Count;

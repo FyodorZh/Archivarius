@@ -49,7 +49,7 @@ namespace Archivarius.Tests
         {
             ReaderWriterStream stream = new ReaderWriterStream();
 
-            HierarchicalSerializer serializer = new HierarchicalSerializer(stream, new GuidBasedTypeSerializer());
+            HierarchicalSerializer serializer = new HierarchicalSerializer(stream, new GuidBasedTypeSerializer(), null, false);
             HierarchicalDeserializer deserializer = new HierarchicalDeserializer(stream, new GuidBasedTypeDeserializer(
                 new[] { typeof(Check_GuidBasedSerializer).Assembly }));
 

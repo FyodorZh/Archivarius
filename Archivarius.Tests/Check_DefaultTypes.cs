@@ -11,7 +11,7 @@ namespace Archivarius.Tests
         {
             ReaderWriterStream stream = new ReaderWriterStream();
 
-            HierarchicalSerializer serializer = new HierarchicalSerializer(stream, new TmpTypeSerializer());
+            HierarchicalSerializer serializer = new HierarchicalSerializer(stream, new TmpTypeSerializer(), null, false);
             HierarchicalDeserializer deserializer = new HierarchicalDeserializer(stream, new TmpTypeDeserializer());
 
             var defaultTypes = new Type[]
@@ -20,7 +20,7 @@ namespace Archivarius.Tests
                 typeof(B)
             };
             
-            serializer.Prepare(true, 3, defaultTypes);
+            serializer.Prepare(false, 3, defaultTypes);
             deserializer.Prepare(version =>
             {
                 if (version != 3)

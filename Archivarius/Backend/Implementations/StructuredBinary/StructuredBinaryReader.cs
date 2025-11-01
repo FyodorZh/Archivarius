@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Archivarius.StructuredBinaryBackend
 {
@@ -51,6 +52,12 @@ namespace Archivarius.StructuredBinaryBackend
 
             _section = r.Section!;
             _position = 0;
+        }
+        
+        public ValueTask BeginSectionAsync()
+        {
+            BeginSection();
+            return default;
         }
 
         public bool EndSection()

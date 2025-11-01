@@ -1,4 +1,6 @@
-﻿namespace Archivarius
+﻿using System.Threading.Tasks;
+
+namespace Archivarius
 {
     public interface ILowLevelReader
     {
@@ -19,6 +21,7 @@
     {
         bool TrySetSectionUsage(bool useSections);
         void BeginSection();
+        ValueTask BeginSectionAsync();
         bool EndSection();
     }
     

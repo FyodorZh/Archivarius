@@ -12,7 +12,7 @@ namespace Archivarius.Tests
         {
             ReaderWriterStream stream = new ReaderWriterStream();
 
-            HierarchicalSerializer serializer = new HierarchicalSerializer(stream, new TypenameBasedTypeSerializer());
+            HierarchicalSerializer serializer = new HierarchicalSerializer(stream, new TypenameBasedTypeSerializer(), null, false);
             HierarchicalDeserializer deserializer = new HierarchicalDeserializer(stream, new TypenameBasedTypeDeserializer());
 
             int[]? nullArray = null;
@@ -101,7 +101,7 @@ namespace Archivarius.Tests
         {
             ReaderWriterStream stream = new ReaderWriterStream();
 
-            HierarchicalSerializer serializer = new HierarchicalSerializer(stream, new TypenameBasedTypeSerializer());
+            HierarchicalSerializer serializer = new HierarchicalSerializer(stream, new TypenameBasedTypeSerializer(), null, false);
             HierarchicalDeserializer deserializer = new HierarchicalDeserializer(stream, new TypenameBasedTypeDeserializer());
 
             List<int>? nullArray = null;

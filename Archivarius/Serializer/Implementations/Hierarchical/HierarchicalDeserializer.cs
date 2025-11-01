@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Archivarius
 {
@@ -157,6 +158,25 @@ namespace Archivarius
             {
                 OnException?.Invoke(new InvalidOperationException("Failed to deserialize object section. Skip it"));
             }
+        }
+        
+        public async ValueTask<T?> AddClassAsync<T>(T? _)
+            where T : class, IDataStruct
+        {
+            IConstructor? ctor = _typeReader.GetConstructor<T>(_reader);
+            if (ctor == null) // NULL
+            {
+                return null;
+            }
+
+            await _reader.BeginSectionAsync();
+
+            var value = DeserializeClass<T>(ctor);
+            if (!_reader.EndSection())
+            {
+                OnException?.Invoke(new InvalidOperationException("Failed to deserialize object section. Skip it"));
+            }
+            return value;
         }
 
         public void AddDynamic<T>(ref T value)
