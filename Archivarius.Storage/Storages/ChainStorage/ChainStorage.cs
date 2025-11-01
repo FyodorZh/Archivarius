@@ -36,8 +36,13 @@ namespace Archivarius.Storage
 
         public async Task<bool> IsValid()
         {
-            var index = await _storage.GetVersionedStruct<IndexData>(_rootPath.File("index"));
-            return index != null;
+            var indexFile = _rootPath.File("index");
+            if (await _storage.IsExists(indexFile)) // check to eliminate error logs
+            {
+                var index = await _storage.GetVersionedStruct<IndexData>(indexFile);
+                return index != null;
+            }
+            return false;
         }
 
         protected async ValueTask<IndexData> GetIndex_Unsafe()

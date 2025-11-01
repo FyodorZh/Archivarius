@@ -45,9 +45,15 @@ namespace Archivarius.Storage
         {
             try
             {
-                using var file = File.Open(_root + path, FileMode.Open, FileAccess.Read);
-                await reader.Invoke(file);
-                return true;
+                string filePath = _root + path;
+                if (File.Exists(filePath))
+                {
+                    using var file = File.Open(filePath, FileMode.Open, FileAccess.Read);
+                    await reader.Invoke(file);
+                    return true;
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
