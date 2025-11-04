@@ -111,7 +111,7 @@ namespace Archivarius.Storage
             await _storage.Write(path, dst =>
             {
                 dst.Write(bytes, 0, bytes.Length);
-                return default;
+                return Task.CompletedTask;
             });
         }
 
@@ -121,7 +121,7 @@ namespace Archivarius.Storage
             await _storage.Write(path, dst =>
             {
                 dst.Write(bytes, 0, bytes.Length);
-                return default;
+                return Task.CompletedTask;
             });
         }
 
@@ -131,7 +131,7 @@ namespace Archivarius.Storage
             await _storage.Write(path, dst =>
             {
                 dst.Write(bytes, 0, bytes.Length);
-                return default;
+                return Task.CompletedTask;
             });
         }
 

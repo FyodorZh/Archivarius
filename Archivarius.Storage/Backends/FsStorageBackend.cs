@@ -10,7 +10,9 @@ namespace Archivarius.Storage
     {
         private readonly string _root;
 
-        public event Action<Exception>? OnError; 
+        public event Action<Exception>? OnError;
+
+        public bool ThrowExceptions { get; set; } = true;
 
         public FsStorageBackend(string root)
         {
@@ -21,7 +23,7 @@ namespace Archivarius.Storage
             _root = root;
         }
 
-        public async Task<bool> Write(FilePath path, Func<Stream, ValueTask> writer)
+        public async Task<bool> Write(FilePath path, Func<Stream, Task> writer)
         {
             try
             {
@@ -37,6 +39,8 @@ namespace Archivarius.Storage
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return false;
             }
         }
@@ -58,6 +62,8 @@ namespace Archivarius.Storage
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return false;
             }
         }
@@ -70,13 +76,16 @@ namespace Archivarius.Storage
                 if (File.Exists(filePath))
                 {
                     File.Delete(filePath);
+                    return Task.FromResult(true);
                 }
 
-                return Task.FromResult(true);
+                return Task.FromResult(false);
             }
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return Task.FromResult(false);
             }
         }
@@ -112,6 +121,8 @@ namespace Archivarius.Storage
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return Task.FromResult<IReadOnlyCollection<FilePath>>([]);
             }
         }

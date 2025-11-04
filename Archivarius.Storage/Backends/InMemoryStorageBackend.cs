@@ -8,25 +8,29 @@ namespace Archivarius.Storage
 {
     public class InMemoryStorageBackend : IStorageBackend
     {
-        private readonly Dictionary<FilePath, byte[]> _data = new();
+        private readonly Dictionary<FilePath, MemoryStream> _data = new();
         
         private readonly SemaphoreSlim _locker = new(1, 1);
         
         public event Action<Exception>? OnError;
 
-        public async Task<bool> Write(FilePath path, Func<Stream, ValueTask> writer)
+        public bool ThrowExceptions { get; set; } = true;
+
+        public async Task<bool> Write(FilePath path, Func<Stream, Task> writer)
         {
             await _locker.WaitAsync();
             try
             {
                 MemoryStream stream = new();
                 await writer(stream);
-                _data[path] = stream.ToArray();
+                _data[path] = stream;
                 return true;
             }
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return false;
             }
             finally
@@ -40,19 +44,19 @@ namespace Archivarius.Storage
             await _locker.WaitAsync();
             try
             {
-                if (_data.TryGetValue(path, out var bytes))
+                if (_data.TryGetValue(path, out var stream))
                 {
-                    var stream = new MemoryStream(bytes, false);
                     stream.Position = 0;
                     await reader(stream);
                     return true;
                 }
-
-                throw new KeyNotFoundException(path.ToString());
+                return false;
             }
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return false;
             }
             finally
@@ -71,6 +75,8 @@ namespace Archivarius.Storage
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return false;
             }
             finally
@@ -89,6 +95,8 @@ namespace Archivarius.Storage
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return false;
             }
             finally
@@ -117,6 +125,8 @@ namespace Archivarius.Storage
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return [];
             }
             finally

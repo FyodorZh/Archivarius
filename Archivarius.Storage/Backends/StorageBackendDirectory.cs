@@ -10,7 +10,13 @@ namespace Archivarius.Storage
         private readonly IReadOnlyStorageBackend _storage;
         protected readonly DirPath _path;
         
-        public event Action<Exception>? OnError; 
+        public event Action<Exception>? OnError;
+
+        public bool ThrowExceptions
+        {
+            get => _storage.ThrowExceptions;
+            set => _storage.ThrowExceptions = value;
+        }
 
         public ReadOnlyDirectoryStorageBackend(IReadOnlyStorageBackend storage, DirPath dir)
         {
@@ -53,7 +59,7 @@ namespace Archivarius.Storage
             _storage = (storage is DirectoryStorageBackend dirBackend) ? dirBackend._storage : storage;
         }
         
-        public Task<bool> Write(FilePath path, Func<Stream, ValueTask> writer)
+        public Task<bool> Write(FilePath path, Func<Stream, Task> writer)
         {
             return _storage.Write(_path.File(path), writer);
         }

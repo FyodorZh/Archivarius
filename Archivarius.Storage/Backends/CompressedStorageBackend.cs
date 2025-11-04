@@ -16,6 +16,12 @@ namespace Archivarius.Storage
         
         public event Action<Exception>? OnError;
 
+        public bool ThrowExceptions
+        {
+            get => _storage.ThrowExceptions;
+            set => _storage.ThrowExceptions = value;
+        }
+
         public CompressedStorageBackend(IStorageBackend storage)
         {
             _storage = storage;
@@ -25,7 +31,7 @@ namespace Archivarius.Storage
             storage.OnError += e => OnError?.Invoke(e);
         }
 
-        async Task<bool> IStorageBackend.Write(FilePath path, Func<Stream, ValueTask> writer)
+        async Task<bool> IStorageBackend.Write(FilePath path, Func<Stream, Task> writer)
         {
             var compressor = await _compressors.GetAsync();
             try
@@ -35,12 +41,14 @@ namespace Archivarius.Storage
                 return await _storage.Write(path, dst =>
                 {
                     compressedStream.WriteTo(dst);
-                    return default;
+                    return Task.CompletedTask;
                 });
             }
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return false;
             }
             finally
@@ -70,6 +78,8 @@ namespace Archivarius.Storage
             catch (Exception ex)
             {
                 OnError?.Invoke(ex);
+                if (ThrowExceptions)
+                    throw;
                 return false;           
             }
             finally
