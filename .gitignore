@@ -24,3 +24,5 @@ obj/
                   
 /.vs/
 Archivarius.sln.DotSettings.user
+
+.idea/**/copilot.data.migration.*.xml
