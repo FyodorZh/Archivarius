@@ -129,16 +129,15 @@ namespace Archivarius.Storage
                 _compressedStream.WriteByte(1); // compressed
                 _srcStream.WriteTo(_compressor);
                 _compressor.Flush();
-                _compressedStream.Position = 0;
 
                 if (_compressedStream.Length > _srcStream.Length)
                 {
+                    _compressedStream.SetLength(0);
                     _compressedStream.WriteByte(0);
                     _srcStream.Position = 0;
                     _srcStream.WriteTo(_compressedStream);
-                    _compressedStream.Position = 0;
                 }
-
+                _compressedStream.Position = 0;
                 return _compressedStream;
             }
         }
