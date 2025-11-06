@@ -20,7 +20,7 @@ namespace Archivarius.Tests
         }
         
         [Test]
-        public async Task Test()
+        public async Task Test_ChainStorage()
         {
             IStorageBackend memory = new InMemoryStorageBackend();
             memory = new CompressedStorageBackend(memory);
@@ -28,14 +28,56 @@ namespace Archivarius.Tests
                 new TypenameBasedTypeSerializer(),
                 new TypenameBasedTypeDeserializer());
             var chain = await storage.CreateNewChain<Data>(DirPath.Root.Dir("chain"), 3);
+            await Test1(chain);
+        }
+
+        [Test]
+        public async Task Test_ChainStorage_GetMany()
+        {
+            IStorageBackend memory = new InMemoryStorageBackend();
+            memory = new CompressedStorageBackend(memory);
+            KeyValueStorage storage = new KeyValueStorage(memory,
+                new TypenameBasedTypeSerializer(),
+                new TypenameBasedTypeDeserializer());
+            var chain = (await storage.CreateNewChain<Data>(DirPath.Root.Dir("chain"), 10));
+            await Test2(chain);
+        }
+        
+        [Test]
+        public async Task Test_BigChainStorage()
+        {
+            IStorageBackend memory = new InMemoryStorageBackend();
+            memory = new CompressedStorageBackend(memory);
+            KeyValueStorage storage = new KeyValueStorage(memory,
+                new TypenameBasedTypeSerializer(),
+                new TypenameBasedTypeDeserializer());
+            var chain = await BigChainStorage<Data>.LoadOrConstruct(storage, DirPath.Root.Dir("chain"), 3, 4);
+            await Test1(chain);
+        }
+
+        [Test]
+        public async Task Test_BigChainStorage_GetMany()
+        {
+            IStorageBackend memory = new InMemoryStorageBackend();
+            memory = new CompressedStorageBackend(memory);
+            KeyValueStorage storage = new KeyValueStorage(memory,
+                new TypenameBasedTypeSerializer(),
+                new TypenameBasedTypeDeserializer());
+            var chain = await BigChainStorage<Data>.LoadOrConstruct(storage, DirPath.Root.Dir("chain"), 4, 3);
+            await Test2(chain);
+        }
+
+        private async Task Test1(IChainStorage<Data>? chain)
+        {
+            int N = 100;
             Assert.IsNotNull(chain);
-            for (int i = 0; i < 10; ++i)
+            for (int i = 0; i < N; ++i)
             {
                 int id = await chain.Append(new Data() { Value = i });
                 Assert.That(id, Is.EqualTo(i));
             }
 
-            for (int i = 0; i < 10; ++i)
+            for (int i = 0; i < N; ++i)
             {
                 var data = await chain.GetAt(i);
                 Assert.That(i, Is.EqualTo(data!.Value));
@@ -52,15 +94,9 @@ namespace Archivarius.Tests
             }
         }
 
-        [Test]
-        public async Task TestGetMany()
+        private async Task Test2(IChainStorage<Data>? chain)
         {
-            IStorageBackend memory = new InMemoryStorageBackend();
-            memory = new CompressedStorageBackend(memory);
-            KeyValueStorage storage = new KeyValueStorage(memory,
-                new TypenameBasedTypeSerializer(),
-                new TypenameBasedTypeDeserializer());
-            var chain = (await storage.CreateNewChain<Data>(DirPath.Root.Dir("chain"), 10))!;
+            Assert.IsNotNull(chain);
             
             int N = 100;
             for (int i = 0; i < N; ++i)
