@@ -305,6 +305,17 @@ namespace Archivarius.Storage
             return new(storage, path, new IndexData(packSize));
         }
         
+        public static async Task<ChainStorage<TData>> ConstructNewAndFlush(IKeyValueStorage storage, DirPath path, int packSize = 1000)
+        {
+            var chain = new ChainStorage<TData>(storage, path, new IndexData(packSize));
+            if (!await chain.IsValid())
+            {
+                await chain.SetIndex_Unsafe();
+                return chain;
+            }
+            throw new InvalidOperationException("Cannot create new chain");
+        }
+        
         public static ChainStorage<TData> LoadFrom(IKeyValueStorage storage, DirPath path)
         {
             return new(storage, path, null);

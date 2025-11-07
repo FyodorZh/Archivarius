@@ -423,6 +423,17 @@ namespace Archivarius.Storage
             return new(storage, path, new IndexData(bigPackSize, smallPackSize));
         }
         
+        public static async Task<BigChainStorage<TData>> ConstructNewAndFlush(IKeyValueStorage storage, DirPath path, int bigPackSize = 100, int smallPackSize = 100)
+        {
+            var chain = new BigChainStorage<TData>(storage, path, new IndexData(bigPackSize, smallPackSize));
+            if (!await chain.IsValid())
+            {
+                await chain.SetIndex_Unsafe();
+                return chain;
+            }
+            throw new InvalidOperationException("Cannot create new chain");
+        }
+        
         public static BigChainStorage<TData> LoadFrom(IKeyValueStorage storage, DirPath path)
         {
             return new(storage, path, null);
@@ -493,7 +504,7 @@ namespace Archivarius.Storage
                 int smallPacksCount = (index.Count % index.BigPackSize) / index.SmallPackSize;
                 int elementsCount = index.Count % index.SmallPackSize;
 
-                int cleaningDepth = 0;
+                int cleaningDepth;
 
                 if (elementsCount + 1 < index.SmallPackSize)
                 {
