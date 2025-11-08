@@ -167,6 +167,11 @@ namespace Archivarius.Storage
             try
             {
                 var index = await GetIndex_Unsafe();
+                
+                if (index.Count == 0)
+                {
+                    yield break;
+                }
 
                 if (till < 0)
                 {
