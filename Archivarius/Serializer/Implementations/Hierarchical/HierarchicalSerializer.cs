@@ -106,6 +106,12 @@ namespace Archivarius
             _versionStack.Clear();
         }
 
+        public async ValueTask<bool> FlushPoint()
+        {
+            await _writer.Flush();
+            return true;
+        }
+
         public void AddStruct<T>(ref T value)
             where T : struct, IDataStruct
         {
@@ -136,19 +142,6 @@ namespace Archivarius
             }
         }
         
-        public ValueTask<T?> AddClassAsync<T>(T? value)
-            where T : class, IDataStruct
-        {
-            _typeWriter.WriteType(_writer, ref value);
-            if (value != null)
-            {
-                _writer.BeginSection();
-                SerializeClass(value);
-                _writer.EndSection();
-            }
-            return new ValueTask<T?>(value);
-        }
-
         public void AddDynamic<T>(ref T value)
         {
             var extension = _factory?.Construct<T>();

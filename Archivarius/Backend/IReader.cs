@@ -19,9 +19,17 @@ namespace Archivarius
 
     public interface IReader : ILowLevelReader
     {
+        /// <summary>
+        /// Some readers may load data to read asynchronously.
+        /// This method ensure that all required data till next Preload() invocation is loaded.
+        /// </summary>
+        /// <returns>
+        /// TRUE - Reader has some data to read
+        /// FALSE - Reader has no data. Deserialization process must stop.
+        /// </returns>
+        ValueTask<bool> Preload();
         bool TrySetSectionUsage(bool useSections);
         void BeginSection();
-        ValueTask BeginSectionAsync();
         bool EndSection();
     }
     

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Archivarius.BinaryBackend
 {
@@ -55,6 +56,11 @@ namespace Archivarius.BinaryBackend
             var res = GetBuffer();
             _size = 0;
             return res;
+        }
+
+        public ValueTask Flush()
+        {
+            return default;
         }
 
         public bool TrySetSectionUsage(bool useSections)

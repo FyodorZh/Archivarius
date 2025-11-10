@@ -32,6 +32,12 @@ namespace Archivarius.StructuredBinaryBackend
             }
         }
 
+        public ValueTask<bool> Preload()
+        {
+            bool hasData = _sections.Count > 0 || _position < _section.Count;
+            return new ValueTask<bool>(hasData);
+        }
+
         public bool TrySetSectionUsage(bool useSections)
         {
             if (useSections)
@@ -52,12 +58,6 @@ namespace Archivarius.StructuredBinaryBackend
 
             _section = r.Section!;
             _position = 0;
-        }
-        
-        public ValueTask BeginSectionAsync()
-        {
-            BeginSection();
-            return default;
         }
 
         public bool EndSection()

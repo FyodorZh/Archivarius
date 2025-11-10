@@ -141,6 +141,12 @@ namespace Archivarius.JsonBackend
             return res;
         }
 
+        public ValueTask<bool> Preload()
+        {
+            bool hasData = _sectionStack.Count > 0 || _cursor < _currentSection.Count;
+            return new ValueTask<bool>(hasData);
+        }
+
         public bool TrySetSectionUsage(bool useSections)
         {
             if (useSections)
@@ -158,12 +164,6 @@ namespace Archivarius.JsonBackend
             _sectionStack.Push(_currentSection);
             _currentSection = _currentSection[_cursor]?.AsArray() ?? throw new InvalidOperationException();
             _cursor = 0;
-        }
-
-        public ValueTask BeginSectionAsync()
-        {
-            BeginSection();
-            return default;
         }
 
         public bool EndSection()

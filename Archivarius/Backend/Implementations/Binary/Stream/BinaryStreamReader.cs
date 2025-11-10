@@ -34,6 +34,11 @@ namespace Archivarius.BinaryBackend
             _stream.Position = 0;
         }
 
+        public ValueTask<bool> Preload()
+        {
+            return new ValueTask<bool>(_stream.Position < _maxPosition);
+        }
+
         public bool TrySetSectionUsage(bool useSections)
         {
             _useSections = useSections;
@@ -48,16 +53,6 @@ namespace Archivarius.BinaryBackend
                 _stackOfSections.Push(_maxPosition);
                 _maxPosition = _stream.Position + size;
             }
-        }
-        
-        public virtual ValueTask BeginSectionAsync()
-        {
-            if (!_useSections)
-            {
-                throw new InvalidOperationException("Trying to await for absent data section");
-            }
-            BeginSection();
-            return default;
         }
 
         public bool EndSection()

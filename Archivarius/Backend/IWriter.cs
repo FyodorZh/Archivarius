@@ -1,4 +1,6 @@
-﻿namespace Archivarius
+﻿using System.Threading.Tasks;
+
+namespace Archivarius
 {
     public interface ILowLevelWriter
     {
@@ -17,6 +19,7 @@
 
     public interface IWriter : ILowLevelWriter
     {
+        ValueTask Flush();
         bool TrySetSectionUsage(bool useSections);
         void BeginSection();
         void EndSection();

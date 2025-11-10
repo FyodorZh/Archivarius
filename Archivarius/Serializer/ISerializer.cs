@@ -46,6 +46,8 @@ namespace Archivarius
     {
         byte Version { get; }
 
+        ValueTask<bool> FlushPoint();
+
         void AddStruct<T>(ref T value) where T : struct, IDataStruct;
         void AddVersionedStruct<T>(ref T value) where T : struct, IDataStruct, IVersionedData;
 
@@ -53,12 +55,6 @@ namespace Archivarius
         /// Serialize both versioned and unversioned data
         /// </summary>
         void AddClass<T>(ref T? value) where T : class, IDataStruct;
-
-        /// <summary>
-        /// Serialize both versioned and unversioned data.
-        /// Waits for data. Requiers IReader to support 'Sections'
-        /// </summary>
-        ValueTask<T?> AddClassAsync<T>(T? value) where T : class, IDataStruct;
 
         void AddDynamic<T>(ref T value);
     }

@@ -97,6 +97,11 @@ namespace Archivarius.JsonBackend
             _currentSection.Add(base64);
         }
 
+        public ValueTask Flush()
+        {
+            return default;
+        }
+
         public bool TrySetSectionUsage(bool useSections)
         {
             if (useSections)

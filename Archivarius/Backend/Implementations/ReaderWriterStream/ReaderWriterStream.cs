@@ -111,6 +111,16 @@ namespace Archivarius
             return true;
         }
 
+        ValueTask IWriter.Flush()
+        {
+            return default;
+        }
+
+        ValueTask<bool> IReader.Preload()
+        {
+            return default;
+        }
+
         void IWriter.BeginSection()
         {
             // DO NOTHING
@@ -124,11 +134,6 @@ namespace Archivarius
         void IReader.BeginSection()
         {
             // DO NOTHING
-        }
-        
-        ValueTask IReader.BeginSectionAsync()
-        {
-            throw new InvalidOperationException("Trying to await for absent data section");
         }
 
         bool IReader.EndSection()

@@ -1,111 +1,74 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Archivarius.BinaryBackend;
 using Archivarius.Internals;
 
-namespace Archivarius.BinaryBackend
+namespace Archivarius.AsyncBackend
 {
-    public class AsyncBufferedStreamReader : IReader
+    public class AsyncBufferedReader : IReader
     {
-        private readonly Stream _source;
         private readonly ByteStream _buffer;
+        private readonly Func<IByteQueueWriter, int, ValueTask> _readAsync;
 
-        private readonly byte[] _readBlockBuffer;
-
-        private readonly Stack<long> _stackOfSections = new Stack<long>();
-        private long _maxPosition;
-
-        public AsyncBufferedStreamReader(Stream source, int readBlockSize)
+        public AsyncBufferedReader(Func<IByteQueueWriter, int, ValueTask> readAsync)
         {
-            _source = source;
-            _readBlockBuffer = new byte[readBlockSize];
-            
             _buffer = new ByteStream(128);
-            
-            _maxPosition = long.MaxValue;
+            _readAsync = readAsync;
+        }
+
+        public async ValueTask<bool> Preload()
+        {
+            if (!await EnsureBufferSize(4))
+            {
+                return false;
+            }
+            int currentBlockSize = ReadInt();
+            if (currentBlockSize == 0)
+            {
+                return false;
+            }
+
+            if (!await EnsureBufferSize(currentBlockSize))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public bool TrySetSectionUsage(bool useSections)
         {
             if (useSections)
             {
-                return true;
+                return false;
             }
-            throw new InvalidOperationException();
+
+            return true;
         }
 
         public void BeginSection()
         {
-            int size = ReadInt();
-            _stackOfSections.Push(_maxPosition);
-            _maxPosition = _buffer.LogicalPosition + size;
-        }
-
-        public async ValueTask BeginSectionAsync()
-        {
-            int size = ReadInt();
-            _stackOfSections.Push(_maxPosition);
-            _maxPosition = _buffer.LogicalPosition + size;
-            
-            int count;
-            if (_buffer.AvailableToProcess < size &&
-                (count = await _source.ReadAsync(_readBlockBuffer, 0, _readBlockBuffer.Length)) > 0)
-            {
-                _buffer.Put(_readBlockBuffer, 0, count);
-            }
         }
 
         public bool EndSection()
         {
-            if (_buffer.LogicalPosition < _maxPosition)
-            {
-                long skipAmount = _maxPosition - _buffer.LogicalPosition;
-                while (skipAmount > 0)
-                {
-                    if (_buffer.AvailableToProcess == 0)
-                    {
-                        int count = _source.Read(_readBlockBuffer, 0, _readBlockBuffer.Length);
-                        if (count == 0)
-                        {
-                            throw new InvalidOperationException();
-                        }
+            return true;
+        }
 
-                        _buffer.Put(_readBlockBuffer, 0, count);
-                    }
-                    
-                    int skipStep = (int)Math.Min(skipAmount, _buffer.AvailableToProcess);
-                    _buffer.Skip(skipStep);
-                    skipAmount -= skipStep;
-                }
-                return false;
-            }
-            if (_buffer.LogicalPosition > _maxPosition)
+        private async ValueTask<bool> EnsureBufferSize(int size)
+        {
+            if (_buffer.AvailableToProcess < size)
             {
-                throw new InvalidOperationException();
+                await _readAsync(_buffer, size - (int)_buffer.AvailableToProcess);
+                return _buffer.AvailableToProcess >= size;
             }
 
-            _maxPosition = _stackOfSections.Pop();
             return true;
         }
 
         private void Check(int grow)
         {
-            if (_buffer.LogicalPosition + grow > _maxPosition)
-            {
-                throw new InvalidOperationException();
-            }
-
-            while (_buffer.AvailableToProcess < grow)
-            {
-                var count = _source.Read(_readBlockBuffer, 0, _readBlockBuffer.Length);
-                if (count > 0)
-                {
-                    _buffer.Put(_readBlockBuffer, 0, count);
-                }
-            }
-
             if (_buffer.AvailableToProcess < grow)
             {
                 throw new InvalidOperationException();

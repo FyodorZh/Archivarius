@@ -8,7 +8,7 @@
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
         <Product>Archivarius.Storage</Product>
-        <Version>0.2.1-dev.6</Version>
+        <Version>0.2.1-dev.7</Version>
         <Title>Archivarius</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <LangVersion>12</LangVersion>
@@ -17,7 +17,6 @@
         <RepositoryUrl>https://github.com/FyodorZh/Archivarius.git</RepositoryUrl>
         <Copyright>Copyright (c) Fyodor Zhmaev 2023 </Copyright>
         <RepositoryType>git</RepositoryType>
-        <PackageReleaseNotes>- Improved errors handling in storage backends</PackageReleaseNotes>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

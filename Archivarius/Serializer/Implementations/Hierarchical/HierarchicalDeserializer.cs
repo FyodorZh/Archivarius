@@ -123,7 +123,12 @@ namespace Archivarius
             _versions.Clear();
             _version = 0;
         }
-        
+
+        public ValueTask<bool> FlushPoint()
+        {
+            return _reader.Preload();
+        }
+
         public void AddStruct<T>(ref T value)
             where T : struct, IDataStruct
         {
@@ -160,25 +165,6 @@ namespace Archivarius
             }
         }
         
-        public async ValueTask<T?> AddClassAsync<T>(T? _)
-            where T : class, IDataStruct
-        {
-            IConstructor? ctor = _typeReader.GetConstructor<T>(_reader);
-            if (ctor == null) // NULL
-            {
-                return null;
-            }
-
-            await _reader.BeginSectionAsync();
-
-            var value = DeserializeClass<T>(ctor);
-            if (!_reader.EndSection())
-            {
-                OnException?.Invoke(new InvalidOperationException("Failed to deserialize object section. Skip it"));
-            }
-            return value;
-        }
-
         public void AddDynamic<T>(ref T value)
         {
             var extension = _factory?.Construct<T>();

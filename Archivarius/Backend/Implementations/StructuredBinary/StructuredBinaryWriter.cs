@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Archivarius.StructuredBinaryBackend
 {
@@ -44,6 +45,11 @@ namespace Archivarius.StructuredBinaryBackend
         {
             _section.Clear();
             _stack.Clear();
+        }
+
+        public ValueTask Flush()
+        {
+            return default;
         }
 
         public bool TrySetSectionUsage(bool useSections)
