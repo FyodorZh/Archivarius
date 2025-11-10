@@ -5,7 +5,7 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>12</LangVersion>
-        <Version>0.2.1-dev.1</Version>
+        <Version>0.2.1-dev.2</Version>
         <Title>Archivarius extensions</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -16,6 +16,11 @@
         <RepositoryUrl>https://github.com/FyodorZh/Archivarius.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <Company>FyodorZh</Company>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
