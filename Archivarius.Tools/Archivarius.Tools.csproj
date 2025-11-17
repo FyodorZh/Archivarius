@@ -8,7 +8,7 @@
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
         <Product>Archivarius</Product>
-        <Version>0.2.1-dev.2</Version>
+        <Version>0.2.1-dev.4</Version>
         <Title>Archivarius.Tools</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <LangVersion>12</LangVersion>
@@ -31,7 +31,7 @@
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <DebugType>full</DebugType>
+        <DebugType>portable</DebugType>
     </PropertyGroup>
 
     <ItemGroup>
@@ -41,6 +41,10 @@
     <ItemGroup>
         <None Include="nuget.readme.md" Pack="true" PackagePath="\" />
         <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Backends\" />
     </ItemGroup>
 
 </Project>

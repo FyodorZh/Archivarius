@@ -29,7 +29,7 @@
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-      <DebugType>full</DebugType>
+      <DebugType>portable</DebugType>
     </PropertyGroup>
 
     <ItemGroup>
