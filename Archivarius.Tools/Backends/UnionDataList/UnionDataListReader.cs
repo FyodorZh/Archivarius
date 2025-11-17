@@ -26,7 +26,7 @@ namespace Archivarius.UnionDataListBackend
             _sectionEnds.Clear();
         }
 
-        private void CheckType(UnionData r, RecordType type)
+        private void CheckType(UnionData r, UnionDataType type)
         {
             if (r._type != type)
             {
@@ -53,7 +53,7 @@ namespace Archivarius.UnionDataListBackend
         public void BeginSection()
         {
             UnionData r = _data[_position];
-            CheckType(r, RecordType.Int);
+            CheckType(r, UnionDataType.Int);
             int sectionLength = r._value.IntValue;
             
             _sectionEnds.Push(_maxPosition);
@@ -72,77 +72,77 @@ namespace Archivarius.UnionDataListBackend
         public bool ReadBool()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.Bool);
+            CheckType(r, UnionDataType.Bool);
             return r._value.BoolValue;
         }
 
         public byte ReadByte()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.Byte);
+            CheckType(r, UnionDataType.Byte);
             return r._value.ByteValue;
         }
 
         public char ReadChar()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.Char);
+            CheckType(r, UnionDataType.Char);
             return r._value.CharValue;
         }
 
         public short ReadShort()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.Short);
+            CheckType(r, UnionDataType.Short);
             return r._value.ShortValue;
         }
 
         public int ReadInt()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.Int);
+            CheckType(r, UnionDataType.Int);
             return r._value.IntValue;
         }
 
         public long ReadLong()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.Long);
+            CheckType(r, UnionDataType.Long);
             return r._value.LongValue;
         }
 
         public float ReadFloat()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.Float);
+            CheckType(r, UnionDataType.Float);
             return r._value.FloatValue;
         }
 
         public double ReadDouble()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.Double);
+            CheckType(r, UnionDataType.Double);
             return r._value.DoubleValue;
         }
 
         public decimal ReadDecimal()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.Decimal);
+            CheckType(r, UnionDataType.Decimal);
             return r._value.DecimalValue;
         }
 
         public string? ReadString()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.String);
+            CheckType(r, UnionDataType.String);
             return r.Text;
         }
         
         public byte[]? ReadBytes()
         {
             UnionData r = _data[_position++];
-            CheckType(r, RecordType.Array);
+            CheckType(r, UnionDataType.Array);
             return r.Bytes;
         }
     }

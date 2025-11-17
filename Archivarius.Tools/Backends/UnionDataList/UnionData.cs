@@ -2,7 +2,7 @@
 
 namespace Archivarius.UnionDataListBackend
 {
-    public enum RecordType : byte
+    public enum UnionDataType : byte
     {
         Unknown,
         Bool,
@@ -21,135 +21,180 @@ namespace Archivarius.UnionDataListBackend
 
     public struct UnionData : IDataStruct
     {
-        public RecordType _type;
+        public UnionDataType _type;
         public TypeAlias _value;
         private object? _object;
         
-        public RecordType Type => _type;
+        public UnionDataType Type => _type;
         public TypeAlias Alias => _value;
         public string? Text => _object as string;
         public byte[]? Bytes => _object as byte[];
         public IDataStruct? DataStruct => _object as IDataStruct;
-
-        public UnionData(bool value)
+        
+        public UnionData(bool value) 
         {
-            _type = RecordType.Bool;
+            _type = UnionDataType.Bool;
             _value = value;
             _object = null;
         }
         
         public UnionData(byte value)
         {
-            _type = RecordType.Byte;
+            _type = UnionDataType.Byte;
             _value = value;
             _object = null;
         }
 
         public UnionData(Char value)
         {
-            _type = RecordType.Char;
+            _type = UnionDataType.Char;
             _value = value;
             _object = null;
         }
 
         public UnionData(short value)
         {
-            _type = RecordType.Short;
+            _type = UnionDataType.Short;
             _value = value;
             _object = null;
         }
 
         public UnionData(int value)
         {
-            _type = RecordType.Int;
+            _type = UnionDataType.Int;
             _value = value;
             _object = null;
         }
 
         public UnionData(long value)
         {
-            _type = RecordType.Long;
+            _type = UnionDataType.Long;
             _value = value;
             _object = null;
         }
 
         public UnionData(float value)
         {
-            _type = RecordType.Float;
+            _type = UnionDataType.Float;
             _value = value;
             _object = null;
         }
 
         public UnionData(double value)
         {
-            _type = RecordType.Double;
+            _type = UnionDataType.Double;
             _value = value;
             _object = null;
         }
         
         public UnionData(decimal value)
         {
-            _type = RecordType.Decimal;
+            _type = UnionDataType.Decimal;
             _value = value;
             _object = null;
         }
 
         public UnionData(string? value)
         {
-            _type = RecordType.String;
+            _type = UnionDataType.String;
             _value = 0;
             _object = value;
         }
         
         public UnionData(byte[]? value)
         {
-            _type = RecordType.Array;
+            _type = UnionDataType.Array;
             _value = 0;
             _object = value;
         }
         
         public UnionData(IDataStruct? value)
         {
-            _type = RecordType.DataStruct;
+            _type = UnionDataType.DataStruct;
             _value = 0;
             _object = value;
+        }
+        
+        public static implicit operator UnionData(bool value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(byte value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(char value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(short value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(int value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(long value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(float value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(double value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(decimal value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(string? value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(byte[]? value)
+        {
+            return new UnionData(value);
         }
 
         private void WriteTo(ILowLevelWriter writer)
         {
             switch (_type)
             {
-                case RecordType.Bool:
+                case UnionDataType.Bool:
                     writer.WriteBool(_value.BoolValue);
                     break;
-                case RecordType.Byte:
+                case UnionDataType.Byte:
                     writer.WriteByte(_value.ByteValue);
                     break;
-                case RecordType.Char:
+                case UnionDataType.Char:
                     writer.WriteChar(_value.CharValue);
                     break;
-                case RecordType.Short:
+                case UnionDataType.Short:
                     writer.WriteShort(_value.ShortValue);
                     break;
-                case RecordType.Int:
+                case UnionDataType.Int:
                     writer.WriteInt(_value.IntValue);
                     break;
-                case RecordType.Long:
+                case UnionDataType.Long:
                     writer.WriteLong(_value.LongValue);
                     break;
-                case RecordType.Float:
+                case UnionDataType.Float:
                     writer.WriteFloat(_value.FloatValue);
                     break;
-                case RecordType.Double:
+                case UnionDataType.Double:
                     writer.WriteDouble(_value.DoubleValue);
                     break;
-                case RecordType.Decimal:
+                case UnionDataType.Decimal:
                     writer.WriteDecimal(_value.DecimalValue);
                     break;
-                case RecordType.String:
+                case UnionDataType.String:
                     writer.WriteString(Text);
                     break;
-                case RecordType.Array:
+                case UnionDataType.Array:
                     writer.WriteBytes(Bytes);
                     break;
                 default:
@@ -157,41 +202,41 @@ namespace Archivarius.UnionDataListBackend
             }
         }
 
-        private void ReadFrom(RecordType type, ILowLevelReader reader)
+        private void ReadFrom(UnionDataType type, ILowLevelReader reader)
         {
             switch (type)
             {
-                case RecordType.Bool:
+                case UnionDataType.Bool:
                     this = new UnionData(reader.ReadBool());
                     break;
-                case RecordType.Byte:
+                case UnionDataType.Byte:
                     this = new UnionData(reader.ReadByte());
                     return;
-                case RecordType.Char:
+                case UnionDataType.Char:
                     this = new UnionData(reader.ReadChar());
                     return;
-                case RecordType.Short:
+                case UnionDataType.Short:
                     this = new UnionData(reader.ReadShort());
                     return;
-                case RecordType.Int:
+                case UnionDataType.Int:
                     this = new UnionData(reader.ReadInt());
                     return;
-                case RecordType.Long:
+                case UnionDataType.Long:
                     this = new UnionData(reader.ReadLong());
                     return;
-                case RecordType.Float:
+                case UnionDataType.Float:
                     this = new UnionData(reader.ReadFloat());
                     return;
-                case RecordType.Double:
+                case UnionDataType.Double:
                     this = new UnionData(reader.ReadDouble());
                     return;
-                case RecordType.Decimal:
+                case UnionDataType.Decimal:
                     this = new UnionData(reader.ReadDecimal());
                     return;
-                case RecordType.String:
+                case UnionDataType.String:
                     this = new UnionData(reader.ReadString());
                     return;
-                case RecordType.Array:
+                case UnionDataType.Array:
                     this = new UnionData(reader.ReadBytes());
                     return;
                 default:
@@ -204,7 +249,7 @@ namespace Archivarius.UnionDataListBackend
             if (serializer.IsWriter)
             {
                 serializer.Writer.WriteByte((byte)_type);
-                if (_type == RecordType.DataStruct)
+                if (_type == UnionDataType.DataStruct)
                 {
                     IDataStruct? dataStruct = _object as IDataStruct;
                     serializer.AddClass(ref dataStruct);
@@ -217,8 +262,8 @@ namespace Archivarius.UnionDataListBackend
             else
             {
                 var reader = serializer.Reader;
-                RecordType type = (RecordType)reader.ReadByte();
-                if (type == RecordType.DataStruct)
+                UnionDataType type = (UnionDataType)reader.ReadByte();
+                if (type == UnionDataType.DataStruct)
                 {
                     IDataStruct? dataStruct = null;
                     serializer.AddClass(ref dataStruct);
@@ -237,29 +282,29 @@ namespace Archivarius.UnionDataListBackend
             string prefix = _type + ":";
             switch (_type)
             {
-                case RecordType.Bool:
+                case UnionDataType.Bool:
                     return prefix + _value.BoolValue;
-                case RecordType.Byte:
+                case UnionDataType.Byte:
                     return prefix + _value.ByteValue;
-                case RecordType.Char:
+                case UnionDataType.Char:
                     return prefix + _value.CharValue;
-                case RecordType.Short:
+                case UnionDataType.Short:
                     return prefix + _value.ShortValue;
-                case RecordType.Int:
+                case UnionDataType.Int:
                     return prefix + _value.IntValue;
-                case RecordType.Long:
+                case UnionDataType.Long:
                     return prefix + _value.LongValue;
-                case RecordType.Float:
+                case UnionDataType.Float:
                     return prefix + _value.FloatValue;
-                case RecordType.Double:
+                case UnionDataType.Double:
                     return prefix + _value.DoubleValue;
-                case RecordType.Decimal:
+                case UnionDataType.Decimal:
                     return prefix + _value.DecimalValue;
-                case RecordType.String:
+                case UnionDataType.String:
                     return prefix + Text;
-                case RecordType.Array:
+                case UnionDataType.Array:
                     return prefix + Bytes;
-                case RecordType.DataStruct:
+                case UnionDataType.DataStruct:
                     return prefix + (_object?.GetType().FullName ?? "null");
                 default:
                     return "INVALID_TYPE_" + _type;
