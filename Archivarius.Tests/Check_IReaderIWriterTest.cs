@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Archivarius.JsonBackend;
-using Archivarius.StructuredBinaryBackend;
+using Archivarius.UnionDataListBackend;
 using NUnit.Framework;
 
 namespace Archivarius.Tests
@@ -35,10 +35,10 @@ namespace Archivarius.Tests
         [Test]
         public void Test_StructuredBinary()
         {
-            Check(GetList(), () => new StructuredBinaryWriter(), w =>
+            Check(GetList(), () => new UnionDataListWriter(), w =>
             {
-                StructuredBinaryWriter bw = (StructuredBinaryWriter)w;
-                return new StructuredBinaryReader(bw.ExtractData());
+                UnionDataListWriter bw = (UnionDataListWriter)w;
+                return new UnionDataListReader(bw.CopyData());
             });
         }
         
