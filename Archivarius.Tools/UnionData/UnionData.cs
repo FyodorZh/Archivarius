@@ -1,32 +1,17 @@
 ﻿using System;
+using System.Globalization;
+using System.Linq;
 
-namespace Archivarius.UnionDataListBackend
+namespace Archivarius
 {
-    public enum UnionDataType : byte
+    public struct UnionData : IDataStruct, IEquatable<UnionData>
     {
-        Unknown,
-        Bool,
-        Byte,
-        Char,
-        Short,
-        Int,
-        Long,
-        Float,
-        Double,
-        Decimal,
-        String,
-        Array,
-        DataStruct
-    }
-
-    public struct UnionData : IDataStruct
-    {
-        public UnionDataType _type;
-        public TypeAlias _value;
+        private UnionDataType _type;
+        private UnionDataMemoryAlias _alias;
         private object? _object;
         
         public UnionDataType Type => _type;
-        public TypeAlias Alias => _value;
+        public UnionDataMemoryAlias Alias => _alias;
         public string? Text => _object as string;
         public byte[]? Bytes => _object as byte[];
         public IDataStruct? DataStruct => _object as IDataStruct;
@@ -34,84 +19,105 @@ namespace Archivarius.UnionDataListBackend
         public UnionData(bool value) 
         {
             _type = UnionDataType.Bool;
-            _value = value;
+            _alias = value;
             _object = null;
         }
         
         public UnionData(byte value)
         {
             _type = UnionDataType.Byte;
-            _value = value;
+            _alias = value;
             _object = null;
         }
 
         public UnionData(Char value)
         {
             _type = UnionDataType.Char;
-            _value = value;
+            _alias = value;
             _object = null;
         }
 
         public UnionData(short value)
         {
             _type = UnionDataType.Short;
-            _value = value;
+            _alias = value;
+            _object = null;
+        }
+        
+        public UnionData(ushort value)
+        {
+            _type = UnionDataType.UShort;
+            _alias = value;
             _object = null;
         }
 
         public UnionData(int value)
         {
             _type = UnionDataType.Int;
-            _value = value;
+            _alias = value;
+            _object = null;
+        }
+        
+        public UnionData(uint value)
+        {
+            _type = UnionDataType.UInt;
+            _alias = value;
             _object = null;
         }
 
         public UnionData(long value)
         {
             _type = UnionDataType.Long;
-            _value = value;
+            _alias = value;
+            _object = null;
+        }
+        
+        public UnionData(ulong value)
+        {
+            _type = UnionDataType.ULong;
+            _alias = value;
             _object = null;
         }
 
         public UnionData(float value)
         {
             _type = UnionDataType.Float;
-            _value = value;
+            _alias = value;
             _object = null;
         }
 
         public UnionData(double value)
         {
             _type = UnionDataType.Double;
-            _value = value;
+            _alias = value;
             _object = null;
         }
         
         public UnionData(decimal value)
         {
             _type = UnionDataType.Decimal;
-            _value = value;
+            _alias = value;
             _object = null;
         }
 
         public UnionData(string? value)
         {
             _type = UnionDataType.String;
-            _value = 0;
+            _alias = 0;
             _object = value;
         }
         
         public UnionData(byte[]? value)
         {
             _type = UnionDataType.Array;
-            _value = 0;
+            _alias = 0;
             _object = value;
         }
         
         public UnionData(IDataStruct? value)
         {
             _type = UnionDataType.DataStruct;
-            _value = 0;
+            _alias = 0;
             _object = value;
         }
         
@@ -131,11 +137,23 @@ namespace Archivarius.UnionDataListBackend
         {
             return new UnionData(value);
         }
+        public static implicit operator UnionData(ushort value)
+        {
+            return new UnionData(value);
+        }
         public static implicit operator UnionData(int value)
         {
             return new UnionData(value);
         }
+        public static implicit operator UnionData(uint value)
+        {
+            return new UnionData(value);
+        }
         public static implicit operator UnionData(long value)
+        {
+            return new UnionData(value);
+        }
+        public static implicit operator UnionData(ulong value)
         {
             return new UnionData(value);
         }
@@ -165,31 +183,40 @@ namespace Archivarius.UnionDataListBackend
             switch (_type)
             {
                 case UnionDataType.Bool:
-                    writer.WriteBool(_value.BoolValue);
+                    writer.WriteBool(_alias.BoolValue);
                     break;
                 case UnionDataType.Byte:
-                    writer.WriteByte(_value.ByteValue);
+                    writer.WriteByte(_alias.ByteValue);
                     break;
                 case UnionDataType.Char:
-                    writer.WriteChar(_value.CharValue);
+                    writer.WriteChar(_alias.CharValue);
                     break;
                 case UnionDataType.Short:
-                    writer.WriteShort(_value.ShortValue);
+                    writer.WriteShort(_alias.ShortValue);
+                    break;
+                case UnionDataType.UShort:
+                    writer.WriteUShort(_alias.UShortValue);
                     break;
                 case UnionDataType.Int:
-                    writer.WriteInt(_value.IntValue);
+                    writer.WriteInt(_alias.IntValue);
+                    break;
+                case UnionDataType.UInt:
+                    writer.WriteUInt(_alias.UIntValue);
                     break;
                 case UnionDataType.Long:
-                    writer.WriteLong(_value.LongValue);
+                    writer.WriteLong(_alias.LongValue);
+                    break;
+                case UnionDataType.ULong:
+                    writer.WriteULong(_alias.ULongValue);
                     break;
                 case UnionDataType.Float:
-                    writer.WriteFloat(_value.FloatValue);
+                    writer.WriteFloat(_alias.FloatValue);
                     break;
                 case UnionDataType.Double:
-                    writer.WriteDouble(_value.DoubleValue);
+                    writer.WriteDouble(_alias.DoubleValue);
                     break;
                 case UnionDataType.Decimal:
-                    writer.WriteDecimal(_value.DecimalValue);
+                    writer.WriteDecimal(_alias.DecimalValue);
                     break;
                 case UnionDataType.String:
                     writer.WriteString(Text);
@@ -218,11 +245,20 @@ namespace Archivarius.UnionDataListBackend
                 case UnionDataType.Short:
                     this = new UnionData(reader.ReadShort());
                     return;
+                case UnionDataType.UShort:
+                    this = new UnionData(reader.ReadUShort());
+                    return;
                 case UnionDataType.Int:
                     this = new UnionData(reader.ReadInt());
                     return;
+                case UnionDataType.UInt:
+                    this = new UnionData(reader.ReadUInt());
+                    return;
                 case UnionDataType.Long:
                     this = new UnionData(reader.ReadLong());
+                    return;
+                case UnionDataType.ULong:
+                    this = new UnionData(reader.ReadULong());
                     return;
                 case UnionDataType.Float:
                     this = new UnionData(reader.ReadFloat());
@@ -276,39 +312,76 @@ namespace Archivarius.UnionDataListBackend
                 }
             }
         }
-
-        public override string ToString()
+        
+        public bool Equals(UnionData other)
         {
-            string prefix = _type + ":";
             switch (_type)
             {
                 case UnionDataType.Bool:
-                    return prefix + _value.BoolValue;
                 case UnionDataType.Byte:
-                    return prefix + _value.ByteValue;
+                    return _alias.Equals1(other._alias);
                 case UnionDataType.Char:
-                    return prefix + _value.CharValue;
                 case UnionDataType.Short:
-                    return prefix + _value.ShortValue;
+                case UnionDataType.UShort:
+                    return _alias.Equals2(other._alias);
                 case UnionDataType.Int:
-                    return prefix + _value.IntValue;
-                case UnionDataType.Long:
-                    return prefix + _value.LongValue;
+                case UnionDataType.UInt:
                 case UnionDataType.Float:
-                    return prefix + _value.FloatValue;
+                    return _alias.Equals4(other._alias);
+                case UnionDataType.Long:
+                case UnionDataType.ULong:
                 case UnionDataType.Double:
-                    return prefix + _value.DoubleValue;
-                case UnionDataType.Decimal:
-                    return prefix + _value.DecimalValue;
+                    return _alias.Equals8(other._alias);
+                case UnionDataType.Decimal: 
+                    return _alias.Equals16(other._alias);
                 case UnionDataType.String:
-                    return prefix + Text;
+                    return Text == other.Text;
                 case UnionDataType.Array:
-                    return prefix + Bytes;
+                {
+                    if ((Bytes == null) != (other.Bytes == null))
+                    {
+                        return false;
+                    }
+                    if (Bytes == null)
+                    {
+                        return true;
+                    }
+                    return Bytes.SequenceEqual(other.Bytes!);
+                }
                 case UnionDataType.DataStruct:
-                    return prefix + (_object?.GetType().FullName ?? "null");
-                default:
-                    return "INVALID_TYPE_" + _type;
+                {
+                    if (ReferenceEquals(DataStruct, other.DataStruct)) 
+                        return true;
+                    throw new InvalidOperationException("IDataStruct comparison not supported");
+                }
+                default: 
+                    return false;
             }
+        }
+        
+        public string ValueToString()
+        {
+            switch (_type)
+            {
+                case UnionDataType.Bool: return _alias.BoolValue.ToString();
+                case UnionDataType.Byte: return _alias.ByteValue.ToString();
+                case UnionDataType.Char: return _alias.CharValue.ToString();
+                case UnionDataType.Short: return _alias.ShortValue.ToString();
+                case UnionDataType.Int: return _alias.IntValue.ToString();
+                case UnionDataType.Long: return _alias.LongValue.ToString();
+                case UnionDataType.Float: return _alias.FloatValue.ToString(CultureInfo.InvariantCulture);
+                case UnionDataType.Double: return _alias.DoubleValue.ToString(CultureInfo.InvariantCulture);
+                case UnionDataType.Decimal: return _alias.DecimalValue.ToString(CultureInfo.InvariantCulture);
+                case UnionDataType.String: return Text ?? "null";
+                case UnionDataType.Array: return Bytes != null ? ("[" + string.Join(",", Bytes) + "]") : "null";
+                case UnionDataType.DataStruct: return _object?.GetType().FullName ?? "null";
+                default: return "INVALID";
+            }
+        }
+
+        public override string ToString()
+        {
+            return _type + ":" + ValueToString();
         }
     }
 }

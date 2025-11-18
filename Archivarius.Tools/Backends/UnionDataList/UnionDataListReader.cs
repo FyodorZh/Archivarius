@@ -28,7 +28,7 @@ namespace Archivarius.UnionDataListBackend
 
         private void CheckType(UnionData r, UnionDataType type)
         {
-            if (r._type != type)
+            if (r.Type != type)
             {
                 throw new InvalidOperationException();
             }
@@ -54,7 +54,7 @@ namespace Archivarius.UnionDataListBackend
         {
             UnionData r = _data[_position];
             CheckType(r, UnionDataType.Int);
-            int sectionLength = r._value.IntValue;
+            int sectionLength = r.Alias.IntValue;
             
             _sectionEnds.Push(_maxPosition);
             _position += 1;
@@ -73,63 +73,63 @@ namespace Archivarius.UnionDataListBackend
         {
             UnionData r = _data[_position++];
             CheckType(r, UnionDataType.Bool);
-            return r._value.BoolValue;
+            return r.Alias.BoolValue;
         }
 
         public byte ReadByte()
         {
             UnionData r = _data[_position++];
             CheckType(r, UnionDataType.Byte);
-            return r._value.ByteValue;
+            return r.Alias.ByteValue;
         }
 
         public char ReadChar()
         {
             UnionData r = _data[_position++];
             CheckType(r, UnionDataType.Char);
-            return r._value.CharValue;
+            return r.Alias.CharValue;
         }
 
         public short ReadShort()
         {
             UnionData r = _data[_position++];
             CheckType(r, UnionDataType.Short);
-            return r._value.ShortValue;
+            return r.Alias.ShortValue;
         }
 
         public int ReadInt()
         {
             UnionData r = _data[_position++];
             CheckType(r, UnionDataType.Int);
-            return r._value.IntValue;
+            return r.Alias.IntValue;
         }
 
         public long ReadLong()
         {
             UnionData r = _data[_position++];
             CheckType(r, UnionDataType.Long);
-            return r._value.LongValue;
+            return r.Alias.LongValue;
         }
 
         public float ReadFloat()
         {
             UnionData r = _data[_position++];
             CheckType(r, UnionDataType.Float);
-            return r._value.FloatValue;
+            return r.Alias.FloatValue;
         }
 
         public double ReadDouble()
         {
             UnionData r = _data[_position++];
             CheckType(r, UnionDataType.Double);
-            return r._value.DoubleValue;
+            return r.Alias.DoubleValue;
         }
 
         public decimal ReadDecimal()
         {
             UnionData r = _data[_position++];
             CheckType(r, UnionDataType.Decimal);
-            return r._value.DecimalValue;
+            return r.Alias.DecimalValue;
         }
 
         public string? ReadString()
