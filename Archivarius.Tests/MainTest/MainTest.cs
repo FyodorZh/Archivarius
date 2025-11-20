@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Archivarius.BinaryBackend;
 using Archivarius.JsonBackend;
-using Archivarius.UnionDataListBackend;
 using Archivarius.TypeSerializers;
 using NUnit.Framework;
 using BinaryReader = Archivarius.BinaryBackend.BinaryReader;
@@ -12,13 +11,6 @@ namespace Archivarius.Tests
 {
     public class MainTest
     {
-        [Test]
-        public void UnionDataListTest()
-        {
-            DoTest(() => new UnionDataListWriter(), 
-                w => new UnionDataListReader(w.CopyData()), true);
-        }
-        
         [Test]
         public void BinaryTest()
         {

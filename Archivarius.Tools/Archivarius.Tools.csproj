@@ -8,7 +8,7 @@
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
         <Product>Archivarius</Product>
-        <Version>0.2.1-dev.5</Version>
+        <Version>0.2.1-dev.6</Version>
         <Title>Archivarius.Tools</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <LangVersion>12</LangVersion>
@@ -41,10 +41,6 @@
     <ItemGroup>
         <None Include="nuget.readme.md" Pack="true" PackagePath="\" />
         <None Include="..\LICENSE" Pack="true" PackagePath="\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Backends\" />
     </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Archivarius.UnionDataListBackend;
+using Archivarius.BinaryBackend;
 using Archivarius.TypeSerializers;
 using NUnit.Framework;
 
@@ -66,14 +66,14 @@ namespace Archivarius.Tests
             r0.a.shortList = new List<short>() { 1, 23, 5 };
             r0.a.stringList = new List<string?>() { "hello", null, "world" };
 
-            UnionDataListReader dataReader;
+            BinaryReader dataReader;
             {
-                var dataWriter = new UnionDataListWriter();
+                var dataWriter = new BinaryWriter();
                 var writer = new GraphSerializer(dataWriter, new TypenameBasedTypeSerializer(), null);
 
                 writer.AddClass(ref r0!);
 
-                dataReader = new UnionDataListReader(dataWriter.CopyData());
+                dataReader = new BinaryReader(dataWriter.GetBuffer());
             }
 
             {

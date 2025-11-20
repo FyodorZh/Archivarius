@@ -45,13 +45,16 @@ namespace Archivarius
             }
         }
 
-        public HierarchicalDeserializer(IReader reader)
+        public HierarchicalDeserializer(IReader reader, bool autoPrepare = true)
             : base(reader)
         {
             var typeReader = new TrivialTypeReader();
             _typeReader = typeReader;
-            
-            Prepare();
+
+            if (autoPrepare)
+            {
+                Prepare();
+            }
         }
         
         public void Prepare(Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider)

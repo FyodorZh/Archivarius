@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using Archivarius.JsonBackend;
-using Archivarius.UnionDataListBackend;
 using NUnit.Framework;
 
 namespace Archivarius.Tests
@@ -31,16 +30,7 @@ namespace Archivarius.Tests
                 return new BinaryBackend.BinaryStreamReader(new MemoryStream(buffer));
             });
         }
-
-        [Test]
-        public void Test_StructuredBinary()
-        {
-            Check(GetList(), () => new UnionDataListWriter(), w =>
-            {
-                UnionDataListWriter bw = (UnionDataListWriter)w;
-                return new UnionDataListReader(bw.CopyData());
-            });
-        }
+        
         
         [Test]
         public void Test_Json()
