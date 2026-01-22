@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace Archivarius.CompressedData
+namespace Archivarius.DataModels.Compressed
 {
     [Guid("EC886A88-FBE7-4411-B750-6FFC2E7BA331")]
     public class DoubleArray : IVersionedDataStruct

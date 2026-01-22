@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace Archivarius.CompressedData
+namespace Archivarius.DataModels.Compressed
 {
     [Guid("9F3D9D40-7C9D-4B52-892A-1C7AFF282A39")]
     public class FloatArray : IVersionedDataStruct

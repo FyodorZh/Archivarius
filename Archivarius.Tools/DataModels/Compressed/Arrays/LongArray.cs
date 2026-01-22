@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace Archivarius.CompressedData
+namespace Archivarius.DataModels.Compressed
 {
     [Guid("9CBBD500-A793-43CB-8429-2C88721A17A1")]
     public class LongArray : IVersionedDataStruct 
