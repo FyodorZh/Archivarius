@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Authors>Fyodor Zhmaev</Authors>
+        <Description>Serialization library</Description>
+        <Company>FyodorZh</Company>
+        <Product>Archivarius.Storage</Product>
+        <Version>0.2.1-dev.1</Version>
+        <Title>Archivarius remote storage library</Title>
+        <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
+        <LangVersion>9</LangVersion>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageProjectUrl>https://github.com/FyodorZh/Archivarius</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/FyodorZh/Archivarius.git</RepositoryUrl>
+        <Copyright>Copyright (c) Fyodor Zhmaev 2026</Copyright>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <None Include="nuget.readme.md" Pack="true" PackagePath="\" />
+        <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\Archivarius.Storage\Archivarius.Storage.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <PackageReference Include="Pontifex.Api" Version="0.1.0-dev.2" />
+    </ItemGroup>
+
+</Project>
