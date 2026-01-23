@@ -8,10 +8,10 @@
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
         <Product>Archivarius</Product>
-        <Version>0.2.1-dev.7</Version>
+        <Version>0.2.1-dev.8</Version>
         <Title>Archivarius.Tools</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
-        <LangVersion>12</LangVersion>
+        <LangVersion>9</LangVersion>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageProjectUrl>https://github.com/FyodorZh/Archivarius</PackageProjectUrl>
         <RepositoryUrl>https://github.com/FyodorZh/Archivarius.git</RepositoryUrl>

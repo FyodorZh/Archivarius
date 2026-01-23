@@ -4,6 +4,11 @@ namespace Archivarius.DataModels
     {
         public byte Value;
 
+        public ByteWrapper(byte value)
+        {
+            Value = value;
+        }
+
         public void Serialize(ISerializer serializer)
         {
             serializer.Add(ref Value);

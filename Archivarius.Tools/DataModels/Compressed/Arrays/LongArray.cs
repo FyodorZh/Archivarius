@@ -9,7 +9,7 @@ namespace Archivarius.DataModels.Compressed
     public class LongArray : IVersionedDataStruct 
     {
         private SerializationScheme _scheme = SerializationScheme.Plain;
-        private long[] _values = [];
+        private long[] _values = Array.Empty<long>();
         
         public long[] ValuesUnsafeToModify => _values;
         

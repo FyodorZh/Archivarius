@@ -10,7 +10,7 @@ namespace Archivarius.DataModels.Compressed
     public class DoubleArray : IVersionedDataStruct
     {
         private SerializationScheme _scheme = SerializationScheme.Plain;
-        private double[] _values = [];
+        private double[] _values = Array.Empty<double>();
 
         public double[] ValuesUnsafeToModify => _values;
 

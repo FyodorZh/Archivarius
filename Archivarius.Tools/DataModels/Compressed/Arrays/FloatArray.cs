@@ -9,7 +9,7 @@ namespace Archivarius.DataModels.Compressed
     public class FloatArray : IVersionedDataStruct
     {
         private SerializationScheme _scheme = SerializationScheme.Plain;
-        private float[] _values = [];
+        private float[] _values = Array.Empty<float>();
 
         public float[] ValuesUnsafeToModify => _values;
 

@@ -4,6 +4,11 @@ namespace Archivarius.DataModels
     {
         public decimal Value;
 
+        public DecimalWrapper(decimal value)
+        {
+            Value = value;
+        }
+
         public void Serialize(ISerializer serializer)
         {
             serializer.Add(ref Value);

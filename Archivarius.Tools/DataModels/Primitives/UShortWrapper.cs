@@ -4,6 +4,11 @@ namespace Archivarius.DataModels
     {
         public ushort Value;
 
+        public UShortWrapper(ushort value)
+        {
+            Value = value;
+        }
+
         public void Serialize(ISerializer serializer)
         {
             serializer.Add(ref Value);

@@ -1,10 +1,10 @@
 namespace Archivarius.DataModels
 {
-    public struct ShortWrapper : IDataStruct
+    public struct BytesWrapper : IDataStruct
     {
-        public short Value;
+        public byte[]? Value;
 
-        public ShortWrapper(short value)
+        public BytesWrapper(byte[]? value)
         {
             Value = value;
         }

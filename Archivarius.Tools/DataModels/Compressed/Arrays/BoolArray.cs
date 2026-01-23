@@ -7,7 +7,7 @@ namespace Archivarius.DataModels.Compressed
     [Guid("0FADA21C-30A5-4B12-90CB-EADA52FCECD2")]
     public class BoolArray : IVersionedDataStruct
     {
-        private byte[] _data = [];
+        private byte[] _data = Array.Empty<byte>();
         private byte _lastSize;
 
         private int _count;
