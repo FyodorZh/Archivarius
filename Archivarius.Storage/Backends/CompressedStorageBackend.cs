@@ -31,16 +31,16 @@ namespace Archivarius.Storage
             storage.OnError += e => OnError?.Invoke(e);
         }
 
-        async Task<bool> IStorageBackend.Write(FilePath path, Func<Stream, Task> writer)
+        async Task<bool> IStorageBackend.Write<TParam>(FilePath path, TParam pram, Func<Stream, TParam, Task> writer)
         {
             var compressor = await _compressors.GetAsync();
             try
             {
-                await writer(compressor.PrepareToCompress());
+                await writer(compressor.PrepareToCompress(), pram);
                 var compressedStream = compressor.Compress();
-                return await _storage.Write(path, dst =>
+                return await _storage.Write(path, compressedStream, (dst, _compressedStream) =>
                 {
-                    compressedStream.WriteTo(dst);
+                    _compressedStream.WriteTo(dst);
                     return Task.CompletedTask;
                 });
             }
@@ -57,13 +57,13 @@ namespace Archivarius.Storage
             }
         }
 
-        async Task<bool> IReadOnlyStorageBackend.Read(FilePath path, Func<Stream, Task> reader)
+        async Task<bool> IReadOnlyStorageBackend.Read<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> reader)
         {
             var decompressor = await _decompressors.GetAsync();
             try
             {
                 MemoryStream? decompressed = null;
-                if (!await _storage.Read(path, stream =>
+                if (!await _storage.Read(path, 0, (stream, _) =>
                     {
                         decompressed = decompressor.Decompress(stream);
                         return Task.CompletedTask;
@@ -72,7 +72,7 @@ namespace Archivarius.Storage
                     return false;
                 }
 
-                await reader.Invoke(decompressed ?? throw new NullReferenceException());
+                await reader.Invoke(decompressed ?? throw new NullReferenceException(), param);
                 return true;
             }
             catch (Exception ex)

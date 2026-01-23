@@ -33,9 +33,9 @@ namespace Archivarius.Storage
             storage.OnError += e => OnError?.Invoke(e);
         }
         
-        public Task<bool> Read(FilePath path, Func<Stream, Task> reader)
+        public Task<bool> Read<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> reader)
         {
-            return _storage.Read(_path.File(path), reader);
+            return _storage.Read(_path.File(path), param, reader);
         }
 
         public Task<bool> IsExists(FilePath path)
@@ -59,9 +59,9 @@ namespace Archivarius.Storage
             _storage = (storage is DirectoryStorageBackend dirBackend) ? dirBackend._storage : storage;
         }
         
-        public Task<bool> Write(FilePath path, Func<Stream, Task> writer)
+        public Task<bool> Write<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> writer)
         {
-            return _storage.Write(_path.File(path), writer);
+            return _storage.Write(_path.File(path), param, writer);
         }
 
         public Task<bool> Erase(FilePath path)

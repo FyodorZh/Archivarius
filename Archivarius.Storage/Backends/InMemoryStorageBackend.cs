@@ -16,13 +16,13 @@ namespace Archivarius.Storage
 
         public bool ThrowExceptions { get; set; } = true;
 
-        public async Task<bool> Write(FilePath path, Func<Stream, Task> writer)
+        public async Task<bool> Write<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> writer)
         {
             await _locker.WaitAsync();
             try
             {
                 MemoryStream stream = new();
-                await writer(stream);
+                await writer(stream, param);
                 _data[path] = stream;
                 return true;
             }
@@ -39,7 +39,7 @@ namespace Archivarius.Storage
             }
         }
 
-        public async Task<bool> Read(FilePath path, Func<Stream, Task> reader)
+        public async Task<bool> Read<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> reader)
         {
             await _locker.WaitAsync();
             try
@@ -47,7 +47,7 @@ namespace Archivarius.Storage
                 if (_data.TryGetValue(path, out var stream))
                 {
                     stream.Position = 0;
-                    await reader(stream);
+                    await reader(stream, param);
                     return true;
                 }
                 return false;

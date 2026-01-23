@@ -23,7 +23,7 @@ namespace Archivarius.Storage
             _root = root;
         }
 
-        public async Task<bool> Write(FilePath path, Func<Stream, Task> writer)
+        public async Task<bool> Write<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> writer)
         {
             try
             {
@@ -33,7 +33,7 @@ namespace Archivarius.Storage
                 Directory.CreateDirectory(dirPath);
 
                 using var file = File.Open(filePath, FileMode.Create, FileAccess.Write);
-                await writer(file);
+                await writer(file, param);
                 return true;
             }
             catch (Exception ex)
@@ -45,7 +45,7 @@ namespace Archivarius.Storage
             }
         }
 
-        public async Task<bool> Read(FilePath path, Func<Stream, Task> reader)
+        public async Task<bool> Read<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> reader)
         {
             try
             {
@@ -53,7 +53,7 @@ namespace Archivarius.Storage
                 if (File.Exists(filePath))
                 {
                     using var file = File.Open(filePath, FileMode.Open, FileAccess.Read);
-                    await reader.Invoke(file);
+                    await reader.Invoke(file, param);
                     return true;
                 }
 
