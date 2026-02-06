@@ -13,6 +13,9 @@
         <PackageReference Include="NUnit" Version="4.3.2"/>
         <PackageReference Include="NUnit.Analyzers" Version="4.7.0"/>
         <PackageReference Include="NUnit3TestAdapter" Version="5.0.0"/>
+        <PackageReference Include="Pontifex" Version="0.1.0-dev.2" />
+        <PackageReference Include="Pontifex.Api" Version="0.1.0-dev.3" />
+        <PackageReference Include="Pontifex.Transport.Direct" Version="0.1.0-dev.2" />
     </ItemGroup>
 
     <ItemGroup>
@@ -20,6 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Archivarius.Storage.Remote\Archivarius.Storage.Remote.csproj" />
       <ProjectReference Include="..\..\Archivarius.Storage\Archivarius.Storage.csproj" />
     </ItemGroup>
 
