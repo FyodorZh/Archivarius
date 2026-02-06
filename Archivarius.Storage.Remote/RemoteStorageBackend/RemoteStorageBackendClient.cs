@@ -69,11 +69,11 @@ namespace Archivarius.Storage.Remote
             }
             catch (Exception ex)
             {
+                OnError?.Invoke(ex);
                 if (ThrowExceptions)
                 {
                     throw;
                 }
-                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -87,11 +87,11 @@ namespace Archivarius.Storage.Remote
             }
             catch (Exception ex)
             {
+                OnError?.Invoke(ex);
                 if (ThrowExceptions)
                 {
                     throw;
                 }
-                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -107,11 +107,11 @@ namespace Archivarius.Storage.Remote
             }
             catch (Exception ex)
             {
+                OnError?.Invoke(ex);
                 if (ThrowExceptions)
                 {
                     throw;
                 }
-                OnError?.Invoke(ex);
                 return Array.Empty<FilePath>();
             }
         }
@@ -136,11 +136,11 @@ namespace Archivarius.Storage.Remote
             }
             catch (Exception ex)
             {
+                OnError?.Invoke(ex);
                 if (ThrowExceptions)
                 {
                     throw;
                 }
-                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -159,11 +159,11 @@ namespace Archivarius.Storage.Remote
             }
             catch (Exception ex)
             {
+                OnError?.Invoke(ex);
                 if (ThrowExceptions)
                 {
                     throw;
                 }
-                OnError?.Invoke(ex);
                 return false;
             }
         }
