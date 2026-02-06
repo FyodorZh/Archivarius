@@ -32,6 +32,15 @@ namespace Archivarius.Storage
 
                 Directory.CreateDirectory(dirPath);
 
+                if (Directory.Exists(filePath))
+                {
+                    if (Directory.EnumerateFiles(filePath, "*", SearchOption.AllDirectories).Any())
+                    {
+                        return false;
+                    }
+                    Directory.Delete(filePath, true);
+                }
+
                 using var file = File.Open(filePath, FileMode.Create, FileAccess.Write);
                 await writer(file, param);
                 return true;
@@ -114,9 +123,11 @@ namespace Archivarius.Storage
                 {
                     file = file.Substring(rootDirLength);
                     return (FilePath)factory.BuildWithCache(file);
-                });
+                }).ToList();
 
-                return Task.FromResult<IReadOnlyCollection<FilePath>>(list.ToArray());
+                list.Sort();
+
+                return Task.FromResult<IReadOnlyCollection<FilePath>>(list);
             }
             catch (Exception ex)
             {
