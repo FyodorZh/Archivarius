@@ -2,7 +2,7 @@ using System;
 
 namespace Archivarius.Storage
 {
-    public abstract class Path : IEquatable<Path>
+    public abstract class Path : IEquatable<Path>, IComparable<Path>
     {
         protected readonly DirPath? _parent;
         private readonly string _path;
@@ -31,6 +31,11 @@ namespace Archivarius.Storage
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return _path == other._path;
+        }
+
+        public int CompareTo(Path other)
+        {
+            return String.Compare(_path, other._path, StringComparison.Ordinal);
         }
 
         public override bool Equals(object? obj)
