@@ -43,6 +43,11 @@ namespace Archivarius.Storage
         
         public static DirPath BuildDir(string path)
         {
+            if (path == "")
+            {
+                return DirPath.Root;
+            }
+            
             if (path[0] != '/')
             {
                 throw new InvalidOperationException();

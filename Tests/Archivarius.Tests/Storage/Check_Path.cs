@@ -11,6 +11,7 @@ namespace Archivarius.Tests
         {
             Assert.That(DirPath.Root.FullName, Is.EqualTo(""));
             Assert.That(DirPath.Root.Parent, Is.Null);
+            Assert.That(DirPath.Root, Is.EqualTo(PathFactory.BuildDir(DirPath.Root.FullName)));
             Assert.That(DirPath.Root.Dir(DirPath.Root).FullName, Is.EqualTo(""));
             Assert.That(DirPath.Root.Dir("dir").FullName, Is.EqualTo("/dir"));
             Assert.That(DirPath.Root.File("file").FullName, Is.EqualTo("/file"));
