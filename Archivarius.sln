@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archivarius.Storage.Remote"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{7983EF43-DB98-454B-9DF7-009E6E73EBE1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archivarius.Storage.Test", "Tests\Archivarius.Storage.Test\Archivarius.Storage.Test.csproj", "{2E22A91C-C461-4B11-A3DE-D56C3183AD72}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,8 +52,13 @@ Global
 		{2B990915-41A5-49D2-9CE9-BC228D8FDEA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2B990915-41A5-49D2-9CE9-BC228D8FDEA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2B990915-41A5-49D2-9CE9-BC228D8FDEA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E22A91C-C461-4B11-A3DE-D56C3183AD72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E22A91C-C461-4B11-A3DE-D56C3183AD72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E22A91C-C461-4B11-A3DE-D56C3183AD72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E22A91C-C461-4B11-A3DE-D56C3183AD72}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{17FC96D9-4268-4B06-A8C4-40BC7D2CC8C5} = {7983EF43-DB98-454B-9DF7-009E6E73EBE1}
+		{2E22A91C-C461-4B11-A3DE-D56C3183AD72} = {7983EF43-DB98-454B-9DF7-009E6E73EBE1}
 	EndGlobalSection
 EndGlobal
