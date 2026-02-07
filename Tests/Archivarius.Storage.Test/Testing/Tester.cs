@@ -13,7 +13,7 @@ namespace Archivarius.Storage.Test
             {
                 dbgId += 1;
                 var result = await command.ApplyAndCompare(subjectToTest, etalonSubject);
-                Assert.That(result, Is.True);
+                Assert.That(result, Is.True, $"Command #{dbgId} failed");
                 if (!result)
                 {
                     return false;

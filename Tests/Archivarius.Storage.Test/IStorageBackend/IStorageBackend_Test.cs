@@ -14,7 +14,7 @@ namespace Archivarius.Storage.Test
     public class IStorageBackend_Test
     {
         [Test]
-        public async Task Test_InMemory_File()
+        public async Task Test_File()
         {
             var commands = CommandsGenerator.Generate(10000, 123);
             Tester<IStorageBackend> tester = new();
@@ -33,7 +33,7 @@ namespace Archivarius.Storage.Test
         }
         
         [Test]
-        public async Task Test_InMemory_Remote()
+        public async Task Test_Remote()
         {
             var commands = CommandsGenerator.Generate(100000, 123);
             Tester<IStorageBackend> tester = new();
