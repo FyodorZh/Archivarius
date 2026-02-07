@@ -8,7 +8,7 @@
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
         <Product>Archivarius.Storage</Product>
-        <Version>0.2.1-dev.9</Version>
+        <Version>0.2.1-dev.10</Version>
         <Title>Archivarius storage library</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <LangVersion>12</LangVersion>
