@@ -221,9 +221,15 @@ namespace Archivarius.Storage
                     int fromBigPackId = from / index.BigPackSize;
                     int tillBigPackId = Math.Min(till / index.BigPackSize, bigPacksNumber - 1);
 
+                    List<(int bigPackId, Task<BigPackData> loadTask)> tasks = new();
                     for (int bigPackId = fromBigPackId; bigPackId <= tillBigPackId; ++bigPackId)
                     {
-                        var pack = await GetBigPack_Unsafe(bigPackId);
+                        tasks.Add((bigPackId, GetBigPack_Unsafe(bigPackId).AsTask()));
+                    }
+                    
+                    foreach (var (bigPackId, loadTask) in tasks)
+                    {
+                        var pack = await loadTask;
                         int a, b;
                         if (bigPackId == fromBigPackId && bigPackId == tillBigPackId)
                         {
@@ -275,10 +281,16 @@ namespace Archivarius.Storage
                 {
                     int fromSmallPackId = from / index.SmallPackSize;
                     int tillSmallPackId = Math.Min(till / index.SmallPackSize, smallPacksNumber - 1);
-
+                    
+                    List<(int smallPackId, Task<SmallPackData> loadTask)> tasks = new();
                     for (int smallPackId = fromSmallPackId; smallPackId <= tillSmallPackId; ++smallPackId)
                     {
-                        var pack = await GetSmallPack_Unsafe(smallPackId);
+                        tasks.Add((smallPackId, GetSmallPack_Unsafe(smallPackId).AsTask()));
+                    }
+
+                    foreach (var (smallPackId, loadTask) in tasks)
+                    {
+                        var pack = await loadTask;
                         int a, b;
                         if (smallPackId == fromSmallPackId && smallPackId == tillSmallPackId)
                         {
@@ -325,12 +337,20 @@ namespace Archivarius.Storage
                 }
                 from %= index.SmallPackSize;
                 till %= index.SmallPackSize;
-                
+
                 {
-                    TData[] range = new TData[till - from + 1];
+                    int count = till - from + 1;
+                    
+                    Task<TData>[] tasks = new Task<TData>[count];
                     for (int i = from; i <= till; ++i)
                     {
-                        range[i - from] = await GetElement_Unsafe(i);
+                        tasks[i - from] = GetElement_Unsafe(i);
+                    }
+                    
+                    TData[] range = new TData[count];
+                    for (int i = 0; i < count; ++i)
+                    {
+                        range[i] = await tasks[i];
                     }
                     yield return range;
                 }
@@ -522,13 +542,21 @@ namespace Archivarius.Storage
                 // if (elementsCount + 1 == index.SmallPackSize)
                 SmallPackData smallPackData = new SmallPackData(new TData[index.SmallPackSize]);
                 {
+                    Task<TData?>[] tasks = new Task<TData?>[index.SmallPackSize - 1];
+
                     for (int i = 0; i < index.SmallPackSize - 1; ++i)
                     {
                         string elementName = string.Format(index.ElementName, i);
                         var path = _rootPath.File(elementName);
-                        var element = await _storage.Get<TData>(path);
-                        smallPackData.List[i] = element ?? throw new Exception($"Failed to load {path}");
+                        tasks[i] = _storage.Get<TData>(path);
                     }
+                    for (int i = 0; i < index.SmallPackSize - 1; ++i)
+                    {
+                        var element = await tasks[i];
+                        tasks[i] = null!;
+                        smallPackData.List[i] = element ?? throw new Exception($"Failed to load {string.Format(index.ElementName, i)}");
+                    }
+                    
                     smallPackData.List[index.SmallPackSize - 1] = data;
                     cleaningDepth = 1;
                 }
@@ -547,11 +575,18 @@ namespace Archivarius.Storage
                 BigPackData bigPackData = new BigPackData(new TData[index.BigPackSize]);
                 {
                     int size = index.BigPackSize / index.SmallPackSize;
+                    
+                    Task<SmallPackData?>[] tasks = new Task<SmallPackData?>[size - 1];
                     for (int i = 0; i < size - 1; ++i)
                     {
                         string smallPackName = string.Format(index.SmallPackName, i);
                         var path = _rootPath.File(smallPackName);
-                        var smallPack = (await _storage.GetStruct<SmallPackData>(path))!.Value;
+                        tasks[i] = _storage.GetStruct<SmallPackData>(path);
+                    }
+                    for (int i = 0; i < size - 1; ++i)
+                    {
+                        var smallPack = (await tasks[i])!.Value;
+                        tasks[i] = null!;
                         Array.Copy(smallPack.List, 0, 
                             bigPackData.List, i * index.SmallPackSize, index.SmallPackSize);
                     }

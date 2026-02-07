@@ -9,7 +9,7 @@ namespace Archivarius.Storage.Test.ChainStorage
         public async Task Test_BigChainStorage()
         {
             CommandsGenerator commandsGenerator = new();
-            var commands = commandsGenerator.Generate(10000, 1234);
+            var commands = commandsGenerator.Generate(30000, 1234);
 
             var etalon = new InMemoryChainStorage<CommandsGenerator.Payload>();
             var testSubject = BigChainStorage<CommandsGenerator.Payload>.ConstructNew(
