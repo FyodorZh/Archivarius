@@ -597,7 +597,12 @@ namespace Archivarius.Storage
 
                     if (depth >= 2)
                     {
-                        for (int i = 0; i < index.BigPackSize - 1; ++i)
+                        // clear small packs cache
+                        _cachedSmallPack = null;
+                        _cachedSmallPackId = -1;
+                        
+                        int smallPacksCountInBigPack = index.BigPackSize / index.SmallPackSize;
+                        for (int i = 0; i < smallPacksCountInBigPack - 1; ++i)
                         {
                             string smallPackName = string.Format(index.SmallPackName, i);
                             var path = _rootPath.File(smallPackName);
