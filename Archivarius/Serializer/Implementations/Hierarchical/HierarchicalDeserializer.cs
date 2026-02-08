@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading.Tasks;
+using Archivarius.Constructors;
 
 namespace Archivarius
 {
@@ -11,6 +11,8 @@ namespace Archivarius
 
         private readonly Stack<byte> _versions = new ();
         private byte _version;
+        
+        private readonly IConstructorFactory _constructorFactory = new DefaultCtorTypeConstructorFactory();
         
         private readonly ISerializerExtensionsFactory? _factory;
 
@@ -26,7 +28,7 @@ namespace Archivarius
             bool autoPrepare = true)
             : base(reader)
         {
-            var typeReader = new PolymorphicTypeReader(typeDeserializer);
+            var typeReader = new PolymorphicTypeReader(typeDeserializer, _constructorFactory);
             typeReader.OnException += e => OnException?.Invoke(e);
             _typeReader = typeReader;
             
@@ -48,7 +50,7 @@ namespace Archivarius
         public HierarchicalDeserializer(IReader reader, bool autoPrepare = true)
             : base(reader)
         {
-            var typeReader = new TrivialTypeReader();
+            var typeReader = new TrivialTypeReader(_constructorFactory);
             _typeReader = typeReader;
 
             if (autoPrepare)
@@ -82,7 +84,7 @@ namespace Archivarius
             }
             
             PrepareHeader();
-            if (_typeReader is not TrivialTypeReader typeReader)
+            if (_typeReader is not TrivialTypeReader _)
             {
                 throw new NotSupportedException($"Unsupported type reader '{_typeReader.GetType()}");
             }
@@ -214,74 +216,6 @@ namespace Archivarius
             }
         }
 
-        protected interface IConstructor
-        {
-            bool IsValid { get; }
-            object? Construct();
-        }
-
-        private class NullConstructor : IConstructor
-        {
-            public static readonly IConstructor Instance = new NullConstructor();
-
-            public bool IsValid => false;
-
-            public object? Construct()
-            {
-                return null;
-            }
-        }
-
-        private class ReflectionBasedConstructor : IConstructor
-        {
-            private static readonly object[] VoidObjectList = [];
-
-            private readonly ConstructorInfo? _ctorInfo;
-
-            public bool IsValid => _ctorInfo != null;
-
-            public ReflectionBasedConstructor(Type type)
-            {
-                _ctorInfo = type.GetConstructor(BindingFlags.CreateInstance |
-                                                BindingFlags.Instance |
-                                                BindingFlags.Public |
-                                                BindingFlags.NonPublic,
-                    null, Type.EmptyTypes, null);
-            }
-
-            public object? Construct()
-            {
-                return _ctorInfo?.Invoke(VoidObjectList);
-            }
-        }
-
-        private static class TypeConstructorBuilder
-        {
-            private class TypeConstructor<T> : IConstructor
-                where T : class, new()
-            {
-                public bool IsValid => true;
-
-                public object Construct()
-                {
-                    return new T();
-                }
-            }
-
-
-            public static IConstructor Build(Type type)
-            {
-                if (type.GetConstructor(Type.EmptyTypes) != null)
-                {
-                    Type genericCtor = typeof(TypeConstructor<>);
-                    Type typeCtor = genericCtor.MakeGenericType(type);
-                    return (IConstructor)typeCtor.GetConstructor(Type.EmptyTypes)!.Invoke([]);
-                }
-
-                return new ReflectionBasedConstructor(type);
-            }
-        }
-
         private interface ITypeReader
         {
             IConstructor? GetConstructor<T>(IReader reader);
@@ -290,15 +224,17 @@ namespace Archivarius
         private class PolymorphicTypeReader : ITypeReader
         {
             private readonly ITypeDeserializer _typeDeserializer;
+            private readonly IConstructorFactory _constructorFactory;
 
             private readonly List<IConstructor?> _typeMap = new ();
             private readonly List<IConstructor> _defaultTypeMap = new ();
             
             public event Action<Exception>? OnException;
 
-            public PolymorphicTypeReader(ITypeDeserializer typeDeserializer)
+            public PolymorphicTypeReader(ITypeDeserializer typeDeserializer, IConstructorFactory constructorFactory)
             {
                 _typeDeserializer = typeDeserializer;
+                _constructorFactory = constructorFactory;
             }
 
             public void Prepare(IReader reader, Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null)
@@ -315,9 +251,9 @@ namespace Archivarius
                         throw new InvalidOperationException();
                     }
                     var defaultTypeSet = defaultTypeSetProvider(defaultTypeSetVersion);
-                    for (var i = 0; i < defaultTypeSet.Count; ++i)
+                    foreach (var t in defaultTypeSet)
                     {
-                        _defaultTypeMap.Add(TypeConstructorBuilder.Build(defaultTypeSet[i]));
+                        _defaultTypeMap.Add(_constructorFactory.Build(t));
                     }
                 }
             }
@@ -343,7 +279,7 @@ namespace Archivarius
                     if (dynamicTypeCtor == null)
                     {
                         var type = _typeDeserializer.Deserialize(reader);
-                        dynamicTypeCtor = type != null ? TypeConstructorBuilder.Build(type) : NullConstructor.Instance;
+                        dynamicTypeCtor = type != null ? _constructorFactory.Build(type) : NullConstructor.Instance;
                         _typeMap[typeId] = dynamicTypeCtor;
 
                         if (!dynamicTypeCtor.IsValid)
@@ -366,6 +302,13 @@ namespace Archivarius
         private class TrivialTypeReader : ITypeReader
         {
             private readonly Dictionary<Type, IConstructor> _typeMap = new ();
+
+            private readonly IConstructorFactory _constructorFactory;
+
+            public TrivialTypeReader(IConstructorFactory constructorFactory)
+            {
+                _constructorFactory = constructorFactory;
+            }
             
             public IConstructor? GetConstructor<T>(IReader reader)
             {
@@ -377,7 +320,7 @@ namespace Archivarius
                         var type = typeof(T);
                         if (!_typeMap.TryGetValue(type, out var constructor))
                         {
-                            constructor = TypeConstructorBuilder.Build(type);
+                            constructor = _constructorFactory.Build(type);
                             _typeMap.Add(type, constructor);
                         }
                         return constructor;
