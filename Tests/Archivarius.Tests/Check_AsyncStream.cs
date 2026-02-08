@@ -51,7 +51,8 @@ namespace Archivarius.Tests
             });
 
             HierarchicalSerializer serializer = new HierarchicalSerializer(writer, new TypenameBasedTypeSerializer(), null, false);
-            HierarchicalDeserializer deserializer = new HierarchicalDeserializer(reader, new TypenameBasedTypeDeserializer(), null, null, false);
+            HierarchicalDeserializer deserializer = HierarchicalDeserializer.From(reader).
+                SetAutoPrepare(false).SetPolymorphic(new TypenameBasedTypeDeserializer()).Build(); 
             
             deserializer.OnException += ex => Assert.Fail(ex.ToString());
 

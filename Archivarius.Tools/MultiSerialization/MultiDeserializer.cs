@@ -211,7 +211,7 @@ namespace Archivarius
             public DeserializationInstance(ITypeDeserializer typeDeserializer)
             {
                 _reader = new BinaryReader(Array.Empty<byte>());
-                _deserializer = new HierarchicalDeserializer(_reader, typeDeserializer, null, null, false);
+                _deserializer = HierarchicalDeserializer.From(_reader).SetAutoPrepare(false).SetPolymorphic(typeDeserializer).Build();
                 _deserializer.OnException += _ =>
                 {
                     _deserializationFail = true;
@@ -263,7 +263,7 @@ namespace Archivarius
             public DeserializationStreamInstance(ITypeDeserializer typeDeserializer)
             {
                 _reader = new BinaryStreamReader(new MemoryStream());
-                _deserializer = new HierarchicalDeserializer(_reader, typeDeserializer, null, null, false);
+                _deserializer = HierarchicalDeserializer.From(_reader).SetAutoPrepare(false).SetPolymorphic(typeDeserializer).Build();
                 _deserializer.OnException += _ =>
                 {
                     _deserializationFail = true;

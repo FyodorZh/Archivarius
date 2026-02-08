@@ -12,7 +12,7 @@ namespace Archivarius.Tests
             ReaderWriterStream stream = new ReaderWriterStream();
 
             HierarchicalSerializer serializer = new HierarchicalSerializer(stream, new TmpTypeSerializer(), null, false);
-            HierarchicalDeserializer deserializer = new HierarchicalDeserializer(stream, new TmpTypeDeserializer());
+            HierarchicalDeserializer deserializer = HierarchicalDeserializer.From(stream).SetPolymorphic(new TmpTypeDeserializer()).Build();
 
             var defaultTypes = new Type[]
             {

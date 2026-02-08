@@ -12,15 +12,62 @@ namespace Archivarius
         private readonly Stack<byte> _versions = new ();
         private byte _version;
         
-        private readonly IConstructorFactory _constructorFactory = new DefaultCtorTypeConstructorFactory();
+        private readonly IConstructorFactory _constructorFactory;
         
         private readonly ISerializerExtensionsFactory? _factory;
 
         public event Action<Exception>? OnException;
 
         public byte Version => _version;
+
+        public static IHierarchicalDeserializer_Params From(IReader source)
+        {
+            return new HierarchicalDeserializer_Params(source);
+        }
+
+        internal HierarchicalDeserializer(IHierarchicalDeserializer_ParamsView @params)
+            :base(@params.Source)
+        {
+            _constructorFactory = @params.ObjectConstructorFactory ?? new DefaultCtorTypeConstructorFactory();
+            if (@params.AsPolymorphic() is {} polymorphicParams)
+            {
+                var typeReader = new PolymorphicTypeReader(
+                    polymorphicParams.TypeDeserializer ?? throw new NullReferenceException(),
+                    _constructorFactory);
+                typeReader.OnException += e => OnException?.Invoke(e);
+                _typeReader = typeReader;
+            
+                if (polymorphicParams.ExtensionsFactory != null)
+                {
+                    _factory = polymorphicParams.ExtensionsFactory;
+                    _factory.OnError += (type, exception) =>
+                    {
+                        OnException?.Invoke(exception);
+                    };
+                }
+
+                if (polymorphicParams.AutoPrepare)
+                {
+                    Prepare(polymorphicParams.DefaultTypeSetProvider);
+                }
+            }
+            else if (@params.AsMonomorphic() is { } monomorphicParams)
+            {
+                var typeReader = new TrivialTypeReader(_constructorFactory);
+                _typeReader = typeReader;
+
+                if (monomorphicParams.AutoPrepare)
+                {
+                    Prepare();
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+        }
         
-        public HierarchicalDeserializer(
+        protected HierarchicalDeserializer(
             IReader reader, 
             ITypeDeserializer typeDeserializer, 
             ISerializerExtensionsFactory? factory = null,
@@ -28,6 +75,7 @@ namespace Archivarius
             bool autoPrepare = true)
             : base(reader)
         {
+            _constructorFactory = new DefaultCtorTypeConstructorFactory();
             var typeReader = new PolymorphicTypeReader(typeDeserializer, _constructorFactory);
             typeReader.OnException += e => OnException?.Invoke(e);
             _typeReader = typeReader;
@@ -47,9 +95,10 @@ namespace Archivarius
             }
         }
 
-        public HierarchicalDeserializer(IReader reader, bool autoPrepare = true)
+        protected HierarchicalDeserializer(IReader reader, bool autoPrepare = true)
             : base(reader)
         {
+            _constructorFactory = new DefaultCtorTypeConstructorFactory();
             var typeReader = new TrivialTypeReader(_constructorFactory);
             _typeReader = typeReader;
 

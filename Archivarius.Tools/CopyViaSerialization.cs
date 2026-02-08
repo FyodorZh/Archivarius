@@ -23,7 +23,7 @@ namespace Archivarius
                 _initialized = true;
                 _backend = new ReaderWriterStream();
                 _serializer = new HierarchicalSerializer(_backend, new TypenameBasedTypeSerializer());
-                _deserializer = new HierarchicalDeserializer(_backend, new TypenameBasedTypeDeserializer());
+                _deserializer = HierarchicalDeserializer.From(_backend).SetPolymorphic(new TypenameBasedTypeDeserializer()).Build();
             }
         }
 

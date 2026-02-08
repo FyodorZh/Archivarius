@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <Authors>Fyodor Zhmaev</Authors>
         <Company>FyodorZh</Company>
-        <Version>0.2.1-dev.3</Version>
+        <Version>0.2.2-dev.1</Version>
         <Title>Archivarius.Json</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
