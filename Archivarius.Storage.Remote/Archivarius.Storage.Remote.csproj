@@ -42,7 +42,7 @@
     </ItemGroup>
     
     <ItemGroup>
-      <PackageReference Include="Pontifex.Api" Version="0.1.0-dev.3" />
+      <PackageReference Include="Pontifex.Api" Version="0.1.0-dev.5" />
     </ItemGroup>
 
 </Project>
