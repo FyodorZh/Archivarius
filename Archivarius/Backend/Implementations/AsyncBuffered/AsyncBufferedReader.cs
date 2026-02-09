@@ -224,7 +224,7 @@ namespace Archivarius.AsyncBackend
             return Encoding.UTF8.GetString(bytes, 0, count);
         }
         
-        public byte[]? ReadBytes()
+        public byte[]? ReadArray()
         {
             int count = ReadInt();
             if (count == 0)
@@ -236,6 +236,12 @@ namespace Archivarius.AsyncBackend
             Check(count);
 
             return _buffer.Pop(count);
+        }
+        
+        public void ReadBytes(byte[] dst, int offset, int count)
+        {
+            Check(count);
+            _buffer.PopNBytes(dst, offset, count);
         }
     }
 }

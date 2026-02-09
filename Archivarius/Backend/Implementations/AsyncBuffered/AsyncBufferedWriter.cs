@@ -178,7 +178,7 @@ namespace Archivarius.AsyncBackend
             }
         }
 
-        public void WriteBytes(byte[]? bytes)
+        public void WriteArray(byte[]? bytes)
         {
             if (bytes == null)
             {
@@ -200,6 +200,11 @@ namespace Archivarius.AsyncBackend
                 
                 _buffer.Put(bytes, 0, count);
             }
+        }
+
+        public void WriteBytes(byte[] value, int offset, int count)
+        {
+            _buffer.Put(value, offset, count);
         }
     }
 }

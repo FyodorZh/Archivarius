@@ -223,7 +223,7 @@ namespace Archivarius.BinaryBackend
             }
         }
 
-        public void WriteBytes(byte[]? bytes)
+        public void WriteArray(byte[]? bytes)
         {
             Grow(4);
             if (bytes == null)
@@ -248,6 +248,13 @@ namespace Archivarius.BinaryBackend
                 Buffer.BlockCopy(bytes, 0, _buffer, _size, count);
                 _size += count;
             }
+        }
+
+        public void WriteBytes(byte[] value, int offset, int count)
+        {
+            Grow(count);
+            Buffer.BlockCopy(value, offset, _buffer, _size, count);
+            _size += count;
         }
     }
 }

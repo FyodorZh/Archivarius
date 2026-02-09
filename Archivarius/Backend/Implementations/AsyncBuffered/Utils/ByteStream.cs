@@ -146,6 +146,22 @@ namespace Archivarius
 
                 throw new IndexOutOfRangeException();
             }
+            
+            public void PopNBytes(byte[] dst, int offset, int count)
+            {
+                if (_count >= count)
+                {
+                    _count -= count;
+                    for (int i = 0; i < count; ++i)
+                    {
+                        dst[offset + i] = _buffer[(_position++) & _capacityMask];
+                    }
+
+                    return;
+                }
+
+                throw new IndexOutOfRangeException();
+            }
 
             public void Skip(int count)
             {

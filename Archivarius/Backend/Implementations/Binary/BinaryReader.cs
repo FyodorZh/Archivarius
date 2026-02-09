@@ -234,7 +234,7 @@ namespace Archivarius.BinaryBackend
             return value;
         }
         
-        public byte[]? ReadBytes()
+        public byte[]? ReadArray()
         {
             int count = ReadInt();
             if (count == 0)
@@ -250,6 +250,13 @@ namespace Archivarius.BinaryBackend
             Buffer.BlockCopy(_buffer, _position, value, 0, count);
             _position += count;
             return value;
+        }
+
+        public void ReadBytes(byte[] dst, int offset, int count)
+        {
+            Check(count);
+            Buffer.BlockCopy(_buffer, _position, dst, offset, count);
+            _position += count;
         }
     }
 }

@@ -91,7 +91,7 @@ namespace Archivarius
         
         public void Add(ref byte[]? value)
         {
-            value = _reader.ReadBytes();
+            value = _reader.ReadArray();
         }
 
         public void Add(ref Guid value)

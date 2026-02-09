@@ -17,6 +17,7 @@ namespace Archivarius
         private readonly Queue<decimal> _decimals = new Queue<decimal>();
         private readonly Queue<string?> _strings = new Queue<string?>();
         private readonly Queue<byte[]?> _arrays = new Queue<byte[]?>();
+        private readonly Queue<byte[]> _byteSequeences = new();
 
         public bool IsEmpty =>
             _booleans.Count == 0 &&
@@ -96,9 +97,19 @@ namespace Archivarius
             return _strings.Dequeue();
         }
 
-        public byte[]? ReadBytes()
+        public byte[]? ReadArray()
         {
             return _arrays.Dequeue();
+        }
+
+        public void ReadBytes(byte[] dst, int offset, int count)
+        {
+            var bytes = _byteSequeences.Dequeue();
+            if (bytes.Length != count)
+            {
+                throw new Exception();
+            }
+            Buffer.BlockCopy(bytes, 0, dst, offset, count);
         }
 
         public bool TrySetSectionUsage(bool useSections)
@@ -191,9 +202,16 @@ namespace Archivarius
             _strings.Enqueue(value);
         }
 
-        public void WriteBytes(byte[]? value)
+        public void WriteArray(byte[]? value)
         {
             _arrays.Enqueue(value);
+        }
+
+        public void WriteBytes(byte[] value, int offset, int count)
+        {
+            byte[] bytes = new byte[count];
+            Buffer.BlockCopy(value, offset, bytes, 0, count);
+            _byteSequeences.Enqueue(bytes);
         }
     }
 }

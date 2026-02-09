@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -156,7 +154,7 @@ namespace Archivarius.BinaryBackend
             }
         }
 
-        public void WriteBytes(byte[]? bytes)
+        public void WriteArray(byte[]? bytes)
         {
             if (bytes == null)
             {
@@ -178,6 +176,11 @@ namespace Archivarius.BinaryBackend
 
                 _stream.Write(bytes, 0, count);
             }
+        }
+
+        public void WriteBytes(byte[] value, int offset, int count)
+        {
+            _stream.Write(value, offset, count);
         }
     }
 }

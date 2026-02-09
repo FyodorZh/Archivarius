@@ -238,7 +238,7 @@ namespace Archivarius.BinaryBackend
             return value;
         }
         
-        public byte[]? ReadBytes()
+        public byte[]? ReadArray()
         {
             int count = ReadInt();
             if (count == 0)
@@ -257,6 +257,16 @@ namespace Archivarius.BinaryBackend
                 throw new EndOfStreamException();
             }
             return value;
+        }
+
+        public void ReadBytes(byte[] dst, int offset, int count)
+        {
+            Check(count);
+            var fact = _stream.Read(dst, offset, count);
+            if (fact != count)
+            {
+                throw new EndOfStreamException();
+            }
         }
     }
 }

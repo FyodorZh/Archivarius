@@ -78,7 +78,8 @@ namespace Archivarius.Tests
                 null,
                 new byte[]{},
                 new byte[]{1},
-                new byte[]{200,201,202}
+                new byte[]{200,201,202},
+                new ArraySegment<byte>([0,1,2,3,4], 1, 3)
             };
         }
 
@@ -133,7 +134,10 @@ namespace Archivarius.Tests
                         writer.WriteString(stringValue);
                         break;
                     case byte[] arrayValue:
-                        writer.WriteBytes(arrayValue);
+                        writer.WriteArray(arrayValue);
+                        break;
+                    case ArraySegment<byte> arraySegment:
+                        writer.WriteBytes(arraySegment.Array!, arraySegment.Offset, arraySegment.Count);
                         break;
                     case null:
                         writer.WriteString(null);
@@ -193,8 +197,16 @@ namespace Archivarius.Tests
                         Assert.That(reader.ReadString(), Is.EqualTo(stringValue));
                         break;
                     case byte[] arrayValue:
-                        Assert.That(reader.ReadBytes(), Is.EqualTo(arrayValue));
+                        Assert.That(reader.ReadArray(), Is.EqualTo(arrayValue));
                         break;
+                    case ArraySegment<byte> arraySegment:
+                    {
+                        int count = arraySegment.Count;
+                        byte[] dst = new byte[count + 2];
+                        reader.ReadBytes(dst, 1, count);
+                        Assert.That(new ArraySegment<byte>(dst, 1, count), Is.EquivalentTo(arraySegment));
+                        break;
+                    }
                     case null:
                         Assert.That(reader.ReadString(), Is.EqualTo(null));
                         break;

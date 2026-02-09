@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Archivarius
 {
@@ -14,7 +15,8 @@ namespace Archivarius
         double ReadDouble();
         decimal ReadDecimal();
         string? ReadString();
-        byte[]? ReadBytes();
+        byte[]? ReadArray();
+        void ReadBytes(byte[] dst, int offset, int count);
     }
 
     public interface IReader : ILowLevelReader

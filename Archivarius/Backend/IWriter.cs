@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Archivarius
 {
@@ -14,7 +15,8 @@ namespace Archivarius
         void WriteDouble(double value);
         void WriteDecimal(decimal value);
         void WriteString(string? value);
-        void WriteBytes(byte[]? value);
+        void WriteArray(byte[]? value);
+        void WriteBytes(byte[] value, int offset, int count);
     }
 
     public interface IWriter : ILowLevelWriter

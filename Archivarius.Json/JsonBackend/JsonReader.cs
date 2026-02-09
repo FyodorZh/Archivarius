@@ -126,7 +126,7 @@ namespace Archivarius.JsonBackend
             return res;
         }
         
-        public byte[]? ReadBytes()
+        public byte[]? ReadArray()
         {
             CheckGrow();
             var element = _currentSection[_cursor];
@@ -139,6 +139,25 @@ namespace Archivarius.JsonBackend
             var res = Convert.FromBase64String(base64);
             _cursor += 1;
             return res;
+        }
+
+        public void ReadBytes(byte[] dst, int offset, int count)
+        {
+            CheckGrow();
+            var element = _currentSection[_cursor];
+            if (element == null)
+            {
+                _cursor += 1;
+                throw new InvalidOperationException();
+            }
+            var base64 = element.GetValue<string>();
+            var res = Convert.FromBase64String(base64);
+            _cursor += 1;
+            if (count != res.Length)
+            {
+                throw new InvalidOperationException();
+            }
+            Buffer.BlockCopy(res, 0, dst, offset, count);
         }
 
         public ValueTask<bool> Preload()

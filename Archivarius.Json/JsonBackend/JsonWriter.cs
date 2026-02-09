@@ -85,7 +85,7 @@ namespace Archivarius.JsonBackend
             _currentSection.Add(value);
         }
 
-        public void WriteBytes(byte[]? value)
+        public void WriteArray(byte[]? value)
         {
             if (value == null)
             {
@@ -94,6 +94,12 @@ namespace Archivarius.JsonBackend
             }
 
             var base64 = Convert.ToBase64String(value);
+            _currentSection.Add(base64);
+        }
+
+        public void WriteBytes(byte[] value, int offset, int count)
+        {
+            var base64 = Convert.ToBase64String(value, offset, count);
             _currentSection.Add(base64);
         }
 
