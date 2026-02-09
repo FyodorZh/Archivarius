@@ -46,6 +46,7 @@ namespace Archivarius.Storage.Remote
         {
             private readonly IReadOnlyStorageBackend _roStorage;
             private readonly IStorageBackend? _writeStorage;
+            private readonly IMemoryRental _memoryRental;
             private readonly IConcurrentPool<MemoryStream> _memoryStreamsPool;
 
             public event Action<RemoteStorageCommandInfo>? OnCommand;
@@ -56,12 +57,13 @@ namespace Archivarius.Storage.Remote
                 storage.ThrowExceptions = true;
                 _roStorage = storage;
                 _writeStorage = storage as IStorageBackend;
-            
+
+                _memoryRental = memoryRental;
                 _memoryStreamsPool = memoryRental.BigObjectsPool.GetPool<MemoryStream>();
                 
                 Api.IsExists.SetProcessorAsync(IsExists);
                 Api.GetSubPath.SetProcessorAsync(GetSubPath);
-                Api.Read.SetProcessorAsync(Read);
+                Api.Read.SetProcessor(Read);
                 Api.Write.SetProcessorAsync(Write);
                 Api.Delete.SetProcessorAsync(Delete);
             }
@@ -108,38 +110,51 @@ namespace Archivarius.Storage.Remote
                 }
             }
 
-            private async Task<BytesWrapper> Read(StringWrapper request)
+            private void Read(IRequest<StringWrapper, MultiRefByteArrayWrapper> request)
             {
-                RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Read");
-                var memoryStream = _memoryStreamsPool.Acquire();
-                try
+                Task.Run(async () =>
                 {
-                    var filePath = PathFactory.BuildFile(request.Value ?? throw new Exception("FilePath is null"));
-                    var res = await _roStorage.Read(filePath, memoryStream, (stream, dst) => stream.CopyToAsync(dst));
-                    if (!res)
+                    RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Read");
+                    var memoryStream = _memoryStreamsPool.Acquire();
+                    try
+                    {
+                        var filePath = PathFactory.BuildFile(request.Data.Value ?? throw new Exception("FilePath is null"));
+                        var res = await _roStorage.Read(filePath, memoryStream, (stream, dst) => stream.CopyToAsync(dst));
+                        if (!res)
+                        {
+                            info.Finish(false);
+                            request.Fail("Failed to read data");
+                            return;
+                        }
+
+                        IMultiRefByteArray bytes = _memoryRental.ByteArraysPool.Acquire((int)memoryStream.Position);
+                        memoryStream.Position = 0;
+                        try
+                        {
+                            var _ = memoryStream.Read(bytes.Array, bytes.Offset, bytes.Count);
+                            info.Finish(true);
+                            var __ = request.Response(new MultiRefByteArrayWrapper() { Value = bytes });
+                        }
+                        finally
+                        {
+                            bytes.Release();
+                        }
+                    }
+                    catch
                     {
                         info.Finish(false);
-                        return new BytesWrapper(null);
+                        throw;
                     }
-
-                    var bytes = memoryStream.ToArray();
-                    info.Finish(true);
-                    return new BytesWrapper(bytes);
-                }
-                catch
-                {
-                    info.Finish(false);
-                    throw;
-                }
-                finally
-                {
-                    memoryStream.SetLength(0);
-                    _memoryStreamsPool.Release(memoryStream);
-                    OnCommand?.Invoke(info);
-                }
+                    finally
+                    {
+                        memoryStream.SetLength(0);
+                        _memoryStreamsPool.Release(memoryStream);
+                        OnCommand?.Invoke(info);
+                    }
+                });
             }
 
-            private async Task<BoolWrapper> Write(Pair<StringWrapper, BytesWrapper> request)
+            private async Task<BoolWrapper> Write(Pair<StringWrapper, MultiRefByteArrayWrapper> request)
             {
                 RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Write");
                 try
@@ -156,9 +171,16 @@ namespace Archivarius.Storage.Remote
                     }
 
                     var filePath = PathFactory.BuildFile(request.First.Value ?? throw new Exception("FilePath is null"));
-                    var res = await _writeStorage.Write(filePath, bytes, (stream, src) => stream.WriteAsync(src, 0, src.Length));
-                    info.Finish(res);
-                    return new BoolWrapper(res);
+                    try
+                    {
+                        var res = await _writeStorage.Write(filePath, bytes, (stream, src) => stream.WriteAsync(src.Array, src.Offset, src.Count));
+                        info.Finish(res);
+                        return new BoolWrapper(res);
+                    }
+                    finally
+                    {
+                        bytes.Release();
+                    }
                 }
                 catch
                 {

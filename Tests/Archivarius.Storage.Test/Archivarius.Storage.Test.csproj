@@ -14,7 +14,7 @@
         <PackageReference Include="NUnit.Analyzers" Version="4.7.0"/>
         <PackageReference Include="NUnit3TestAdapter" Version="5.0.0"/>
         <PackageReference Include="Pontifex" Version="0.1.0-dev.5" />
-        <PackageReference Include="Pontifex.Api" Version="0.1.0-dev.6" />
+        <PackageReference Include="Pontifex.Api" Version="0.1.0-dev.7" />
         <PackageReference Include="Pontifex.Transport.Direct" Version="0.1.0-dev.4" />
     </ItemGroup>
 

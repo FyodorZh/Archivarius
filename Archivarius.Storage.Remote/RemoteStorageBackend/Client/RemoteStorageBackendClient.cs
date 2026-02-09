@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Actuarius.Memory;
 using Archivarius.DataModels;
 using Pontifex.Abstractions.Clients;
 using Pontifex.Api;
@@ -15,6 +16,9 @@ namespace Archivarius.Storage.Remote
         private readonly RemoteStorageApi _api;
         private readonly IAckRawClient _transport;
         private readonly bool _isReadOnly;
+
+        private readonly IMemoryRental _memoryRental;
+        private readonly IConcurrentPool<MemoryStream> _memoryStreamPool;
         
         public bool ThrowExceptions { get; set; }
 
@@ -42,7 +46,7 @@ namespace Archivarius.Storage.Remote
             {
                 return null;
             }
-            if (!transport.Start(stopReason => { }))
+            if (!transport.Start(_ => { }))
             {
                 return null;
             }
@@ -55,6 +59,8 @@ namespace Archivarius.Storage.Remote
             _api = api;
             _transport = transport;
             _isReadOnly = isReadOnly;
+            _memoryRental = transport.Memory;
+            _memoryStreamPool = _memoryRental.BigObjectsPool.GetPool<MemoryStream>();
         }
 
         public async Task<bool> Read<TParam>(FilePath path, TParam param, Func<Stream, TParam, Task> reader)
@@ -64,7 +70,16 @@ namespace Archivarius.Storage.Remote
                 var res = await _api.Read.RequestAsync(new StringWrapper(path.FullName));
                 if (res.Value == null) 
                     return false;
-                await reader.Invoke(new MemoryStream(res.Value), param);
+                try
+                {
+                    MemoryStream streamToRead = new MemoryStream(res.Value.Array, res.Value.Offset, res.Value.Count, false, false);
+                    await reader.Invoke(streamToRead, param);
+                }
+                finally
+                {
+                    res.Value.Release();
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -122,17 +137,27 @@ namespace Archivarius.Storage.Remote
             {
                 throw new InvalidOperationException();
             }
-            
+
+            MemoryStream ms = _memoryStreamPool.Acquire();
             try
             {
-                MemoryStream ms = new MemoryStream();
                 await writer.Invoke(ms, param);
-                var res = await _api.Write.RequestAsync(new Pair<StringWrapper, BytesWrapper>()
+                IMultiRefByteArray bytes = _memoryRental.ByteArraysPool.Acquire((int)ms.Length);
+                try
                 {
-                    First = new StringWrapper(path.FullName),
-                    Second = new BytesWrapper(ms.ToArray())
-                });
-                return res.Value;
+                    ms.Position = 0;
+                    var _ = ms.Read(bytes.Array, bytes.Offset, bytes.Count);
+                    var res = await _api.Write.RequestAsync(new Pair<StringWrapper, MultiRefByteArrayWrapper>()
+                    {
+                        First = new StringWrapper(path.FullName),
+                        Second = new MultiRefByteArrayWrapper() { Value = bytes }
+                    });
+                    return res.Value;
+                }
+                finally
+                {
+                    bytes.Release();
+                }
             }
             catch (Exception ex)
             {
@@ -141,7 +166,13 @@ namespace Archivarius.Storage.Remote
                 {
                     throw;
                 }
+
                 return false;
+            }
+            finally
+            {
+                ms.SetLength(0);
+                _memoryStreamPool.Release(ms);
             }
         }
 
