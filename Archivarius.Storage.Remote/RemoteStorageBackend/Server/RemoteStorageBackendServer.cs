@@ -13,9 +13,9 @@ namespace Archivarius.Storage.Remote
     {
         private readonly IReadOnlySyncStorageBackend _roStorage;
         private readonly ISyncStorageBackend? _writeStorage;
-        
-        public event Action<RemoteStorageCommandInfo>? OnCommand;
 
+        public event Action<double>? WorkLoad;
+        
         public RemoteStorageBackendServer(ISyncStorageBackend storage)
         {
             _roStorage = _writeStorage = storage;
@@ -34,7 +34,7 @@ namespace Archivarius.Storage.Remote
                     var res = _writeStorage != null ? 
                         new ServerSideStorageApi(_writeStorage, transport.Memory, transport.Log) : 
                         new ServerSideStorageApi(_roStorage, transport.Memory, transport.Log);
-                    res.OnCommand += OnCommand;
+                    res.WorkLoad += (w) => WorkLoad?.Invoke(w);
                     return res;
                 }));
             return transport.Start(_ => { });
@@ -44,18 +44,27 @@ namespace Archivarius.Storage.Remote
         {
             private readonly StorageBackendLogic<UserData> _storage;
             
-            public event Action<RemoteStorageCommandInfo>? OnCommand;
+            public event Action<double>? WorkLoad;
             
             public ServerSideStorageApi(IReadOnlySyncStorageBackend storage, IMemoryRental memoryRental, ILogger logger) 
                 : base(new RemoteStorageApi(), memoryRental, logger)
             {
+                double worlkload = 0;
                 if (storage is ISyncStorageBackend wStorage)
                 {
-                    _storage = new StorageBackendLogic<UserData>(wStorage, memoryRental);
+                    _storage = new StorageBackendLogic<UserData>(wStorage, memoryRental, w =>
+                    {
+                        worlkload = worlkload * 0.95 + w * 0.05;
+                        WorkLoad?.Invoke(worlkload);
+                    } );
                 }
                 else
                 {
-                    _storage = new StorageBackendLogic<UserData>(storage, memoryRental);
+                    _storage = new StorageBackendLogic<UserData>(storage, memoryRental, w =>
+                    {
+                        worlkload = worlkload * 0.95 + w * 0.05;
+                        WorkLoad?.Invoke(worlkload);
+                    } );
                 }
 
                 Api.Disconnected += _ =>
@@ -70,9 +79,8 @@ namespace Archivarius.Storage.Remote
                 Api.Delete.SetProcessor(Delete);
             }
 
-            private void IsExists(IRequest<StringWrapper, BoolWrapper> request)
+            private void IsExists(Request<StringWrapper, BoolWrapper> request)
             {
-                RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("IsExists");
                 FilePath filePath;
                 try
                 {
@@ -81,22 +89,18 @@ namespace Archivarius.Storage.Remote
                 catch (Exception ex)
                 {
                     request.Fail(ex.Message);
-                    info.Finish(false);
-                    OnCommand?.Invoke(info);
                     return;
                 }
                 
-                var userData = _storage.GetFreeUserData() ?? new UserData(this);
+                var userData = _storage.GetFreeUserData() ?? new UserData();
                 userData.IsExistsRequest = request;
-                userData.DbgInfo = info;
                 _storage.IsExists(filePath, userData, 
                     (res, data) => data.OK_IsExistsRequest(new BoolWrapper(res)),
                     (e, data) => data.Fail_IsExistsRequest(e));
             }
 
-            private void GetSubPath(IRequest<StringWrapper, StructsArray<StringWrapper>> request)
+            private void GetSubPath(Request<StringWrapper, StructsArray<StringWrapper>> request)
             {
-                RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("GetSubPaths");
                 DirPath dirPath;
                 try
                 {
@@ -105,14 +109,11 @@ namespace Archivarius.Storage.Remote
                 catch (Exception ex)
                 {
                     request.Fail(ex.Message);
-                    info.Finish(false);
-                    OnCommand?.Invoke(info);
                     return;
                 }
 
-                var userData = _storage.GetFreeUserData() ?? new UserData(this);
+                var userData = _storage.GetFreeUserData() ?? new UserData();
                 userData.GetSubPathsRequest = request;
-                userData.DbgInfo = info;
                 _storage.GetSubPath(dirPath, userData, 
                     (res, data) =>
                     {
@@ -122,9 +123,8 @@ namespace Archivarius.Storage.Remote
                     (e, data) => data.Fail_GetSubPathsRequest(e));
             }
 
-            private void Read(IRequest<StringWrapper, MultiRefByteArrayWrapper> request)
+            private void Read(Request<StringWrapper, MultiRefByteArrayWrapper> request)
             {
-                RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Read");
                 FilePath filePath;
                 try
                 {
@@ -133,23 +133,18 @@ namespace Archivarius.Storage.Remote
                 catch (Exception ex)
                 {
                     request.Fail(ex.Message);
-                    info.Finish(false);
-                    OnCommand?.Invoke(info);
                     return;
                 }
 
-                var userData = _storage.GetFreeUserData() ?? new UserData(this);
+                var userData = _storage.GetFreeUserData() ?? new UserData();
                 userData.ReadRequest = request;
-                userData.DbgInfo = info;
                 _storage.Read(filePath, userData, 
                     (res, data) => data.OK_ReadRequest(res),
                     (e, data) => data.Fail_ReadRequest(e));
             }
 
-            private void Write(IRequest<Pair<StringWrapper, MultiRefByteArrayWrapper>, BoolWrapper> request)
+            private void Write(Request<Pair<StringWrapper, MultiRefByteArrayWrapper>, BoolWrapper> request)
             {
-                RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Write");
-                
                 FilePath filePath;
                 try
                 {
@@ -158,31 +153,24 @@ namespace Archivarius.Storage.Remote
                 catch (Exception ex)
                 {
                     request.Fail(ex.Message);
-                    info.Finish(false);
-                    OnCommand?.Invoke(info);
                     return;
                 }
 
                 if (request.Data.Second.Value == null)
                 {
                     request.Fail("Nothing to write");
-                    info.Finish(false);
-                    OnCommand?.Invoke(info);
                     return;
                 }
                 
-                var userData = _storage.GetFreeUserData() ?? new UserData(this);
+                var userData = _storage.GetFreeUserData() ?? new UserData();
                 userData.WriteRequest = request;
-                userData.DbgInfo = info;
                 _storage.Write(filePath, request.Data.Second.Value, userData, 
                     (res, data) => data.OK_WriteRequest(new BoolWrapper(res)), 
                     (e, data) => data.Fail_WriteRequest(e));
             }
 
-            private void Delete(IRequest<StringWrapper, BoolWrapper> request)
+            private void Delete(Request<StringWrapper, BoolWrapper> request)
             {
-                RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Delete");
-                
                 FilePath filePath;
                 try
                 {
@@ -191,119 +179,90 @@ namespace Archivarius.Storage.Remote
                 catch (Exception ex)
                 {
                     request.Fail(ex.Message);
-                    info.Finish(false);
-                    OnCommand?.Invoke(info);
                     return;
                 }
                 
-                var userData = _storage.GetFreeUserData() ?? new UserData(this);
+                var userData = _storage.GetFreeUserData() ?? new UserData();
                 userData.EraseRequest = request;
-                userData.DbgInfo = info;
                 _storage.Erase(filePath, userData, 
                     (res, data) => data.OK_EraseRequest(new BoolWrapper(res)), 
                     (e, data) => data.Fail_EraseRequest(e));
             }
-            
-            private void InvokeOnCommand(RemoteStorageCommandInfo info)
-            {
-                if (OnCommand != null)
-                {
-                    OnCommand(info);
-                }
-            }
 
             private class UserData
             {
-                public readonly ServerSideStorageApi Owner;
-                public IRequest<StringWrapper, BoolWrapper>? IsExistsRequest;
-                public IRequest<StringWrapper, StructsArray<StringWrapper>>? GetSubPathsRequest;
-                public IRequest<StringWrapper, MultiRefByteArrayWrapper>? ReadRequest;
-                public IRequest<Pair<StringWrapper, MultiRefByteArrayWrapper>, BoolWrapper>? WriteRequest;
-                public IRequest<StringWrapper, BoolWrapper>? EraseRequest;
-                public RemoteStorageCommandInfo DbgInfo;
-                
-                public UserData(ServerSideStorageApi owner)
-                {
-                    Owner = owner;
-                }
+                public Request<StringWrapper, BoolWrapper>? IsExistsRequest;
+                public Request<StringWrapper, StructsArray<StringWrapper>>? GetSubPathsRequest;
+                public Request<StringWrapper, MultiRefByteArrayWrapper>? ReadRequest;
+                public Request<Pair<StringWrapper, MultiRefByteArrayWrapper>, BoolWrapper>? WriteRequest;
+                public Request<StringWrapper, BoolWrapper>? EraseRequest;
                 
                 public void OK_IsExistsRequest(BoolWrapper res)
                 {
-                    IsExistsRequest!.Response(res);
-                    DbgInfo.Finish(true);
-                    Owner.InvokeOnCommand(DbgInfo);
+                    IsExistsRequest!.Value.Response(res);
+                    IsExistsRequest = null;
                 }
                 
                 public void OK_GetSubPathsRequest(StructsArray<StringWrapper> res)
                 {
-                    GetSubPathsRequest!.Response(res);
-                    DbgInfo.Finish(true);
-                    Owner.InvokeOnCommand(DbgInfo);
+                    GetSubPathsRequest!.Value.Response(res);
+                    GetSubPathsRequest = null;
                 }
                 
                 public void OK_ReadRequest(IMultiRefByteArray? res)
                 {
                     if (res == null)
                     {
-                        ReadRequest!.Fail("Failed to read file");
-                        DbgInfo.Finish(false);
+                        ReadRequest!.Value.Fail("Failed to read file");
                     }
                     else
                     {
-                        ReadRequest!.Response(new MultiRefByteArrayWrapper() { Value = res });
+                        ReadRequest!.Value.Response(new MultiRefByteArrayWrapper() { Value = res });
                         res.Release();
-                        DbgInfo.Finish(true);
                     }
-                    Owner.InvokeOnCommand(DbgInfo);
+                    ReadRequest = null;
                 }
                 
                 public void OK_WriteRequest(BoolWrapper res)
                 {
-                    WriteRequest!.Response(res);
-                    DbgInfo.Finish(true);
-                    Owner.InvokeOnCommand(DbgInfo);
+                    WriteRequest!.Value.Response(res);
+                    WriteRequest = null;
                 }
 
                 public void OK_EraseRequest(BoolWrapper res)
                 {
-                    EraseRequest!.Response(res);
-                    DbgInfo.Finish(true);
-                    Owner.InvokeOnCommand(DbgInfo);
+                    EraseRequest!.Value.Response(res);
+                    EraseRequest = null;
                 }
                 
                 public void Fail_IsExistsRequest(Exception ex)
                 {
-                    IsExistsRequest!.Fail(ex.Message);
-                    DbgInfo.Finish(false);
-                    Owner.InvokeOnCommand(DbgInfo);
+                    IsExistsRequest!.Value.Fail(ex.Message);
+                    IsExistsRequest = null;
                 }
                 
                 public void Fail_GetSubPathsRequest(Exception ex)
                 {
-                    GetSubPathsRequest!.Fail(ex.Message);
-                    DbgInfo.Finish(false);
-                    Owner.InvokeOnCommand(DbgInfo);
+                    GetSubPathsRequest!.Value.Fail(ex.Message);
+                    GetSubPathsRequest = null;
                 }
                 
                 public void Fail_ReadRequest(Exception ex)
                 {
-                    ReadRequest!.Fail(ex.Message);
-                    DbgInfo.Finish(false);
-                    Owner.InvokeOnCommand(DbgInfo);
+                    ReadRequest!.Value.Fail(ex.Message);
+                    ReadRequest = null;
                 }
                 
                 public void Fail_WriteRequest(Exception ex)
                 {
-                    WriteRequest!.Fail(ex.Message);
-                    DbgInfo.Finish(false);
-                    Owner.InvokeOnCommand(DbgInfo);
+                    WriteRequest!.Value.Fail(ex.Message);
+                    WriteRequest = null;
                 }
 
                 public void Fail_EraseRequest(Exception ex)
                 {
-                    EraseRequest!.Fail(ex.Message);
-                    DbgInfo.Finish(false);
-                    Owner.InvokeOnCommand(DbgInfo);
+                    EraseRequest!.Value.Fail(ex.Message);
+                    EraseRequest = null;
                 }
             }
         }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Actuarius.Collections;
@@ -19,7 +20,8 @@ namespace Archivarius.Storage.Remote
         private readonly ISyncStorageBackend? _storageBackend;
         
         private readonly IMemoryRental _memoryRental;
-        
+        private readonly Action<double>? _updateWorkloadMetric;
+
         private readonly MemoryStream _readBuffer = new();
         private IMultiRefByteArray? _readData;
         
@@ -29,14 +31,14 @@ namespace Archivarius.Storage.Remote
         private readonly SystemConcurrentStack<TUserData> _freeUserData = new SystemConcurrentStack<TUserData>();
         
         private volatile bool _stop;
-        
-        public StorageBackendLogic(ISyncStorageBackend storageBackend, IMemoryRental memoryRental)
-            :this((IReadOnlySyncStorageBackend)storageBackend, memoryRental)
+
+        public StorageBackendLogic(ISyncStorageBackend storageBackend, IMemoryRental memoryRental, Action<double>? updateWorkloadMetric)
+            :this((IReadOnlySyncStorageBackend)storageBackend, memoryRental, updateWorkloadMetric)
         {
             _storageBackend = storageBackend;
         }
         
-        public StorageBackendLogic(IReadOnlySyncStorageBackend storageBackend, IMemoryRental memoryRental)
+        public StorageBackendLogic(IReadOnlySyncStorageBackend storageBackend, IMemoryRental memoryRental, Action<double>? updateWorkloadMetric)
         {
             storageBackend.ThrowExceptions = true;
             
@@ -44,7 +46,8 @@ namespace Archivarius.Storage.Remote
             _resetEvent = new ManualResetEventSlim(false);
 
             _memoryRental = memoryRental;
-            
+            _updateWorkloadMetric = updateWorkloadMetric;
+
             Thread thread = new Thread(Work, 128 * 1024);
             thread.Start();
         }
@@ -67,9 +70,14 @@ namespace Archivarius.Storage.Remote
 
         private void Work()
         {
+            Stopwatch totalTime = new Stopwatch();
+            Stopwatch workTime = new Stopwatch();
             while (true)
             {
+                totalTime.Restart();
                 _resetEvent.Wait();
+                _resetEvent.Reset();
+                workTime.Restart();
                 if (_stop)
                 {
                     break;
@@ -83,8 +91,17 @@ namespace Archivarius.Storage.Remote
                     }
                     command.Run(this);
                 }
-                
-                _resetEvent.Reset();
+
+                if (_updateWorkloadMetric != null)
+                {
+                    double total = totalTime.Elapsed.TotalSeconds;
+                    if (total > 1e-5)
+                    {
+                        double work = workTime.Elapsed.TotalSeconds;
+                        double k = work / total;
+                        _updateWorkloadMetric.Invoke(k);
+                    }
+                }
             }
         }
         
