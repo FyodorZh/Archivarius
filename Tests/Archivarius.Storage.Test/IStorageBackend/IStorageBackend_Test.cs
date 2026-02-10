@@ -14,7 +14,7 @@ namespace Archivarius.Storage.Test
     public class IStorageBackend_Test
     {
         [Test]
-        public async Task Test_File()
+        public async Task Test_AsyncFile()
         {
             var commands = CommandsGenerator.Generate(10000, 123);
             Tester<IStorageBackend> tester = new();
@@ -41,22 +41,26 @@ namespace Archivarius.Storage.Test
             Log.AddConsumer(new ConsoleConsumer());
             ILogger logger = new StaticLogger();
 
-            IStorageBackend remoteBackend;
-            {
-                AckRawDirectServer directServer = new AckRawDirectServer("test", logger, MemoryRental.Shared);
-                RemoteStorageBackendServer backend = new RemoteStorageBackendServer(new InMemoryStorageBackend());
-                backend.Setup(directServer);
-                
-                AckRawDirectClient directClient = new AckRawDirectClient("test", logger, MemoryRental.Shared);
-                remoteBackend = RemoteStorageBackendClient.Construct(directClient) ?? throw new Exception();
-            }
+            AckRawDirectServer directServer = new AckRawDirectServer("test", logger, MemoryRental.Shared);
+            RemoteStorageBackendServer backend = new RemoteStorageBackendServer(new InMemorySyncStorageBackend());
+            backend.Setup(directServer);
+            
+            AckRawDirectClient directClient = new AckRawDirectClient("test", logger, MemoryRental.Shared);
+            IStorageBackend remoteBackend = RemoteStorageBackendClient.Construct(directClient) ?? throw new Exception();
             
             IStorageBackend etalon = new InMemoryStorageBackend();
-            
-            remoteBackend.ThrowExceptions = false;
-            etalon.ThrowExceptions = false;
-            var res = await tester.Run(commands, remoteBackend, etalon);
-            Assert.That(res, Is.True);
+
+            try
+            {
+                remoteBackend.ThrowExceptions = false;
+                etalon.ThrowExceptions = false;
+                var res = await tester.Run(commands, remoteBackend, etalon);
+                Assert.That(res, Is.True);
+            }
+            finally
+            {
+                directClient.Stop();
+            }
         }
     }
 }

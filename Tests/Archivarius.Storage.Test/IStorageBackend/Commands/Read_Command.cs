@@ -36,7 +36,8 @@ namespace Archivarius.Storage.Test.StorageBackend
 
             public bool Equals(ByteArray other)
             {
-                return Bytes.SequenceEqual(other.Bytes);
+                bool res =  Bytes.SequenceEqual(other.Bytes);
+                return res;
             }
         }
     }

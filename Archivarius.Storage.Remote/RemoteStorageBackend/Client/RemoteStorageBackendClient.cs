@@ -67,7 +67,7 @@ namespace Archivarius.Storage.Remote
         {
             try
             {
-                var res = await _api.Read.RequestAsync(new StringWrapper(path.FullName));
+                var res = await _api.Read.RequestAsync(new StringWrapper(path.FullName), TimeSpan.FromDays(1));
                 if (res.Value == null) 
                     return false;
                 try
@@ -97,7 +97,7 @@ namespace Archivarius.Storage.Remote
         {
             try
             {
-                var res = await _api.IsExists.RequestAsync(new StringWrapper(path.FullName));
+                var res = await _api.IsExists.RequestAsync(new StringWrapper(path.FullName), TimeSpan.FromDays(1));
                 return res.Value;
             }
             catch (Exception ex)
@@ -115,7 +115,7 @@ namespace Archivarius.Storage.Remote
         {
             try
             {
-                var res = await _api.GetSubPath.RequestAsync(new StringWrapper(path.FullName));
+                var res = await _api.GetSubPath.RequestAsync(new StringWrapper(path.FullName), TimeSpan.FromDays(1));
                 if (res.Value == null)
                     return Array.Empty<FilePath>();
                 return res.Value.Select(s => PathFactory.BuildFile(s.Value!)).ToArray();
@@ -151,7 +151,7 @@ namespace Archivarius.Storage.Remote
                     {
                         First = new StringWrapper(path.FullName),
                         Second = new MultiRefByteArrayWrapper() { Value = bytes }
-                    });
+                    }, TimeSpan.FromDays(1));
                     return res.Value;
                 }
                 finally
@@ -185,7 +185,7 @@ namespace Archivarius.Storage.Remote
 
             try
             {
-                var res = await _api.Delete.RequestAsync(new StringWrapper() { Value = path.FullName });
+                var res = await _api.Delete.RequestAsync(new StringWrapper() { Value = path.FullName }, TimeSpan.FromDays(1));
                 return res.Value;
             }
             catch (Exception ex)

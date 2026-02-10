@@ -1,7 +1,5 @@
 using System;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Actuarius.Memory;
 using Archivarius.DataModels;
 using Pontifex.Abstractions.Servers;
@@ -13,17 +11,17 @@ namespace Archivarius.Storage.Remote
 {
     public class RemoteStorageBackendServer
     {
-        private readonly IReadOnlyStorageBackend _roStorage;
-        private readonly IStorageBackend? _writeStorage;
+        private readonly IReadOnlySyncStorageBackend _roStorage;
+        private readonly ISyncStorageBackend? _writeStorage;
         
         public event Action<RemoteStorageCommandInfo>? OnCommand;
 
-        public RemoteStorageBackendServer(IStorageBackend storage)
+        public RemoteStorageBackendServer(ISyncStorageBackend storage)
         {
             _roStorage = _writeStorage = storage;
         }
         
-        public RemoteStorageBackendServer(IReadOnlyStorageBackend storage)
+        public RemoteStorageBackendServer(IReadOnlySyncStorageBackend storage)
         {
             _roStorage = storage;
         }
@@ -44,178 +42,268 @@ namespace Archivarius.Storage.Remote
 
         private class ServerSideStorageApi : ServerSideApi<RemoteStorageApi>
         {
-            private readonly IReadOnlyStorageBackend _roStorage;
-            private readonly IStorageBackend? _writeStorage;
-            private readonly IMemoryRental _memoryRental;
-            private readonly IConcurrentPool<MemoryStream> _memoryStreamsPool;
-
+            private readonly StorageBackendLogic<UserData> _storage;
+            
             public event Action<RemoteStorageCommandInfo>? OnCommand;
             
-            public ServerSideStorageApi(IReadOnlyStorageBackend storage, IMemoryRental memoryRental, ILogger logger) 
+            public ServerSideStorageApi(IReadOnlySyncStorageBackend storage, IMemoryRental memoryRental, ILogger logger) 
                 : base(new RemoteStorageApi(), memoryRental, logger)
             {
-                storage.ThrowExceptions = true;
-                _roStorage = storage;
-                _writeStorage = storage as IStorageBackend;
+                if (storage is ISyncStorageBackend wStorage)
+                {
+                    _storage = new StorageBackendLogic<UserData>(wStorage, memoryRental);
+                }
+                else
+                {
+                    _storage = new StorageBackendLogic<UserData>(storage, memoryRental);
+                }
 
-                _memoryRental = memoryRental;
-                _memoryStreamsPool = memoryRental.BigObjectsPool.GetPool<MemoryStream>();
+                Api.Disconnected += _ =>
+                {
+                    _storage.Dispose();
+                };
                 
-                Api.IsExists.SetProcessorAsync(IsExists);
-                Api.GetSubPath.SetProcessorAsync(GetSubPath);
+                Api.IsExists.SetProcessor(IsExists);
+                Api.GetSubPath.SetProcessor(GetSubPath);
                 Api.Read.SetProcessor(Read);
-                Api.Write.SetProcessorAsync(Write);
-                Api.Delete.SetProcessorAsync(Delete);
+                Api.Write.SetProcessor(Write);
+                Api.Delete.SetProcessor(Delete);
             }
 
-            private async Task<BoolWrapper> IsExists(StringWrapper request)
+            private void IsExists(IRequest<StringWrapper, BoolWrapper> request)
             {
                 RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("IsExists");
+                FilePath filePath;
                 try
                 {
-                    var filePath = PathFactory.BuildFile(request.Value ?? throw new Exception("FilePath is null"));
-                    var res = await _roStorage.IsExists(filePath);
-                    info.Finish(true);
-                    return new BoolWrapper(res);
+                    filePath = PathFactory.BuildFile(request.Data.Value ?? throw new Exception("FilePath is null"));
                 }
-                catch
+                catch (Exception ex)
                 {
+                    request.Fail(ex.Message);
                     info.Finish(false);
-                    throw;
-                }
-                finally
-                {
                     OnCommand?.Invoke(info);
+                    return;
                 }
+                
+                var userData = _storage.GetFreeUserData() ?? new UserData(this);
+                userData.IsExistsRequest = request;
+                userData.DbgInfo = info;
+                _storage.IsExists(filePath, userData, 
+                    (res, data) => data.OK_IsExistsRequest(new BoolWrapper(res)),
+                    (e, data) => data.Fail_IsExistsRequest(e));
             }
 
-            private async Task<StructsArray<StringWrapper>> GetSubPath(StringWrapper request)
+            private void GetSubPath(IRequest<StringWrapper, StructsArray<StringWrapper>> request)
             {
                 RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("GetSubPaths");
+                DirPath dirPath;
                 try
                 {
-                    var dirPath = PathFactory.BuildDir(request.Value ?? throw new Exception("DirPath is null"));
-                    var res = await _roStorage.GetSubPaths(dirPath);
-                    info.Finish(true);
-                    return new StructsArray<StringWrapper>(res.Select(fPath => new StringWrapper(fPath.FullName)).ToArray());
+                    dirPath = PathFactory.BuildDir(request.Data.Value ?? throw new Exception("DirPath is null"));
                 }
-                catch
+                catch (Exception ex)
                 {
+                    request.Fail(ex.Message);
                     info.Finish(false);
-                    throw;
-                }
-                finally
-                {
                     OnCommand?.Invoke(info);
+                    return;
                 }
+
+                var userData = _storage.GetFreeUserData() ?? new UserData(this);
+                userData.GetSubPathsRequest = request;
+                userData.DbgInfo = info;
+                _storage.GetSubPath(dirPath, userData, 
+                    (res, data) =>
+                    {
+                        var model = new StructsArray<StringWrapper>(res.Select(fPath => new StringWrapper(fPath.FullName)).ToArray());
+                        data.OK_GetSubPathsRequest(model);
+                    },
+                    (e, data) => data.Fail_GetSubPathsRequest(e));
             }
 
             private void Read(IRequest<StringWrapper, MultiRefByteArrayWrapper> request)
             {
-                Task.Run(async () =>
+                RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Read");
+                FilePath filePath;
+                try
                 {
-                    RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Read");
-                    var memoryStream = _memoryStreamsPool.Acquire();
-                    try
-                    {
-                        var filePath = PathFactory.BuildFile(request.Data.Value ?? throw new Exception("FilePath is null"));
-                        var res = await _roStorage.Read(filePath, memoryStream, (stream, dst) => stream.CopyToAsync(dst));
-                        if (!res)
-                        {
-                            info.Finish(false);
-                            request.Fail("Failed to read data");
-                            return;
-                        }
+                    filePath = PathFactory.BuildFile(request.Data.Value ?? throw new Exception("FilePath is null"));
+                }
+                catch (Exception ex)
+                {
+                    request.Fail(ex.Message);
+                    info.Finish(false);
+                    OnCommand?.Invoke(info);
+                    return;
+                }
 
-                        IMultiRefByteArray bytes = _memoryRental.ByteArraysPool.Acquire((int)memoryStream.Position);
-                        memoryStream.Position = 0;
-                        try
-                        {
-                            var _ = memoryStream.Read(bytes.Array, bytes.Offset, bytes.Count);
-                            info.Finish(true);
-                            var __ = request.Response(new MultiRefByteArrayWrapper() { Value = bytes });
-                        }
-                        finally
-                        {
-                            bytes.Release();
-                        }
-                    }
-                    catch
-                    {
-                        info.Finish(false);
-                        throw;
-                    }
-                    finally
-                    {
-                        memoryStream.SetLength(0);
-                        _memoryStreamsPool.Release(memoryStream);
-                        OnCommand?.Invoke(info);
-                    }
-                });
+                var userData = _storage.GetFreeUserData() ?? new UserData(this);
+                userData.ReadRequest = request;
+                userData.DbgInfo = info;
+                _storage.Read(filePath, userData, 
+                    (res, data) => data.OK_ReadRequest(res),
+                    (e, data) => data.Fail_ReadRequest(e));
             }
 
-            private async Task<BoolWrapper> Write(Pair<StringWrapper, MultiRefByteArrayWrapper> request)
+            private void Write(IRequest<Pair<StringWrapper, MultiRefByteArrayWrapper>, BoolWrapper> request)
             {
                 RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Write");
+                
+                FilePath filePath;
                 try
                 {
-                    if (_writeStorage == null)
-                    {
-                        throw new Exception("Write is not supported");
-                    }
-
-                    var bytes = request.Second.Value;
-                    if (bytes == null)
-                    {
-                        throw new Exception("Data is null");
-                    }
-
-                    var filePath = PathFactory.BuildFile(request.First.Value ?? throw new Exception("FilePath is null"));
-                    try
-                    {
-                        var res = await _writeStorage.Write(filePath, bytes, (stream, src) => stream.WriteAsync(src.Array, src.Offset, src.Count));
-                        info.Finish(res);
-                        return new BoolWrapper(res);
-                    }
-                    finally
-                    {
-                        bytes.Release();
-                    }
+                    filePath = PathFactory.BuildFile(request.Data.First.Value ?? throw new Exception("FilePath is null"));
                 }
-                catch
+                catch (Exception ex)
                 {
+                    request.Fail(ex.Message);
                     info.Finish(false);
-                    throw;
-                }
-                finally
-                {
                     OnCommand?.Invoke(info);
+                    return;
+                }
+
+                if (request.Data.Second.Value == null)
+                {
+                    request.Fail("Nothing to write");
+                    info.Finish(false);
+                    OnCommand?.Invoke(info);
+                    return;
+                }
+                
+                var userData = _storage.GetFreeUserData() ?? new UserData(this);
+                userData.WriteRequest = request;
+                userData.DbgInfo = info;
+                _storage.Write(filePath, request.Data.Second.Value, userData, 
+                    (res, data) => data.OK_WriteRequest(new BoolWrapper(res)), 
+                    (e, data) => data.Fail_WriteRequest(e));
+            }
+
+            private void Delete(IRequest<StringWrapper, BoolWrapper> request)
+            {
+                RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Delete");
+                
+                FilePath filePath;
+                try
+                {
+                    filePath = PathFactory.BuildFile(request.Data.Value ?? throw new Exception("FilePath is null"));
+                }
+                catch (Exception ex)
+                {
+                    request.Fail(ex.Message);
+                    info.Finish(false);
+                    OnCommand?.Invoke(info);
+                    return;
+                }
+                
+                var userData = _storage.GetFreeUserData() ?? new UserData(this);
+                userData.EraseRequest = request;
+                userData.DbgInfo = info;
+                _storage.Erase(filePath, userData, 
+                    (res, data) => data.OK_EraseRequest(new BoolWrapper(res)), 
+                    (e, data) => data.Fail_EraseRequest(e));
+            }
+            
+            private void InvokeOnCommand(RemoteStorageCommandInfo info)
+            {
+                if (OnCommand != null)
+                {
+                    OnCommand(info);
                 }
             }
 
-            private async Task<BoolWrapper> Delete(StringWrapper request)
+            private class UserData
             {
-                RemoteStorageCommandInfo info = new RemoteStorageCommandInfo("Delete");
-                try
+                public readonly ServerSideStorageApi Owner;
+                public IRequest<StringWrapper, BoolWrapper>? IsExistsRequest;
+                public IRequest<StringWrapper, StructsArray<StringWrapper>>? GetSubPathsRequest;
+                public IRequest<StringWrapper, MultiRefByteArrayWrapper>? ReadRequest;
+                public IRequest<Pair<StringWrapper, MultiRefByteArrayWrapper>, BoolWrapper>? WriteRequest;
+                public IRequest<StringWrapper, BoolWrapper>? EraseRequest;
+                public RemoteStorageCommandInfo DbgInfo;
+                
+                public UserData(ServerSideStorageApi owner)
                 {
-                    if (_writeStorage == null)
+                    Owner = owner;
+                }
+                
+                public void OK_IsExistsRequest(BoolWrapper res)
+                {
+                    IsExistsRequest!.Response(res);
+                    DbgInfo.Finish(true);
+                    Owner.InvokeOnCommand(DbgInfo);
+                }
+                
+                public void OK_GetSubPathsRequest(StructsArray<StringWrapper> res)
+                {
+                    GetSubPathsRequest!.Response(res);
+                    DbgInfo.Finish(true);
+                    Owner.InvokeOnCommand(DbgInfo);
+                }
+                
+                public void OK_ReadRequest(IMultiRefByteArray? res)
+                {
+                    if (res == null)
                     {
-                        throw new Exception("Delete is not supported");
+                        ReadRequest!.Fail("Failed to read file");
+                        DbgInfo.Finish(false);
                     }
+                    else
+                    {
+                        ReadRequest!.Response(new MultiRefByteArrayWrapper() { Value = res });
+                        res.Release();
+                        DbgInfo.Finish(true);
+                    }
+                    Owner.InvokeOnCommand(DbgInfo);
+                }
+                
+                public void OK_WriteRequest(BoolWrapper res)
+                {
+                    WriteRequest!.Response(res);
+                    DbgInfo.Finish(true);
+                    Owner.InvokeOnCommand(DbgInfo);
+                }
 
-                    var filePath = PathFactory.BuildFile(request.Value ?? throw new Exception("FilePath is null"));
-                    var res = await _writeStorage.Erase(filePath);
-                    info.Finish(res);
-                    return new BoolWrapper(res);
-                }
-                catch
+                public void OK_EraseRequest(BoolWrapper res)
                 {
-                    info.Finish(false);
-                    throw;
+                    EraseRequest!.Response(res);
+                    DbgInfo.Finish(true);
+                    Owner.InvokeOnCommand(DbgInfo);
                 }
-                finally
+                
+                public void Fail_IsExistsRequest(Exception ex)
                 {
-                    OnCommand?.Invoke(info);
+                    IsExistsRequest!.Fail(ex.Message);
+                    DbgInfo.Finish(false);
+                    Owner.InvokeOnCommand(DbgInfo);
+                }
+                
+                public void Fail_GetSubPathsRequest(Exception ex)
+                {
+                    GetSubPathsRequest!.Fail(ex.Message);
+                    DbgInfo.Finish(false);
+                    Owner.InvokeOnCommand(DbgInfo);
+                }
+                
+                public void Fail_ReadRequest(Exception ex)
+                {
+                    ReadRequest!.Fail(ex.Message);
+                    DbgInfo.Finish(false);
+                    Owner.InvokeOnCommand(DbgInfo);
+                }
+                
+                public void Fail_WriteRequest(Exception ex)
+                {
+                    WriteRequest!.Fail(ex.Message);
+                    DbgInfo.Finish(false);
+                    Owner.InvokeOnCommand(DbgInfo);
+                }
+
+                public void Fail_EraseRequest(Exception ex)
+                {
+                    EraseRequest!.Fail(ex.Message);
+                    DbgInfo.Finish(false);
+                    Owner.InvokeOnCommand(DbgInfo);
                 }
             }
         }
