@@ -9,18 +9,12 @@ using Actuarius.Memory;
 
 namespace Archivarius.Storage.Remote
 {
-    internal enum CommandType
-    {
-        Read, IsExists, GetSubPath, Write, Erase
-    }
-    
     public class StorageBackendLogic<TUserData> : IDisposable
     {
         private readonly IReadOnlySyncStorageBackend _roStorageBackend;
         private readonly ISyncStorageBackend? _storageBackend;
         
         private readonly IMemoryRental _memoryRental;
-        private readonly Action<double>? _updateWorkloadMetric;
 
         private readonly MemoryStream _readBuffer = new();
         private IMultiRefByteArray? _readData;
@@ -32,13 +26,15 @@ namespace Archivarius.Storage.Remote
         
         private volatile bool _stop;
 
-        public StorageBackendLogic(ISyncStorageBackend storageBackend, IMemoryRental memoryRental, Action<double>? updateWorkloadMetric)
-            :this((IReadOnlySyncStorageBackend)storageBackend, memoryRental, updateWorkloadMetric)
+        private readonly Action<CommandReport>? _commandReportProcessor;
+
+        public StorageBackendLogic(ISyncStorageBackend storageBackend, IMemoryRental memoryRental, Action<CommandReport>? commandReportProcessor)
+            :this((IReadOnlySyncStorageBackend)storageBackend, memoryRental, commandReportProcessor)
         {
             _storageBackend = storageBackend;
         }
         
-        public StorageBackendLogic(IReadOnlySyncStorageBackend storageBackend, IMemoryRental memoryRental, Action<double>? updateWorkloadMetric)
+        public StorageBackendLogic(IReadOnlySyncStorageBackend storageBackend, IMemoryRental memoryRental, Action<CommandReport>? commandReportProcessor)
         {
             storageBackend.ThrowExceptions = true;
             
@@ -46,7 +42,8 @@ namespace Archivarius.Storage.Remote
             _resetEvent = new ManualResetEventSlim(false);
 
             _memoryRental = memoryRental;
-            _updateWorkloadMetric = updateWorkloadMetric;
+
+            _commandReportProcessor = commandReportProcessor;
 
             Thread thread = new Thread(Work, 128 * 1024);
             thread.Start();
@@ -70,37 +67,26 @@ namespace Archivarius.Storage.Remote
 
         private void Work()
         {
-            Stopwatch totalTime = new Stopwatch();
-            Stopwatch workTime = new Stopwatch();
+            Stopwatch sw = new Stopwatch();
             while (true)
             {
-                totalTime.Restart();
                 _resetEvent.Wait();
                 _resetEvent.Reset();
-                workTime.Restart();
                 if (_stop)
                 {
                     break;
                 }
-
+                
                 while (_commandsQueue.TryPop(out Command command))
                 {
                     if (_stop)
                     {
                         break;
                     }
-                    command.Run(this);
-                }
-
-                if (_updateWorkloadMetric != null)
-                {
-                    double total = totalTime.Elapsed.TotalSeconds;
-                    if (total > 1e-5)
-                    {
-                        double work = workTime.Elapsed.TotalSeconds;
-                        double k = work / total;
-                        _updateWorkloadMetric.Invoke(k);
-                    }
+                    sw.Restart();
+                    bool isOk = command.Run(this);
+                    sw.Stop();
+                    _commandReportProcessor?.Invoke(new CommandReport() { Type = command.Type, Success = isOk, Duration = sw.Elapsed });
                 }
             }
         }
@@ -156,6 +142,8 @@ namespace Archivarius.Storage.Remote
             
             private Action<Exception, TUserData> _fail;
 
+            public CommandType Type => _type;
+
             public void Free()
             {
                 _bytesToWrite?.Release();
@@ -187,12 +175,11 @@ namespace Archivarius.Storage.Remote
                 return new Command() { _type = CommandType.Erase, _filePath = path, _userData = userData, _boolFinish = onFinish, _fail = onFail};
             }
 
-            public void Run(StorageBackendLogic<TUserData> logic)
+            public bool Run(StorageBackendLogic<TUserData> logic)
             {
                 switch (_type)
                 {
                     case CommandType.Read:
-                    {
                         try
                         {
                             bool res = logic._roStorageBackend.Read(_filePath!, logic, (stream, l) =>
@@ -207,86 +194,95 @@ namespace Archivarius.Storage.Remote
                                     throw new Exception("Failed to read data. Internal error");
                                 }
                             });
-                            _bytesFinish!.Invoke(res ? logic._readData : null, _userData);
+                            if (!res)
+                            {
+                                _fail.Invoke(new Exception("Failed to read data"), _userData);
+                                return false;
+                            }
+                            _bytesFinish!.Invoke(logic._readData, _userData);
+                            return true;
                         }
                         catch (Exception ex)
                         {
                             logic._readData?.Release();
                             _fail.Invoke(ex, _userData);
+                            return false;
                         }
                         finally
                         {
                             logic._readData = null;
                         }
-                        break;
-                    }
                     case CommandType.IsExists:
-                    {
                         try
                         {
                             bool res = logic._roStorageBackend.IsExists(_filePath!);
                             _boolFinish!.Invoke(res, _userData);
+                            return true;
                         }
                         catch (Exception ex)
                         {
                             _fail.Invoke(ex, _userData);
+                            return false;
                         }
-                        break;
-                    }
                     case CommandType.GetSubPath:
-                    {
                         try
                         {
                             var res = logic._roStorageBackend.GetSubPaths(_dirPath!);
                             _pathsFinish!.Invoke(res, _userData);
+                            return true;
                         }
                         catch (Exception ex)
                         {
                             _fail.Invoke(ex, _userData);
+                            return false;
                         }
-                        break;
-                    }
                     case CommandType.Write:
-                    {
                         try
                         {
                             if (logic._storageBackend == null)
                             {
                                 _fail.Invoke(new InvalidOperationException("Failed to write to ReadOnly backend"), _userData);
-                                return;
+                                return false;
                             }
 
                             var res = logic._storageBackend.Write(_filePath!, _bytesToWrite!, (stream, bytes) => { stream.Write(bytes.Array, bytes.Offset, bytes.Count); });
-                            _boolFinish!.Invoke(res, _userData);
+                            if (res)
+                            {
+                                _boolFinish!.Invoke(res, _userData);
+                            }
+                            else
+                            {
+                                _fail.Invoke(new Exception("Faield to write data"), _userData);
+                            }
+
+                            return res;
                         }
                         catch (Exception ex)
                         {
                             _fail.Invoke(ex, _userData);
+                            return false;
                         }
                         finally
                         {
                             _bytesToWrite!.Release();
                         }
-                        break;
-                    }
                     case CommandType.Erase:
-                    {
                         try
                         {
                             if (logic._storageBackend == null)
                             {
                                 _fail.Invoke(new InvalidOperationException("Failed to erase from ReadOnly backend"), _userData);
-                                return;
+                                return false;
                             }
                             var res = logic._storageBackend.Erase(_filePath!);
                             _boolFinish!.Invoke(res, _userData);
+                            return true;
                         }
                         catch (Exception ex)
                         {
                             _fail.Invoke(ex, _userData);
+                            return false;
                         }
-                        break;
-                    }
                     default:
                         throw new InvalidOperationException();
                 }

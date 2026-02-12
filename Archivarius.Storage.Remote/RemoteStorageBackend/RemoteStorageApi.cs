@@ -5,7 +5,7 @@ using Pontifex.Api;
 
 namespace Archivarius.Storage.Remote
 {
-    internal class RemoteStorageApi : ApiRoot
+    public class RemoteStorageApi : ApiRoot
     {
         public readonly RRDecl<StringWrapper, StructsArray<StringWrapper>> GetSubPath = new ();
         public readonly RRDecl<StringWrapper, BoolWrapper> IsExists = new ();
