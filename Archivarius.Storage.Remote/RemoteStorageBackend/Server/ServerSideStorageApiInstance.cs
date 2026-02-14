@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using Actuarius.Memory;
 using Archivarius.DataModels;
 using Pontifex.Abstractions;
@@ -11,15 +12,21 @@ namespace Archivarius.Storage.Remote
 {
     public interface IServerSideStorageApiInstance
     {
+        int InstanceId { get; }
         event Action<CommandReport>? OnCommand;
-        IEndPoint Endpoint { get; }
+        IEndPoint RemoteEndpoint { get; }
     }
     
     internal class ServerSideStorageApiInstance : ServerSideApiInstance<RemoteStorageApi>, IServerSideStorageApiInstance
     {
+        private static int _nextInstanceId;
         private readonly StorageBackendLogic<UserData> _storage;
 
         public event Action<CommandReport>? OnCommand;
+
+        public IEndPoint RemoteEndpoint => Endpoint;
+
+        public int InstanceId { get; } = Interlocked.Increment(ref _nextInstanceId);
 
         public ServerSideStorageApiInstance(IReadOnlySyncStorageBackend storage, IMemoryRental memoryRental, ILogger logger)
             : base(new RemoteStorageApi(), memoryRental, logger)
