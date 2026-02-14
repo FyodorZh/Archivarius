@@ -33,21 +33,24 @@ namespace Archivarius
         IHierarchicalDeserializer_MonomorphicParams SetMonomorphic();
         IHierarchicalDeserializer_PolymorphicParams SetPolymorphic(ITypeDeserializer typeDeserializer);
     }
-    
-    public interface IHierarchicalDeserializer_MonomorphicParams : IHierarchicalDeserializer_Params
+
+    public interface IHierarchicalDeserializer_Builder
     {
-        new IHierarchicalDeserializer_MonomorphicParams SetCtorFactory(IConstructorFactory ctorFactory);
-        new IHierarchicalDeserializer_MonomorphicParams SetAutoPrepare(bool autoPrepare);
         HierarchicalDeserializer Build();
     }
     
-    public interface IHierarchicalDeserializer_PolymorphicParams : IHierarchicalDeserializer_Params
+    public interface IHierarchicalDeserializer_MonomorphicParams : IHierarchicalDeserializer_Params, IHierarchicalDeserializer_Builder
+    {
+        new IHierarchicalDeserializer_MonomorphicParams SetCtorFactory(IConstructorFactory ctorFactory);
+        new IHierarchicalDeserializer_MonomorphicParams SetAutoPrepare(bool autoPrepare);
+    }
+    
+    public interface IHierarchicalDeserializer_PolymorphicParams : IHierarchicalDeserializer_Params, IHierarchicalDeserializer_Builder
     {
         IHierarchicalDeserializer_PolymorphicParams SetExtensionsFactory(ISerializerExtensionsFactory extensionsFactory);
         IHierarchicalDeserializer_PolymorphicParams SetDefaultTypeSet(Func<int, IReadOnlyList<Type>> defaultTypeSetProvider);
         new IHierarchicalDeserializer_PolymorphicParams SetCtorFactory(IConstructorFactory ctorFactory);
         new IHierarchicalDeserializer_PolymorphicParams SetAutoPrepare(bool autoPrepare);
-        HierarchicalDeserializer Build();
     }
     
     public class HierarchicalDeserializer_Params : 

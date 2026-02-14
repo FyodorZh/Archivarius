@@ -9,11 +9,23 @@ namespace Archivarius.Tests
     public class Check_MultiSerialization
     {
         [Test]
-        public async Task Test()
+        public async Task Test_Polymorphic()
         {
             MultiSerializer serializer = new MultiSerializer(() => new TypenameBasedTypeSerializer());
             MultiDeserializer deserializer = new MultiDeserializer(() => new TypenameBasedTypeDeserializer());
+            await Check(serializer, deserializer);
+        }
+        
+        [Test]
+        public async Task Test_Monomorphic()
+        {
+            MultiSerializer serializer = new MultiSerializer();
+            MultiDeserializer deserializer = new MultiDeserializer();
+            await Check(serializer, deserializer);
+        }
 
+        private async Task Check(MultiSerializer serializer, MultiDeserializer deserializer)
+        {
             List<Task> tasks = new();
 
             for (int i = 0; i < 10000; ++i)

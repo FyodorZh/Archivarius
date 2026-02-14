@@ -240,7 +240,18 @@ namespace Archivarius
         {
             public void WriteType<T>(IWriter writer, ref T? value)
             {
-                writer.WriteByte(value == null ? (byte)0 : (byte)1);
+                if (value == null)
+                {
+                    writer.WriteByte(0);
+                }
+                else
+                {
+                    if (value.GetType() != typeof(T))
+                    {
+                        throw new InvalidOperationException($"Polymorphic serialization used. {value.GetType()} over {typeof(T)}");
+                    }
+                    writer.WriteByte(1);
+                }
             }
         }
     }

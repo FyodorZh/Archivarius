@@ -87,6 +87,11 @@ namespace Archivarius.Storage
         private readonly IStorageBackend _storage;
 
         private readonly MultiSerializer _serializer;
+        
+        public KeyValueStorage(IStorageBackend storage)
+            : this(storage, new MultiSerializer(), new MultiDeserializer())
+        {
+        }
 
         public KeyValueStorage(IStorageBackend storage, ITypeSerializer typeSerializer, ITypeDeserializer typeDeserializer)
             : this(storage, new MultiSerializer(() => typeSerializer), new MultiDeserializer(() => typeDeserializer))

@@ -39,6 +39,16 @@ namespace Archivarius
                 () => new DeserializationStreamInstance(typeDeserializerFactory.Invoke()), 
                 instance => instance.Reset());
         }
+        
+        public MultiDeserializer()
+        {
+            _byteDeserializers = new ObjectPool<DeserializationInstance>(
+                () => new DeserializationInstance(),
+                instance => instance.Reset());
+            _streamDeserializers = new ObjectPool<DeserializationStreamInstance>(
+                () => new DeserializationStreamInstance(), 
+                instance => instance.Reset());
+        }
 
         public bool DeserializeClass<TData>(byte[] bytes, out TData? data) where TData : class, IDataStruct
         {
@@ -217,6 +227,16 @@ namespace Archivarius
                     _deserializationFail = true;
                 };
             }
+            
+            public DeserializationInstance()
+            {
+                _reader = new BinaryReader(Array.Empty<byte>());
+                _deserializer = HierarchicalDeserializer.From(_reader).SetAutoPrepare(false).SetMonomorphic().Build();
+                _deserializer.OnException += _ =>
+                {
+                    _deserializationFail = true;
+                };
+            }
 
             public void Reset()
             {
@@ -264,6 +284,16 @@ namespace Archivarius
             {
                 _reader = new BinaryStreamReader(new MemoryStream());
                 _deserializer = HierarchicalDeserializer.From(_reader).SetAutoPrepare(false).SetPolymorphic(typeDeserializer).Build();
+                _deserializer.OnException += _ =>
+                {
+                    _deserializationFail = true;
+                };
+            }
+            
+            public DeserializationStreamInstance()
+            {
+                _reader = new BinaryStreamReader(new MemoryStream());
+                _deserializer = HierarchicalDeserializer.From(_reader).SetAutoPrepare(false).SetMonomorphic().Build();
                 _deserializer.OnException += _ =>
                 {
                     _deserializationFail = true;

@@ -28,6 +28,13 @@ namespace Archivarius
                 () => new SerializationInstance(typeSerializerFactory.Invoke()),
                 instance => instance.Reset());
         }
+        
+        public MultiSerializer()
+        {
+            _byteSerializers = new ObjectPool<SerializationInstance>(
+                () => new SerializationInstance(),
+                instance => instance.Reset());
+        }
 
         public byte[] SerializeClass<TData>(TData data) where TData : class, IDataStruct
         {
@@ -115,49 +122,18 @@ namespace Archivarius
             private readonly BinaryWriter _writer;
             private readonly HierarchicalSerializer _serializer;
 
+            // Polymorphic serialization
             public SerializationInstance(ITypeSerializer typeSerializer)
             {
                 _writer = new BinaryWriter();
                 _serializer = new HierarchicalSerializer(_writer, typeSerializer);
             }
 
-            public void Reset()
+            //Non-polymorphic serialization
+            public SerializationInstance()
             {
-                _writer.Clear();
-                _serializer.Prepare();
-            }
-
-            public byte[] SerializeClass<TData>(TData? data)
-                where TData : class, IDataStruct
-            {
-                _serializer.AddClass(ref data);
-                return _writer.GetBuffer();
-            }
-            
-            public byte[] SerializeStruct<TData>(TData data)
-                where TData : struct, IDataStruct
-            {
-                _serializer.AddStruct(ref data);
-                return _writer.GetBuffer();
-            }
-            
-            public byte[] SerializeVersionedStruct<TData>(TData data)
-                where TData : struct, IVersionedDataStruct
-            {
-                _serializer.AddVersionedStruct(ref data);
-                return _writer.GetBuffer();
-            }
-        }
-        /*
-        private class SerializationStreamInstance
-        {
-            private readonly BinaryStreamWriter _writer;
-            private readonly HierarchicalSerializer _serializer;
-
-            public SerializationStreamInstance(ITypeSerializer typeSerializer)
-            {
-                _writer = new BinaryStreamWriter();
-                _serializer = new HierarchicalSerializer(_writer, typeSerializer);
+                _writer = new BinaryWriter();
+                _serializer = new HierarchicalSerializer(_writer);
             }
 
             public void Reset()
@@ -187,6 +163,5 @@ namespace Archivarius
                 return _writer.GetBuffer();
             }
         }
-        */
     }
 }
