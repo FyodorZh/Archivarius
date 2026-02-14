@@ -16,7 +16,7 @@ namespace Archivarius.Storage.Test
         [Test]
         public async Task Test_AsyncFile()
         {
-            var commands = CommandsGenerator.Generate(10000, 123);
+            var commands = CommandsGenerator.Generate(100000, 123);
             Tester<IStorageBackend> tester = new();
             var tempDir = System.IO.Path.GetTempPath() + "IStorageBackend_Test_7234289";
             if (System.IO.Directory.Exists(tempDir))
@@ -28,6 +28,23 @@ namespace Archivarius.Storage.Test
             InMemoryStorageBackend etalon = new();
             backend.ThrowExceptions = false;
             etalon.ThrowExceptions = false;
+            var res = await tester.Run(commands, backend, etalon);
+            Assert.That(res, Is.True);
+        }
+        
+        [Test]
+        public async Task Test_AsyncCompressed()
+        {
+            var commands = CommandsGenerator.Generate(100000, 123);
+            Tester<IStorageBackend> tester = new();
+
+            InMemoryStorageBackend inMemoryBackend = new InMemoryStorageBackend();
+            CompressedStorageBackend backend = new(inMemoryBackend);
+            InMemoryStorageBackend etalon = new();
+            
+            backend.ThrowExceptions = false;
+            etalon.ThrowExceptions = false;
+            
             var res = await tester.Run(commands, backend, etalon);
             Assert.That(res, Is.True);
         }
