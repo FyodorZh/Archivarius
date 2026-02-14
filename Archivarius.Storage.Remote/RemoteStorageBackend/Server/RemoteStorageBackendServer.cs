@@ -1,6 +1,7 @@
 using System;
 using Pontifex.Abstractions.Servers;
 using Pontifex.Api;
+using Pontifex.StopReasons;
 
 namespace Archivarius.Storage.Remote
 {
@@ -8,6 +9,8 @@ namespace Archivarius.Storage.Remote
     {
         private readonly IReadOnlySyncStorageBackend _roStorage;
         private readonly ISyncStorageBackend? _writeStorage;
+
+        private IAckRawServer? _transport;
 
         public event Action<IServerSideStorageApiInstance>? Started;
         public event Action<IServerSideStorageApiInstance>? Stopped;
@@ -24,6 +27,7 @@ namespace Archivarius.Storage.Remote
         
         public bool Setup(IAckRawServer transport)
         {
+            _transport = transport;
             transport.Init(new ServerSideApiFactory<RemoteStorageApi>(
                 _ =>
                 {
@@ -35,6 +39,11 @@ namespace Archivarius.Storage.Remote
                     return res;
                 }));
             return transport.Start(_ => { });
+        }
+
+        public void Stop(string? reason = null)
+        {
+            _transport?.Stop(new UserIntention("RemoteStorageBackendServer", reason ?? ""));
         }
     }
 }
