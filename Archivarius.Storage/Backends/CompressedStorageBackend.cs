@@ -22,11 +22,11 @@ namespace Archivarius.Storage
             set => _storage.ThrowExceptions = value;
         }
 
-        public CompressedStorageBackend(IStorageBackend storage)
+        public CompressedStorageBackend(IStorageBackend storage, CompressionLevel compressionLevel = CompressionLevel.Default)
         {
             _storage = storage;
 
-            _compressors = new ObjectPool<Compressor>(() => new Compressor(), _ => { });
+            _compressors = new ObjectPool<Compressor>(() => new Compressor(compressionLevel), _ => { });
             _decompressors = new ObjectPool<Decompressor>(() => new Decompressor(), _ => { });
             storage.OnError += e => OnError?.Invoke(e);
         }
@@ -109,11 +109,11 @@ namespace Archivarius.Storage
             private readonly MemoryStream _compressedStream;
             private readonly DeflateStream _compressor;
 
-            public Compressor()
+            public Compressor(CompressionLevel compressionLevel)
             {
                 _srcStream = new();
                 _compressedStream = new();
-                _compressor = new DeflateStream(_compressedStream, CompressionMode.Compress, CompressionLevel.BestCompression);
+                _compressor = new DeflateStream(_compressedStream, CompressionMode.Compress, compressionLevel);
                 _compressor.FlushMode = FlushType.Full;
             }
 
