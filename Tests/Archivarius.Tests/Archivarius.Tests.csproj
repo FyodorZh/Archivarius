@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>false</ImplicitUsings>
         <Nullable>enable</Nullable>
 
@@ -11,6 +10,8 @@
         <Company>FyodorZh</Company>
         <Version>0.2.0-dev.1</Version>
         <Title>Archivarius.Tests</Title>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">

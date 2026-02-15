@@ -51,7 +51,7 @@ namespace Archivarius.Tests
 
             HierarchicalSerializer serializer = new HierarchicalSerializer(stream, new GuidBasedTypeSerializer(), null, false);
             HierarchicalDeserializer deserializer = HierarchicalDeserializer.From(stream).SetPolymorphic(
-                new GuidBasedTypeDeserializer([typeof(Check_GuidBasedSerializer).Assembly])).Build();
+                new GuidBasedTypeDeserializer().Add(typeof(Check_GuidBasedSerializer).Assembly)).Build();
 
             {
                 ClassSimple? simple = new ClassSimple() { Data = 7 };

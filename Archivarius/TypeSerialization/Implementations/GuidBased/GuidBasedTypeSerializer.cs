@@ -4,50 +4,45 @@ using System.Runtime.InteropServices;
 
 namespace Archivarius.TypeSerializers
 {
-    public class GuidBasedTypeSerializer : ITypeSerializer
+    public class GuidBasedTypeSerializer : AttributeBasedTypeSerializer<string>
     {
+        private static readonly Type _attrType = typeof(GuidAttribute);
+        
         [ThreadStatic] private static List<string>? _ids;
         
-        public void Serialize(IWriter writer, Type type)
+        protected override List<string> GetTmpList()
         {
             _ids ??= new List<string>();
             _ids.Clear();
-            EncodeTypeRecursive(_ids, type);
-            
-            writer.WriteByte(0); // version for the future
-            writer.WriteByte(checked((byte)_ids.Count));
-            foreach (var id in _ids)
-            {
-                writer.WriteString(id);
-            }
+            return _ids;
         }
 
-        private static void EncodeTypeRecursive(List<string> ids, Type type)
+        protected override void WriteId(IWriter writer, string id)
         {
-            string typeId = GetTypeId(type);
-            ids.Add(typeId);
-            if (type.IsGenericType)
-            {
-                foreach (var argument in type.GenericTypeArguments)
-                {
-                    EncodeTypeRecursive(ids, argument);
-                }
-            }
+            writer.WriteString(id);
         }
 
-        private static string GetTypeId(Type type)
+        protected override string GetTypeId(Type type)
         {
-            if (type.IsPrimitive)
+            switch (Type.GetTypeCode(type))
             {
-                return type.Name;
+                case TypeCode.Boolean:  return "Boolean";
+                case TypeCode.Byte:     return "Byte";
+                case TypeCode.SByte:    return "SByte";
+                case TypeCode.Int16:    return "Int16";
+                case TypeCode.UInt16:   return "UInt16";
+                case TypeCode.Int32:    return "Int32";
+                case TypeCode.UInt32:   return "UInt32";
+                case TypeCode.Int64:    return "Int64";
+                case TypeCode.UInt64:   return "UInt64";
+                case TypeCode.Char:     return "Char";
+                case TypeCode.Single:   return "Single";
+                case TypeCode.Double:   return "Double";
+                case TypeCode.Decimal:  return "Decimal";
+                case TypeCode.String:   return "String";
             }
 
-            if (type.Name == "String")
-            {
-                return "String";
-            }
-
-            if (Attribute.GetCustomAttribute(type, typeof(GuidAttribute), false) is not GuidAttribute attribute)
+            if (Attribute.GetCustomAttribute(type, _attrType, false) is not GuidAttribute attribute)
             {
                 throw new InvalidOperationException($"'{type}' must have GUID attribute");
             }
