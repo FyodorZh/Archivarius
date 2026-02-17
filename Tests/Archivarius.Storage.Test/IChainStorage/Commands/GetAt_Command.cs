@@ -13,11 +13,11 @@ namespace Archivarius.Storage.Test.ChainStorage
             _index = index;
         }
         
-        protected override async Task<TData?> InvokeOnSubject(IChainStorage<TData> subject)
+        protected override async Task<TData?> InvokeOnSubject(ChainStorageWrapper<TData> subject)
         {
-            int count = await subject.GetCount();
+            int count = await subject.Storage.GetCount();
             int index = (int)(count * _index);
-            return await subject.GetAt(index);
+            return await subject.Storage.GetAt(index);
         }
     }
 }

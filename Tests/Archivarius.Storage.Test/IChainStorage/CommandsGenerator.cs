@@ -6,7 +6,7 @@ namespace Archivarius.Storage.Test.ChainStorage
 {
     public class CommandsGenerator
     {
-        public IEnumerable<ITestCommand<IChainStorage<Payload>>> Generate(int count, int? rndSeed = null)
+        public IEnumerable<ITestCommand<ChainStorageWrapper<Payload>>> Generate(int count, int? rndSeed = null)
         {
             Random rnd = rndSeed.HasValue ? new Random(rndSeed.Value) : new Random();
             for (int i = 0; i < count; ++i)
@@ -21,6 +21,10 @@ namespace Archivarius.Storage.Test.ChainStorage
                     {
                         yield return new RewriteData_Command<Payload>(rnd.Next() % 2 == 1, rnd.Next() % 2 == 1, rnd.Next() % 2 == 1);
                     }
+                }
+                else if (rnd.NextDouble() < 0.01)
+                {
+                    yield return new Reinit_Command<Payload>();
                 }
                 else
                 {
@@ -45,7 +49,22 @@ namespace Archivarius.Storage.Test.ChainStorage
                 }
             }
         }
-        
+
+        public IEnumerable<ITestCommand<ChainStorageWrapper<Payload>>> Generate2(int count)
+        {
+            for (int i = 0; i < count; ++i)
+            {
+                yield return new Append_Command<Payload>(new Payload(i));
+            }
+            yield return new GetAll_Command<Payload>();
+            yield return new Reinit_Command<Payload>();
+            yield return new GetAll_Command<Payload>();
+            for (int i = 0; i < count; ++i)
+            {
+                yield return new GetAt_Command<Payload>(i * 1.0 / count);
+            }
+        }
+
         public class Payload : IEquatable<Payload>, IDataStruct
         {
             private static int _counter = 0;
@@ -56,10 +75,15 @@ namespace Archivarius.Storage.Test.ChainStorage
             {
                 _payload = -1;
             }
+            
+            public Payload(int payload)
+            {
+                _payload = payload;
+            }
 
             public static Payload New()
             {
-                return new Payload() { _payload = Interlocked.Increment(ref _counter) };
+                return new Payload(Interlocked.Increment(ref _counter));
             }
 
             public override bool Equals(object? obj)

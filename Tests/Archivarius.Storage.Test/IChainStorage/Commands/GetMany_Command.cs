@@ -15,9 +15,9 @@ namespace Archivarius.Storage.Test.ChainStorage
             _till = till;
         }
         
-        protected override async Task<DataArray<TData>> InvokeOnSubject(IChainStorage<TData> subject)
+        protected override async Task<DataArray<TData>> InvokeOnSubject(ChainStorageWrapper<TData> subject)
         {
-            int count = await subject.GetCount();
+            int count = await subject.Storage.GetCount();
             int from = (int)(_from * count);
             int till = (int)(_from + (1 - _from) * _till * count);
             
@@ -27,7 +27,7 @@ namespace Archivarius.Storage.Test.ChainStorage
             till = Math.Max(0, till);
             
             DataArray<TData> res = new();
-            await foreach (var data in subject.GetMany(from, till))
+            await foreach (var data in subject.Storage.GetMany(from, till))
             {
                 res.Data.AddRange(data);
             }

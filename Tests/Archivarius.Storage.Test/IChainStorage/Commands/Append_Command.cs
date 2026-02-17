@@ -12,9 +12,9 @@ namespace Archivarius.Storage.Test.ChainStorage
             _data = data;
         }
         
-        protected override Task<int> InvokeOnSubject(IChainStorage<TData> subject)
+        protected override Task<int> InvokeOnSubject(ChainStorageWrapper<TData> subject)
         {
-            return subject.Append(_data);
+            return subject.Storage.Append(_data);
         }
     }
 }

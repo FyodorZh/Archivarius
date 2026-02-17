@@ -33,7 +33,6 @@ namespace Archivarius.Tests
         [Test]
         public void Test_TypeNameBased()
         {
-            
             _systemTypes = _systemTypes.Concat(_userTypes).ToArray();
             Test(new TypenameBasedTypeSerializer(), new TypenameBasedTypeDeserializer(), _systemTypes);
         }

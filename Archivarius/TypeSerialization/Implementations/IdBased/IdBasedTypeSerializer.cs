@@ -43,7 +43,7 @@ namespace Archivarius
 
             if (Attribute.GetCustomAttribute(type, _attrType, false) is not IdAttribute attribute)
             {
-                throw new InvalidOperationException($"'{type}' must have GUID attribute");
+                throw new InvalidOperationException($"'{type}' must have ID attribute");
             }
 
             return attribute.Value;

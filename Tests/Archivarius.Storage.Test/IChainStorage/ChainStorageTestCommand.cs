@@ -3,12 +3,12 @@ using System.Threading.Tasks;
 
 namespace Archivarius.Storage.Test
 {
-    public abstract class ChainStorageTestCommand<TData, TResult> : ITestCommand<IChainStorage<TData>>
+    public abstract class ChainStorageTestCommand<TData, TResult> : ITestCommand<ChainStorageWrapper<TData>>
         where TData : class, IDataStruct
     {
-        protected abstract Task<TResult> InvokeOnSubject(IChainStorage<TData> subject);
+        protected abstract Task<TResult> InvokeOnSubject(ChainStorageWrapper<TData> subject);
         
-        public async Task<bool> ApplyAndCompare(IChainStorage<TData> subjectToCheck, IChainStorage<TData> etalonSubject)
+        public async Task<bool> ApplyAndCompare(ChainStorageWrapper<TData> subjectToCheck, ChainStorageWrapper<TData> etalonSubject)
         {
             Exception? ex1 = null, ex2 = null;
             TResult? res1 = default, res2 = default;

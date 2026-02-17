@@ -16,9 +16,9 @@ namespace Archivarius.Storage.Test.ChainStorage
             _includeElements = includeElements;
         }
         
-        protected override async Task<bool> InvokeOnSubject(IChainStorage<TData> subject)
+        protected override async Task<bool> InvokeOnSubject(ChainStorageWrapper<TData> subject)
         {
-            await subject.RewriteData(_includeIndex, _includePacks, _includeElements);
+            await subject.Storage.RewriteData(_includeIndex, _includePacks, _includeElements);
             return true;
         }
     }

@@ -69,37 +69,36 @@ namespace Archivarius.Storage
             return _index;
         }
 
+        private async Task<BigPackData> GetBigPack_Unsafe_NoCache(int bigPackId)
+        {
+            string packName = string.Format(_index.BigPackName, bigPackId);
+            var packPath = _rootPath.File(packName);
+            return await _storage.GetStruct<BigPackData>(packPath) ?? throw new Exception($"Failed to load '{string.Format(_index.BigPackName, bigPackId)}'");
+        }
+
         protected async ValueTask<BigPackData> GetBigPack_Unsafe(int bigPackId)
         {
             if (_cachedBigPackId != bigPackId || _cachedBigPack == null)
             {
-                string packName = string.Format(_index.BigPackName, bigPackId);
-                var packPath = _rootPath.File(packName);
-                _cachedBigPack = await _storage.GetStruct<BigPackData>(packPath);
+                _cachedBigPack = await GetBigPack_Unsafe_NoCache(bigPackId);
                 _cachedBigPackId = bigPackId;
             }
-            
-            if (_cachedBigPack == null)
-            {
-                throw new Exception($"Failed to load '{string.Format(_index.BigPackName, bigPackId)}'");
-            }
-                
             return _cachedBigPack.Value;
         }
-        
+
+        private async Task<SmallPackData> GetSmallPack_Unsafe_NoCache(int smallPackId)
+        {
+            string packName = string.Format(_index.SmallPackName, smallPackId);
+            var packPath = _rootPath.File(packName);
+            return await _storage.GetStruct<SmallPackData>(packPath) ?? throw new Exception($"Failed to load '{string.Format(_index.SmallPackName, smallPackId)}'");
+        }
+
         protected async ValueTask<SmallPackData> GetSmallPack_Unsafe(int smallPackId)
         {
             if (_cachedSmallPackId != smallPackId || _cachedSmallPack == null)
             {
-                string packName = string.Format(_index.SmallPackName, smallPackId);
-                var packPath = _rootPath.File(packName);
-                _cachedSmallPack = await _storage.GetStruct<SmallPackData>(packPath);
+                _cachedSmallPack = await GetSmallPack_Unsafe_NoCache(smallPackId);
                 _cachedSmallPackId = smallPackId;
-            }
-            
-            if (_cachedSmallPack == null)
-            {
-                throw new Exception($"Failed to load '{string.Format(_index.SmallPackName, smallPackId)}'");
             }
                 
             return _cachedSmallPack.Value;
@@ -224,7 +223,8 @@ namespace Archivarius.Storage
                     List<(int bigPackId, Task<BigPackData> loadTask)> tasks = new();
                     for (int bigPackId = fromBigPackId; bigPackId <= tillBigPackId; ++bigPackId)
                     {
-                        tasks.Add((bigPackId, GetBigPack_Unsafe(bigPackId).AsTask()));
+                        int _bigPackId = bigPackId;
+                        tasks.Add((bigPackId, GetBigPack_Unsafe_NoCache(_bigPackId)));
                     }
                     
                     foreach (var (bigPackId, loadTask) in tasks)
@@ -285,7 +285,8 @@ namespace Archivarius.Storage
                     List<(int smallPackId, Task<SmallPackData> loadTask)> tasks = new();
                     for (int smallPackId = fromSmallPackId; smallPackId <= tillSmallPackId; ++smallPackId)
                     {
-                        tasks.Add((smallPackId, GetSmallPack_Unsafe(smallPackId).AsTask()));
+                        int _smallPackId = smallPackId;
+                        tasks.Add((_smallPackId, GetSmallPack_Unsafe_NoCache(_smallPackId)));
                     }
 
                     foreach (var (smallPackId, loadTask) in tasks)
@@ -344,7 +345,8 @@ namespace Archivarius.Storage
                     Task<TData>[] tasks = new Task<TData>[count];
                     for (int i = from; i <= till; ++i)
                     {
-                        tasks[i - from] = GetElement_Unsafe(i);
+                        int _i = i;
+                        tasks[i - from] = GetElement_Unsafe(_i);
                     }
                     
                     TData[] range = new TData[count];
@@ -432,8 +434,6 @@ namespace Archivarius.Storage
                     (ISerializer s, ref TData value) => s.AddClass(ref value, 
                         () => throw new Exception()));
             }
-
-            public byte Version => 0;
         }
     }
     
