@@ -69,7 +69,7 @@ namespace Archivarius.Storage
             return _index;
         }
 
-        private async Task<BigPackData> GetBigPack_Unsafe_NoCache(int bigPackId)
+        protected async Task<BigPackData> GetBigPack_Unsafe_NoCache(int bigPackId)
         {
             string packName = string.Format(_index.BigPackName, bigPackId);
             var packPath = _rootPath.File(packName);
@@ -86,7 +86,7 @@ namespace Archivarius.Storage
             return _cachedBigPack.Value;
         }
 
-        private async Task<SmallPackData> GetSmallPack_Unsafe_NoCache(int smallPackId)
+        protected async Task<SmallPackData> GetSmallPack_Unsafe_NoCache(int smallPackId)
         {
             string packName = string.Format(_index.SmallPackName, smallPackId);
             var packPath = _rootPath.File(packName);
@@ -161,7 +161,7 @@ namespace Archivarius.Storage
                 int bigPackId = id / index.BigPackSize;
                 if (bigPackId < bigPacksNumber)
                 {
-                    var pack = await GetBigPack_Unsafe(bigPackId);
+                    var pack = await GetBigPack_Unsafe_NoCache(bigPackId);
                     return pack.List[id % index.BigPackSize];
                 }
                 
@@ -169,7 +169,7 @@ namespace Archivarius.Storage
                 int smallPackId = (id % index.BigPackSize) / index.SmallPackSize;
                 if (smallPackId < smallPacksNumber)
                 {
-                    var pack = await GetSmallPack_Unsafe(smallPackId);
+                    var pack = await GetSmallPack_Unsafe_NoCache(smallPackId);
                     return pack.List[id % index.SmallPackSize];
                 }
 
@@ -688,13 +688,13 @@ namespace Archivarius.Storage
                 {
                     for (int i = 0; i < totalBigPacks; ++i)
                     {
-                        var pack = await GetBigPack_Unsafe(i);
+                        var pack = await GetBigPack_Unsafe_NoCache(i);
                         await SetBigPack_Unsafe(i, pack);
                         progress?.Invoke(processed += index.BigPackSize);
                     }
                     for (int i = 0; i < totalSmallPacks; ++i)
                     {
-                        var pack = await GetSmallPack_Unsafe(i);
+                        var pack = await GetSmallPack_Unsafe_NoCache(i);
                         await SetSmallPack_Unsafe(i, pack);
                         progress?.Invoke(processed += index.SmallPackSize);
                     }
