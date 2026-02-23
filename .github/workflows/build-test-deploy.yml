@@ -1,0 +1,58 @@
+name: .NET CI and NuGet Publish
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'   # Use a specific preview if needed
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution (Release)
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run all unit tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Pack and publish dev packages
+        if: success()
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+              mkdir ./artefacts
+              rm -rf ./artefacts/*
+              
+              dotnet sln list | tail -n +3 | while read -r project; do
+              	echo "$project"
+              	is_packable=$(dotnet msbuild "$project" -getProperty:IsPackable -nologo | xargs)
+              	if [ "$is_packable" != "true" ]; then
+                  	echo "-> Not packable. Skipping."
+                  	continue
+              	fi
+              
+              	version=$(dotnet msbuild -getProperty:Version $project)
+              	if [[ "$version" != *-dev.0 ]]; then
+              		echo "-> Version is not -dev.0. Skipping"
+                  	continue
+              	fi
+              	echo "-> Publishing"
+              	#dotnet list "$project" package | grep '^   > ' | awk '{print $NF}' | grep -e '-dev\.'
+              	dotnet pack "$project" -c Debug -o ./artefacts --include-symbols
+              	dotnet nuget push ./artefacts/*.nupkg \
+                              --source https://api.nuget.org/v3/index.json \
+                              --api-key "$NUGET_API_KEY" \
+                              --skip-duplicate
+              done
