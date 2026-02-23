@@ -1,21 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>netstandard2.1</TargetFramework>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>Fyodor Zhmaev</Authors>
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
         <Product>Archivarius.Storage</Product>
-        <Version>0.2.2-dev.17</Version>
-        <Title>Archivarius storage library</Title>
+        <Version>0.2.3-dev.0</Version>
+        <Title>Archivarius remote storage library</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
-        <LangVersion>12</LangVersion>
+        <LangVersion>9</LangVersion>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageProjectUrl>https://github.com/FyodorZh/Archivarius</PackageProjectUrl>
         <RepositoryUrl>https://github.com/FyodorZh/Archivarius.git</RepositoryUrl>
-        <Copyright>Copyright (c) Fyodor Zhmaev 2023 </Copyright>
+        <Copyright>Copyright (c) Fyodor Zhmaev 2026</Copyright>
         <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
@@ -25,26 +25,24 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
-      <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0-preview.6.25358.103" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Archivarius.Tools\Archivarius.Tools.csproj" />
-      <ProjectReference Include="..\Archivarius\Archivarius.csproj" />
-    </ItemGroup>
-
+    
     <ItemGroup>
         <None Include="nuget.readme.md" Pack="true" PackagePath="\" />
         <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\Archivarius.Storage\Archivarius.Storage.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <PackageReference Include="Pontifex.Api" Version="0.1.0-dev.13" />
     </ItemGroup>
 
 </Project>

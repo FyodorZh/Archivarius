@@ -70,7 +70,7 @@ namespace Archivarius.Tests
         private async Task Test1(IChainStorage<Data>? chain)
         {
             int N = 100;
-            Assert.IsNotNull(chain);
+            Assert.That(chain, Is.Not.Null);
             for (int i = 0; i < N; ++i)
             {
                 int id = await chain.Append(new Data() { Value = i });
@@ -96,7 +96,7 @@ namespace Archivarius.Tests
 
         private async Task Test2(IChainStorage<Data>? chain)
         {
-            Assert.IsNotNull(chain);
+            Assert.That(chain, Is.Not.Null);
             
             int N = 100;
             for (int i = 0; i < N; ++i)

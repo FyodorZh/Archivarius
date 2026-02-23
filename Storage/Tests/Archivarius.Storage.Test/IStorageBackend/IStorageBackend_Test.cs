@@ -11,6 +11,7 @@ using Scriba.Consumers;
 
 namespace Archivarius.Storage.Test
 {
+    [TestFixture]
     public class IStorageBackend_Test
     {
         [Test]

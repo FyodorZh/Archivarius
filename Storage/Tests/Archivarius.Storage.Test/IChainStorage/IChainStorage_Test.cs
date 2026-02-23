@@ -4,6 +4,7 @@ using Archivarius.TypeSerializers;
 
 namespace Archivarius.Storage.Test.ChainStorage
 {
+    [TestFixture]
     public class IChainStorage_Test
     {
         [Test]
