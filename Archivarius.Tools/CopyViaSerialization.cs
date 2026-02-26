@@ -22,7 +22,7 @@ namespace Archivarius
             {
                 _initialized = true;
                 _backend = new ReaderWriterStream();
-                _serializer = new HierarchicalSerializer(_backend, new TypenameBasedTypeSerializer());
+                _serializer = new HierarchicalSerializer(_backend, new TypenameBasedTypeSerializer(), null, false);
                 _deserializer = HierarchicalDeserializer.From(_backend).SetPolymorphic(new TypenameBasedTypeDeserializer()).Build();
             }
         }
@@ -33,7 +33,7 @@ namespace Archivarius
 
             try
             {
-                _serializer.Prepare();
+                _serializer.Prepare(false);
                 _serializer.AddClass(ref source);
                 T? copy = default(T);
                 _deserializer.Prepare();
@@ -56,7 +56,7 @@ namespace Archivarius
             
             try
             {
-                _serializer.Prepare();
+                _serializer.Prepare(false);
                 _serializer.AddStruct(ref source);
                 T copy = default(T);
                 _deserializer.Prepare();
