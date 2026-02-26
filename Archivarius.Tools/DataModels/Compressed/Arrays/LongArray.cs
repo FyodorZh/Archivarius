@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace Archivarius.DataModels.Compressed
@@ -10,6 +8,7 @@ namespace Archivarius.DataModels.Compressed
     {
         private SerializationScheme _scheme = SerializationScheme.Plain;
         private long[] _values = Array.Empty<long>();
+        private long _gcd = 1;
         
         public long[] ValuesUnsafeToModify => _values;
         
@@ -17,25 +16,45 @@ namespace Archivarius.DataModels.Compressed
         {
         }
         
-        public LongArray(IEnumerable<long> data)
+        public LongArray(long[] data)
         {
-            _values = data.ToArray();
+            _values = data;
 
-            long delta = 0;
-            for (int i = 1; i < _values.Length; i++)
+            if (data.Length <= 2)
             {
-                delta = Math.Max(delta, _values[i] - _values[i - 1]);
+                return; // plain
             }
 
-            if (delta >= SByte.MinValue && delta <= SByte.MaxValue)
+            long minDelta, maxDelta;
+            try
+            {
+                long gcd = maxDelta = minDelta = checked(_values[1] - _values[0]);
+                for (int i = 2; i < _values.Length; i++)
+                {
+                    var d = checked(_values[i] - _values[i - 1]);
+                    maxDelta = Math.Max(maxDelta, d);
+                    minDelta = Math.Min(minDelta, d);
+                    gcd = Gcd(Math.Abs(d), gcd);
+                }
+
+                minDelta /= gcd;
+                maxDelta /= gcd;
+                _gcd = gcd;
+            }
+            catch
+            {
+                return; // plain
+            }
+
+            if (minDelta >= SByte.MinValue && maxDelta <= SByte.MaxValue)
             {
                 _scheme = SerializationScheme.SByteDelta;
             }
-            else if (delta >= Int16.MinValue && delta <= Int16.MaxValue)
+            else if (minDelta >= Int16.MinValue && maxDelta <= Int16.MaxValue)
             {
                 _scheme = SerializationScheme.ShortDelta;
             }
-            else if (delta >= Int32.MinValue && delta <= Int32.MaxValue)
+            else if (minDelta >= Int32.MinValue && maxDelta <= Int32.MaxValue)
             {
                 _scheme = SerializationScheme.IntDelta;
             }
@@ -48,6 +67,15 @@ namespace Archivarius.DataModels.Compressed
         public void Serialize(ISerializer serializer)
         {
             serializer.Add(ref _scheme);
+            
+            if (serializer.Version > 0)
+            {
+                if (_scheme != SerializationScheme.Plain)
+                {
+                    serializer.Add(ref _gcd);
+                }
+            }
+            
             switch (_scheme)
             {
                 case SerializationScheme.Plain:
@@ -63,7 +91,7 @@ namespace Archivarius.DataModels.Compressed
             }
         }
 
-        public byte Version => 0;
+        public byte Version => 1;
 
         private void Serialize_Plain(ISerializer serializer)
         {
@@ -84,21 +112,21 @@ namespace Archivarius.DataModels.Compressed
                         case SerializationScheme.IntDelta:
                             for (int i = 1; i < _values.Length; i++)
                             {
-                                var delta = (int)(_values[i] - _values[i - 1]);
+                                var delta = (int)((_values[i] - _values[i - 1]) / _gcd);
                                 writer.WriteInt(delta);
                             }
                             break;
                         case SerializationScheme.ShortDelta:
                             for (int i = 1; i < _values.Length; i++)
                             {
-                                var delta = (short)(_values[i] - _values[i - 1]);
+                                var delta = (short)((_values[i] - _values[i - 1]) / _gcd);
                                 writer.WriteShort(delta);
                             }
                             break;
                         case SerializationScheme.SByteDelta:
                             for (int i = 1; i < _values.Length; i++)
                             {
-                                var delta = (sbyte)(_values[i] - _values[i - 1]);
+                                var delta = (sbyte)((_values[i] - _values[i - 1]) / _gcd);
                                 writer.WriteSByte(delta);
                             }
                             break;
@@ -120,21 +148,21 @@ namespace Archivarius.DataModels.Compressed
                         case SerializationScheme.IntDelta:
                             for (int i = 1; i < len; i++)
                             {
-                                var delta = reader.ReadInt();
+                                var delta = reader.ReadInt() * _gcd;
                                 _values[i] = _values[i - 1] + delta;
                             }
                             break;
                         case SerializationScheme.ShortDelta:
                             for (int i = 1; i < len; i++)
                             {
-                                var delta = reader.ReadShort();
+                                var delta = reader.ReadShort() * _gcd;
                                 _values[i] = _values[i - 1] + delta;
                             }
                             break;
                         case SerializationScheme.SByteDelta:
                             for (int i = 1; i < len; i++)
                             {
-                                var delta = reader.ReadSByte();
+                                var delta = reader.ReadSByte() * _gcd;
                                 _values[i] = _values[i - 1] + delta;
                             }
                             break;
@@ -144,6 +172,8 @@ namespace Archivarius.DataModels.Compressed
                 }
             }
         }
+
+        public int GetSizePerRecord() => PredictSize(_scheme, 1);
 
         private static int PredictSize(SerializationScheme scheme, int count)
         {
@@ -160,6 +190,17 @@ namespace Archivarius.DataModels.Compressed
                 default:
                     throw new ArgumentOutOfRangeException(nameof(scheme), scheme, null);
             }
+        }
+        
+        private static long Gcd(long a, long b) // positive
+        {
+            while (b != 0)
+            {
+                long temp = b;
+                b = a % b;
+                a = temp;
+            }
+            return a;
         }
         
         private enum SerializationScheme : byte
