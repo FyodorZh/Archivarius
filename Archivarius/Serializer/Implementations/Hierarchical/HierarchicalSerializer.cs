@@ -7,7 +7,8 @@ namespace Archivarius
 {
     public class HierarchicalSerializer : PrimitiveSerializer, ISerializer
     {
-        private readonly ITypeWriter _typeWriter;
+        private readonly ITypeWriter _mainTypeWriter;
+        private readonly ITypeWriter _staticTypeWriter;
 
         private readonly Stack<byte> _versionStack = new Stack<byte>();
         private byte _version;
@@ -39,7 +40,8 @@ namespace Archivarius
                 _factory = factory;
             }
 
-            _typeWriter = new PolymorphicTypeWriter(typeSerializer);
+            _mainTypeWriter = new PolymorphicTypeWriter(typeSerializer);
+            _staticTypeWriter = new TrivialTypeWriter();
 
             Prepare(useAntiCorruptionSections, defaultTypeSetVersion, defaultTypeSet);
         }
@@ -47,7 +49,7 @@ namespace Archivarius
         public HierarchicalSerializer(IWriter writer, bool useAntiCorruptionSections = true)
             : base(writer)
         {
-            _typeWriter = new TrivialTypeWriter();
+            _staticTypeWriter = _mainTypeWriter = new TrivialTypeWriter();
             Prepare(useAntiCorruptionSections);
         }
         
@@ -57,9 +59,9 @@ namespace Archivarius
             {
                 throw new InvalidOperationException(nameof(defaultTypeSetVersion) + " can't be negative");
             }
-            if (_typeWriter is not PolymorphicTypeWriter typeWriter)
+            if (_mainTypeWriter is not PolymorphicTypeWriter typeWriter)
             {
-                throw new InvalidOperationException($"Wrong TypeWriter type '{_typeWriter.GetType()}'");
+                throw new InvalidOperationException($"Wrong TypeWriter type '{_mainTypeWriter.GetType()}'");
             }
 
             PrepareHeader(useAntiCorruptionSections);
@@ -69,15 +71,15 @@ namespace Archivarius
 
         public void Prepare(bool useAntiCorruptionSections = true)
         {
-            if (_typeWriter is PolymorphicTypeWriter)
+            if (_mainTypeWriter is PolymorphicTypeWriter)
             {
                 Prepare(useAntiCorruptionSections, 0, null);
                 return;
             }
             
-            if (_typeWriter is not TrivialTypeWriter typeWriter)
+            if (_mainTypeWriter is not TrivialTypeWriter typeWriter)
             {
-                throw new InvalidOperationException($"Wrong TypeWriter type '{_typeWriter.GetType()}'");
+                throw new InvalidOperationException($"Wrong TypeWriter type '{_mainTypeWriter.GetType()}'");
             }
 
             PrepareHeader(useAntiCorruptionSections);
@@ -129,11 +131,23 @@ namespace Archivarius
 
             _version = _versionStack.Pop();
         }
+        
+        public void AddStaticClass<T>(ref T? value)
+            where T : class, IDataStruct
+        {
+            _staticTypeWriter.WriteType(_writer, ref value);
+            if (value != null)
+            {
+                _writer.BeginSection();
+                SerializeClass(value);
+                _writer.EndSection();
+            }
+        }
 
         public void AddClass<T>(ref T? value)
             where T : class, IDataStruct
         {
-            _typeWriter.WriteType(_writer, ref value);
+            _mainTypeWriter.WriteType(_writer, ref value);
             if (value != null)
             {
                 _writer.BeginSection();

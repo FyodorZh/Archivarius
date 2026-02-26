@@ -49,7 +49,7 @@ namespace Archivarius.Tests
             serializer.AddStruct(ref _structInt);
             serializer.AddClass(ref _classInt);
             serializer.AddVersionedStruct(ref _structIntV);
-            serializer.AddClass(ref _classIntV);
+            serializer.AddStaticClass(ref _classIntV);
             serializer.AddStruct(ref _structComposition);
         }
 

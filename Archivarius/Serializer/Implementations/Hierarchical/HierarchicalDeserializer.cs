@@ -7,7 +7,8 @@ namespace Archivarius
 {
     public class HierarchicalDeserializer : PrimitiveDeserializer, ISerializer
     {
-        private readonly ITypeReader _typeReader;
+        private readonly ITypeReader _mainTypeReader;
+        private readonly ITypeReader _staticTypeReader;
 
         private readonly Stack<byte> _versions = new ();
         private byte _version;
@@ -35,7 +36,9 @@ namespace Archivarius
                     polymorphicParams.TypeDeserializer ?? throw new NullReferenceException(),
                     _constructorFactory);
                 typeReader.OnException += e => OnException?.Invoke(e);
-                _typeReader = typeReader;
+                _mainTypeReader = typeReader;
+
+                _staticTypeReader = new TrivialTypeReader(_constructorFactory);
             
                 if (polymorphicParams.ExtensionsFactory != null)
                 {
@@ -54,7 +57,7 @@ namespace Archivarius
             else if (@params.AsMonomorphic() is { } monomorphicParams)
             {
                 var typeReader = new TrivialTypeReader(_constructorFactory);
-                _typeReader = typeReader;
+                _staticTypeReader = _mainTypeReader = typeReader;
 
                 if (monomorphicParams.AutoPrepare)
                 {
@@ -78,7 +81,9 @@ namespace Archivarius
             _constructorFactory = new DefaultCtorTypeConstructorFactory();
             var typeReader = new PolymorphicTypeReader(typeDeserializer, _constructorFactory);
             typeReader.OnException += e => OnException?.Invoke(e);
-            _typeReader = typeReader;
+            _mainTypeReader = typeReader;
+
+            _staticTypeReader = new TrivialTypeReader(_constructorFactory);
             
             if (factory != null)
             {
@@ -100,7 +105,7 @@ namespace Archivarius
         {
             _constructorFactory = new DefaultCtorTypeConstructorFactory();
             var typeReader = new TrivialTypeReader(_constructorFactory);
-            _typeReader = typeReader;
+            _staticTypeReader = _mainTypeReader = typeReader;
 
             if (autoPrepare)
             {
@@ -112,13 +117,13 @@ namespace Archivarius
         {
             PrepareHeader();
 
-            if (_typeReader is PolymorphicTypeReader polymorphicTypeReader)
+            if (_mainTypeReader is PolymorphicTypeReader polymorphicTypeReader)
             {
                 polymorphicTypeReader.Prepare(_reader, defaultTypeSetProvider);
             }
             else
             {
-                throw new NotSupportedException($"Unsupported type reader '{_typeReader.GetType()}");
+                throw new NotSupportedException($"Unsupported type reader '{_mainTypeReader.GetType()}");
             }
             
             PostPrepareHeader();
@@ -126,16 +131,16 @@ namespace Archivarius
         
         public void Prepare()
         {
-            if (_typeReader is PolymorphicTypeReader)
+            if (_mainTypeReader is PolymorphicTypeReader)
             {
                 Prepare(null);
                 return;
             }
             
             PrepareHeader();
-            if (_typeReader is not TrivialTypeReader _)
+            if (_mainTypeReader is not TrivialTypeReader _)
             {
-                throw new NotSupportedException($"Unsupported type reader '{_typeReader.GetType()}");
+                throw new NotSupportedException($"Unsupported type reader '{_mainTypeReader.GetType()}");
             }
             PostPrepareHeader();
         }
@@ -198,11 +203,31 @@ namespace Archivarius
             value.Serialize(this);
             _version = _versions.Pop();
         }
+        
+        public void AddStaticClass<T>(ref T? value)
+            where T : class, IDataStruct
+        {
+            IConstructor? ctor = _staticTypeReader.GetConstructor<T>(_reader);
+            if (ctor == null) // NULL
+            {
+                value = null;
+                return;
+            }
+
+            _reader.BeginSection();
+
+            value = DeserializeClass<T>(ctor);
+
+            if (!_reader.EndSection())
+            {
+                OnException?.Invoke(new InvalidOperationException("Failed to deserialize object section. Skip it"));
+            }
+        }
 
         public void AddClass<T>(ref T? value)
             where T : class, IDataStruct
         {
-            IConstructor? ctor = _typeReader.GetConstructor<T>(_reader);
+            IConstructor? ctor = _mainTypeReader.GetConstructor<T>(_reader);
             if (ctor == null) // NULL
             {
                 value = null;

@@ -21,6 +21,20 @@ namespace Archivarius
         /// <summary>
         /// NotNull DataStruct class
         /// </summary>
+        public static void AddStaticClass<T>(this ISerializer serializer, ref T value, Func<T> defaultValue)
+            where T : class, IDataStruct
+        {
+            T? pValue = value;
+            serializer.AddStaticClass(ref pValue);
+            if (!serializer.IsWriter)
+            {
+                value = pValue ?? defaultValue.Invoke();
+            }
+        }
+        
+        /// <summary>
+        /// NotNull DataStruct class
+        /// </summary>
         public static void AddClass<T>(this ISerializer serializer, ref T value, Func<T> defaultValue)
             where T : class, IDataStruct
         {

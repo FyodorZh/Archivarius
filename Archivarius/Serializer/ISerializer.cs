@@ -50,6 +50,12 @@ namespace Archivarius
 
         void AddStruct<T>(ref T value) where T : struct, IDataStruct;
         void AddVersionedStruct<T>(ref T value) where T : struct, IDataStruct, IVersionedData;
+        
+        /// <summary>
+        /// Serialize both versioned and unversioned data.
+        /// No polymorphism
+        /// </summary>
+        void AddStaticClass<T>(ref T? value) where T : class, IDataStruct;
 
         /// <summary>
         /// Serialize both versioned and unversioned data
