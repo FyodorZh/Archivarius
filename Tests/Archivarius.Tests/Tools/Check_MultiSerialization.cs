@@ -34,11 +34,11 @@ namespace Archivarius.Tests
                 Task task = Task.Run(async () =>
                 {
                     DataClass data = new DataClass() { Value = k };
-                    var bytes = await serializer.SerializeClassAsync(data);
+                    var bytes = serializer.SerializeClass(data);
                     await Task.Yield();
-                    var newData = await deserializer.DeserializeClass<DataClass>(bytes);
-                    Assert.IsTrue(newData.Item1);
-                    Assert.IsTrue(k == newData.Item2!.Value);
+                    var isOk = deserializer.DeserializeClass<DataClass>(bytes, out var res);
+                    Assert.IsTrue(isOk);
+                    Assert.IsTrue(k == res!.Value);
                 });
                 tasks.Add(task);
             }

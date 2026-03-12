@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Threading.Tasks;
 using Archivarius.BinaryBackend;
 using Archivarius.Internals;
 using BinaryReader = Archivarius.BinaryBackend.BinaryReader;
@@ -11,18 +10,12 @@ namespace Archivarius
     {
         bool DeserializeClass<TData>(byte[] bytes, out TData? data) where TData : class, IDataStruct;
         bool DeserializeClass<TData>(Stream stream, out TData? data) where TData : class, IDataStruct;
-        Task<(bool, TData?)> DeserializeClass<TData>(byte[] bytes) where TData : class, IDataStruct;
-        Task<(bool, TData?)> DeserializeClass<TData>(Stream stream) where TData : class, IDataStruct;
 
         bool DeserializeStruct<TData>(byte[] bytes, out TData data) where TData : struct, IDataStruct;
         bool DeserializeStruct<TData>(Stream stream, out TData data) where TData : struct, IDataStruct;
-        Task<(bool, TData)> DeserializeStruct<TData>(Stream stream) where TData : struct, IDataStruct;
-        Task<(bool, TData)> DeserializeStruct<TData>(byte[] bytes) where TData : struct, IDataStruct;
         
         bool DeserializeVersionedStruct<TData>(byte[] bytes, out TData data) where TData : struct, IVersionedDataStruct;
         bool DeserializeVersionedStruct<TData>(Stream stream, out TData data) where TData : struct, IVersionedDataStruct;
-        Task<(bool, TData)> DeserializeVersionedStruct<TData>(byte[] bytes) where TData : struct, IVersionedDataStruct;
-        Task<(bool, TData)> DeserializeVersionedStruct<TData>(Stream stream) where TData : struct, IVersionedDataStruct;
     }
     
     public class MultiDeserializer :IMultiDeserializer
@@ -76,34 +69,6 @@ namespace Archivarius
             }
         }
 
-        public async Task<(bool, TData?)> DeserializeClass<TData>(byte[] bytes)
-            where TData : class, IDataStruct
-        {
-            var deserializer = await _byteDeserializers.GetAsync();
-            try
-            {
-                return (deserializer.DeserializeClass<TData>(bytes, out var data), data);
-            }
-            finally
-            {
-                await _byteDeserializers.ReleaseAsync(deserializer);
-            }
-        }
-        
-        public async Task<(bool, TData?)> DeserializeClass<TData>(Stream stream)
-            where TData : class, IDataStruct
-        {
-            var deserializer = await _streamDeserializers.GetAsync();
-            try
-            {
-                return (deserializer.DeserializeClass<TData>(stream, out var data), data);
-            }
-            finally
-            {
-                await _streamDeserializers.ReleaseAsync(deserializer);
-            }
-        }
-
         public bool DeserializeStruct<TData>(byte[] bytes, out TData data) where TData : struct, IDataStruct
         {
             var deserializer = _byteDeserializers.Get();
@@ -130,34 +95,6 @@ namespace Archivarius
             }
         }
 
-        public async Task<(bool, TData)> DeserializeStruct<TData>(byte[] bytes)
-            where TData : struct, IDataStruct
-        {
-            var deserializer = await _byteDeserializers.GetAsync();
-            try
-            {
-                return (deserializer.DeserializeStruct<TData>(bytes, out var data), data);
-            }
-            finally
-            {
-                await _byteDeserializers.ReleaseAsync(deserializer);
-            }
-        }
-        
-        public async Task<(bool, TData)> DeserializeStruct<TData>(Stream stream)
-            where TData : struct, IDataStruct
-        {
-            var deserializer = await _streamDeserializers.GetAsync();
-            try
-            {
-                return (deserializer.DeserializeStruct<TData>(stream, out var data), data);
-            }
-            finally
-            {
-                await _streamDeserializers.ReleaseAsync(deserializer);
-            }
-        }
-
         public bool DeserializeVersionedStruct<TData>(byte[] bytes, out TData data) where TData : struct, IVersionedDataStruct
         {
             var deserializer = _byteDeserializers.Get();
@@ -181,34 +118,6 @@ namespace Archivarius
             finally
             {
                 _streamDeserializers.Release(deserializer);
-            }
-        }
-
-        public async Task<(bool, TData)> DeserializeVersionedStruct<TData>(byte[] bytes)
-            where TData : struct, IVersionedDataStruct
-        {
-            var deserializer = await _byteDeserializers.GetAsync();
-            try
-            {
-                return (deserializer.DeserializeVersionedStruct<TData>(bytes, out var data), data);
-            }
-            finally
-            {
-                await _byteDeserializers.ReleaseAsync(deserializer);
-            }
-        }
-        
-        public async Task<(bool, TData)> DeserializeVersionedStruct<TData>(Stream stream)
-            where TData : struct, IVersionedDataStruct
-        {
-            var deserializer = await _streamDeserializers.GetAsync();
-            try
-            {
-                return (deserializer.DeserializeVersionedStruct<TData>(stream, out var data), data);
-            }
-            finally
-            {
-                await _streamDeserializers.ReleaseAsync(deserializer);
             }
         }
         
