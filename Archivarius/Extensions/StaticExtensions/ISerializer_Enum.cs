@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Archivarius
 {
@@ -15,28 +16,28 @@ namespace Archivarius
                 switch (value.GetTypeCode())
                 {
                     case TypeCode.Byte:
-                        serializer.Writer.WriteByte((byte)(object)value);
+                        serializer.Writer.WriteByte(Unsafe.As<T, byte>(ref value));
                         break;
                     case TypeCode.Int16:
-                        serializer.Writer.WriteShort((short)(object)value);
+                        serializer.Writer.WriteShort(Unsafe.As<T, short>(ref value));
                         break;
                     case TypeCode.Int32:
-                        serializer.Writer.WriteInt((int)(object)value);
+                        serializer.Writer.WriteInt(Unsafe.As<T, int>(ref value));
                         break;
                     case TypeCode.Int64:
-                        serializer.Writer.WriteLong((long)(object)value);
+                        serializer.Writer.WriteLong(Unsafe.As<T, long>(ref value));
                         break;
                     case TypeCode.SByte:
-                        serializer.Writer.WriteSByte((sbyte)(object)value);
+                        serializer.Writer.WriteSByte(Unsafe.As<T, sbyte>(ref value));
                         break;
                     case TypeCode.UInt16:
-                        serializer.Writer.WriteUShort((ushort)(object)value);
+                        serializer.Writer.WriteUShort(Unsafe.As<T, ushort>(ref value));
                         break;
                     case TypeCode.UInt32:
-                        serializer.Writer.WriteUInt((uint)(object)value);
+                        serializer.Writer.WriteUInt(Unsafe.As<T, uint>(ref value));
                         break;
                     case TypeCode.UInt64:
-                        serializer.Writer.WriteULong((ulong)(object)value);
+                        serializer.Writer.WriteULong(Unsafe.As<T, ulong>(ref value));
                         break;
                     default:
                         throw new InvalidOperationException();
@@ -47,28 +48,28 @@ namespace Archivarius
                 switch (value.GetTypeCode())
                 {
                     case TypeCode.Byte:
-                        value = (T)(object)serializer.Reader.ReadByte();
+                        { var tmp = serializer.Reader.ReadByte(); value = Unsafe.As<byte, T>(ref tmp); }
                         break;
                     case TypeCode.Int16:
-                        value = (T)(object)serializer.Reader.ReadShort();
+                        { var tmp = serializer.Reader.ReadShort(); value = Unsafe.As<short, T>(ref tmp); }
                         break;
                     case TypeCode.Int32:
-                        value = (T)(object)serializer.Reader.ReadInt();
+                        { var tmp = serializer.Reader.ReadInt(); value = Unsafe.As<int, T>(ref tmp); }
                         break;
                     case TypeCode.Int64:
-                        value = (T)(object)serializer.Reader.ReadLong();
+                        { var tmp = serializer.Reader.ReadLong(); value = Unsafe.As<long, T>(ref tmp); }
                         break;
                     case TypeCode.SByte:
-                        value = (T)(object)serializer.Reader.ReadSByte();
+                        { var tmp = serializer.Reader.ReadSByte(); value = Unsafe.As<sbyte, T>(ref tmp); }
                         break;
                     case TypeCode.UInt16:
-                        value = (T)(object)serializer.Reader.ReadUShort();
+                        { var tmp = serializer.Reader.ReadUShort(); value = Unsafe.As<ushort, T>(ref tmp); }
                         break;
                     case TypeCode.UInt32:
-                        value = (T)(object)serializer.Reader.ReadUInt();
+                        { var tmp = serializer.Reader.ReadUInt(); value = Unsafe.As<uint, T>(ref tmp); }
                         break;
                     case TypeCode.UInt64:
-                        value = (T)(object)serializer.Reader.ReadULong();
+                        { var tmp = serializer.Reader.ReadULong(); value = Unsafe.As<ulong, T>(ref tmp); }
                         break;
                     default:
                         throw new InvalidOperationException();
