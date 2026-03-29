@@ -165,13 +165,12 @@ namespace Archivarius
 
             public void Skip(int count)
             {
-                if (_count >= count)
+                if (_count < count)
                 {
-                    _count -= count;
-                    _position += count;
+                    throw new IndexOutOfRangeException();
                 }
-
-                throw new IndexOutOfRangeException();
+                _count -= count;
+                _position += count;
             }
 
             public byte[] ToArray()
