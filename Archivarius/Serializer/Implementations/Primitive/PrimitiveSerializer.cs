@@ -44,7 +44,7 @@ namespace Archivarius
 
         public void Add(ref ushort value)
         {
-            _writer.WriteChar((char)value);
+            _writer.WriteShort(unchecked((short)value));
         }
 
         public void Add(ref int value)

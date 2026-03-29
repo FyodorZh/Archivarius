@@ -44,7 +44,8 @@ namespace Archivarius
 
         public void Add(ref ushort value)
         {
-            value = _reader.ReadChar();
+            var sValue = _reader.ReadShort();
+            value = unchecked((ushort)sValue);
         }
 
         public void Add(ref int value)
