@@ -3,7 +3,6 @@
     <PropertyGroup>
         <ImplicitUsings>false</ImplicitUsings>
         <Nullable>enable</Nullable>
-
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
         <Authors>Fyodor Zhmaev</Authors>
@@ -35,7 +34,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Archivarius.Json\Archivarius.Json.csproj" />
-      <ProjectReference Include="..\..\Archivarius.Tools\Archivarius.Tools.csproj" />
       <ProjectReference Include="..\..\Archivarius\Archivarius.csproj" />
     </ItemGroup>
 

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Archivarius.TypeSerializers;
-using NUnit.Framework;
 
 namespace Archivarius.Tests
 {
@@ -37,8 +36,8 @@ namespace Archivarius.Tests
                     var bytes = serializer.SerializeClass(data);
                     await Task.Yield();
                     var isOk = deserializer.DeserializeClass<DataClass>(bytes, out var res);
-                    Assert.IsTrue(isOk);
-                    Assert.IsTrue(k == res!.Value);
+                    Assert.That(isOk, Is.True);
+                    Assert.That(res!.Value, Is.EqualTo(k));
                 });
                 tasks.Add(task);
             }
