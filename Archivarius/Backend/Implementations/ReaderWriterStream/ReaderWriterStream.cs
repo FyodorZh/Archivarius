@@ -30,7 +30,8 @@ namespace Archivarius
             _doubles.Count == 0 &&
             _decimals.Count == 0 &&
             _strings.Count == 0 &&
-            _arrays.Count == 0;
+            _arrays.Count == 0 &&
+            _byteSequeences.Count == 0;
 
         public void Clear()
         {
@@ -45,6 +46,7 @@ namespace Archivarius
             _decimals.Clear();
             _strings.Clear();
             _arrays.Clear();
+            _byteSequeences.Clear();
         }
 
         public bool ReadBool()
