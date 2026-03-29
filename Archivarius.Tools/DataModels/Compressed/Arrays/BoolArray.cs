@@ -70,13 +70,10 @@ namespace Archivarius.DataModels.Compressed
             serializer.Add(ref _lastSize);
             if (!serializer.IsWriter)
             {
-                if (_data.Length > 0)
+                _count = _data.Length * 8;
+                if (_lastSize != 0)
                 {
-                    _count = _data.Length * 8 - 8 + _lastSize;
-                }
-                else
-                {
-                    _count = 0;
+                    _count += -8 + _lastSize;
                 }
             }
         }
