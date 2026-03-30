@@ -36,7 +36,7 @@ namespace Archivarius.BinaryBackend
             _position = 0;
         }
 
-        public ValueTask<bool> Preload()
+        public ValueTask<bool> Fetch()
         {
             return new ValueTask<bool>(_position < _maxPosition);
         }

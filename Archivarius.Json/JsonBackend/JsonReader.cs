@@ -168,7 +168,7 @@ namespace Archivarius.JsonBackend
             Buffer.BlockCopy(res, 0, dst, offset, count);
         }
 
-        public ValueTask<bool> Preload()
+        public ValueTask<bool> Fetch()
         {
             bool hasData = _sectionStack.Count > 0 || _cursor < _currentSection.Count;
             return new ValueTask<bool>(hasData);

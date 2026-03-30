@@ -30,6 +30,5 @@ namespace Archivarius
         void BeginSection();
         void EndSection();
     }
-
 }
 

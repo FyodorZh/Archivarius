@@ -33,11 +33,10 @@ namespace Archivarius
         /// TRUE - Reader has some data to read
         /// FALSE - Reader has no data. The Deserialization process must stop.
         /// </returns>
-        ValueTask<bool> Preload();
+        ValueTask<bool> Fetch();
         bool TrySetSectionUsage(bool useSections);
         void BeginSection();
         bool EndSection();
     }
-    
 }
 

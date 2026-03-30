@@ -185,7 +185,7 @@ namespace Archivarius
 
         public ValueTask<bool> FlushPoint()
         {
-            return _reader.Preload();
+            return _reader.Fetch();
         }
 
         public void AddStruct<T>(ref T value)

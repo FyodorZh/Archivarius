@@ -84,7 +84,7 @@ namespace Archivarius.Tests
                 await finish();
             });
 
-            await reader.Preload();
+            await reader.Fetch();
             deserializer.Prepare();
             int i = 0;
             while (true)

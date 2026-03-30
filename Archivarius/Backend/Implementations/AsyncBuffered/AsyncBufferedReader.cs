@@ -17,7 +17,7 @@ namespace Archivarius.AsyncBackend
             _readAsync = readAsync;
         }
 
-        public async ValueTask<bool> Preload()
+        public async ValueTask<bool> Fetch()
         {
             if (!await EnsureBufferSize(4))
             {

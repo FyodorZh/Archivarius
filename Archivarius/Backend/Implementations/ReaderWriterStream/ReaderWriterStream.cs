@@ -137,7 +137,7 @@ namespace Archivarius
             return default;
         }
 
-        ValueTask<bool> IReader.Preload()
+        ValueTask<bool> IReader.Fetch()
         {
             return default;
         }
