@@ -50,6 +50,8 @@ namespace Archivarius.BinaryBackend
             _stream.WriteByte(value);
         }
 
+        public void WriteSByte(sbyte value) => WriteByte(unchecked((byte)value));
+
         public void WriteChar(char value)
         {
             CharToByte block = new CharToByte() {Value = value};
@@ -64,6 +66,8 @@ namespace Archivarius.BinaryBackend
             _stream.WriteByte(block.Byte1);
         }
 
+        public void WriteUShort(ushort value) => WriteShort(unchecked((short)value));
+
         public void WriteInt(int value)
         {
             IntToByte block = new IntToByte() {Value = value};
@@ -72,6 +76,8 @@ namespace Archivarius.BinaryBackend
             _stream.WriteByte(block.Byte2);
             _stream.WriteByte(block.Byte3);
         }
+
+        public void WriteUInt(uint value) => WriteInt(unchecked((int)value));
 
         public void WriteLong(long value)
         {
@@ -85,6 +91,8 @@ namespace Archivarius.BinaryBackend
             _stream.WriteByte(block.Byte6);
             _stream.WriteByte(block.Byte7);
         }
+
+        public void WriteULong(ulong value) => WriteLong(unchecked((long)value));
 
         public void WriteFloat(float value)
         {

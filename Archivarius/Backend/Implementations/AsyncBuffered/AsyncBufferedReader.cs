@@ -95,6 +95,8 @@ namespace Archivarius.AsyncBackend
             return _buffer.Pop();
         }
 
+        public sbyte ReadSByte() => unchecked((sbyte)ReadByte());
+
         public char ReadChar()
         {
             Check(2);
@@ -119,6 +121,8 @@ namespace Archivarius.AsyncBackend
             return block.Value;
         }
 
+        public ushort ReadUShort() => unchecked((ushort)ReadShort());
+
         public int ReadInt()
         {
             Check(4);
@@ -132,6 +136,8 @@ namespace Archivarius.AsyncBackend
 
             return block.Value;
         }
+
+        public uint ReadUInt() => unchecked((uint)ReadInt());
 
         public long ReadLong()
         {
@@ -150,6 +156,8 @@ namespace Archivarius.AsyncBackend
 
             return block.Value;
         }
+
+        public ulong ReadULong() => unchecked((ulong)ReadLong());
 
         public float ReadFloat()
         {

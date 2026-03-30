@@ -45,6 +45,8 @@ namespace Archivarius.JsonBackend
             _currentSection.Add(value);
         }
 
+        public void WriteSByte(sbyte value) => WriteByte(unchecked((byte)value));
+
         public void WriteChar(char value)
         {
             _currentSection.Add(value);
@@ -55,15 +57,21 @@ namespace Archivarius.JsonBackend
             _currentSection.Add(value);
         }
 
+        public void WriteUShort(ushort value) => WriteShort(unchecked((short)value));
+
         public void WriteInt(int value)
         {
             _currentSection.Add(value);
         }
 
+        public void WriteUInt(uint value) => WriteInt(unchecked((int)value));
+
         public void WriteLong(long value)
         {
             _currentSection.Add(value);
         }
+
+        public void WriteULong(ulong value) => WriteLong(unchecked((long)value));
 
         public void WriteFloat(float value)
         {

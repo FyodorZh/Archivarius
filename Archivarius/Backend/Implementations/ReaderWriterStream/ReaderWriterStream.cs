@@ -59,6 +59,8 @@ namespace Archivarius
             return _bytes.Dequeue();
         }
 
+        public sbyte ReadSByte() => unchecked((sbyte)ReadByte());
+
         public char ReadChar()
         {
             return _chars.Dequeue();
@@ -69,15 +71,21 @@ namespace Archivarius
             return _shorts.Dequeue();
         }
 
+        public ushort ReadUShort() => unchecked((ushort)ReadShort());
+
         public int ReadInt()
         {
             return _ints.Dequeue();
         }
 
+        public uint ReadUInt() => unchecked((uint)ReadInt());
+
         public long ReadLong()
         {
             return _longs.Dequeue();
         }
+
+        public ulong ReadULong() => unchecked((ulong)ReadLong());
 
         public float ReadFloat()
         {
@@ -164,6 +172,8 @@ namespace Archivarius
             _bytes.Enqueue(value);
         }
 
+        public void WriteSByte(sbyte value) => WriteByte(unchecked((byte)value));
+
         public void WriteChar(char value)
         {
             _chars.Enqueue(value);
@@ -174,15 +184,21 @@ namespace Archivarius
             _shorts.Enqueue(value);
         }
 
+        public void WriteUShort(ushort value) => WriteShort(unchecked((short)value));
+
         public void WriteInt(int value)
         {
             _ints.Enqueue(value);
         }
 
+        public void WriteUInt(uint value) => WriteInt(unchecked((int)value));
+
         public void WriteLong(long value)
         {
             _longs.Enqueue(value);
         }
+
+        public void WriteULong(ulong value) => WriteLong(unchecked((long)value));
 
         public void WriteFloat(float value)
         {

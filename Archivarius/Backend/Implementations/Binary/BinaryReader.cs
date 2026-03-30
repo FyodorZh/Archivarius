@@ -103,6 +103,8 @@ namespace Archivarius.BinaryBackend
             return _buffer[_position++];
         }
 
+        public sbyte ReadSByte() => unchecked((sbyte)ReadByte());
+
         public char ReadChar()
         {
             Check(2);
@@ -127,6 +129,8 @@ namespace Archivarius.BinaryBackend
             return block.Value;
         }
 
+        public ushort ReadUShort() => unchecked((ushort)ReadShort());
+
         public int ReadInt()
         {
             Check(4);
@@ -140,6 +144,8 @@ namespace Archivarius.BinaryBackend
 
             return block.Value;
         }
+
+        public uint ReadUInt() => unchecked((uint)ReadInt());
 
         public long ReadLong()
         {
@@ -158,6 +164,8 @@ namespace Archivarius.BinaryBackend
 
             return block.Value;
         }
+
+        public ulong ReadULong() => unchecked((ulong)ReadLong());
 
         public float ReadFloat()
         {

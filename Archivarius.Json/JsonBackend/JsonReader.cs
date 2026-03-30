@@ -56,6 +56,8 @@ namespace Archivarius.JsonBackend
             return res;
         }
 
+        public sbyte ReadSByte() => unchecked((sbyte)ReadByte());
+
         public char ReadChar()
         {
             CheckGrow();
@@ -72,6 +74,8 @@ namespace Archivarius.JsonBackend
             return res;
         }
 
+        public ushort ReadUShort() => unchecked((ushort)ReadShort());
+
         public int ReadInt()
         {
             CheckGrow();
@@ -80,6 +84,8 @@ namespace Archivarius.JsonBackend
             return res;
         }
 
+        public uint ReadUInt() => unchecked((uint)ReadInt());
+
         public long ReadLong()
         {
             CheckGrow();
@@ -87,6 +93,8 @@ namespace Archivarius.JsonBackend
             _cursor += 1;
             return res;
         }
+
+        public ulong ReadULong() => unchecked((ulong)ReadLong());
 
         public float ReadFloat()
         {
