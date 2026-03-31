@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 
 namespace Archivarius
@@ -86,7 +86,7 @@ namespace Archivarius
         /// </summary>
         /// <param name="value">The source buffer.</param>
         /// <param name="offset">The zero-based start index within <paramref name="value"/>.</param>
-        /// <param name="count">The number of bytes to write.</param>
+        /// <param name="count">The number of bytes to write. When zero, the method is a no-op (nothing is written to the stream).</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="value"/> is <see langword="null"/>.
         /// </exception>
@@ -171,16 +171,27 @@ namespace Archivarius
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Each <see cref="Flush"/> call must be matched by exactly one subsequent
-        /// <see cref="IReader.Fetch"/> call on the paired reader, and vice-versa.
+        /// <b>Flush/Fetch must be matched 1-to-1.</b>
+        /// After a <see cref="IReader.Fetch"/> call the reader does not guarantee how many bytes
+        /// are actually made available — this is an implementation detail of the underlying
+        /// transport. Therefore the only reliable usage pattern is for the writer side and the
+        /// reader side to perform an equal number of <see cref="Flush"/>/<see cref="IReader.Fetch"/>
+        /// calls in lockstep. Mismatching counts is not itself a hard error, but the resulting
+        /// behaviour is undefined.
         /// </para>
         /// <para>
         /// For in-memory implementations this method is a no-op and completes synchronously.
         /// For streaming implementations it frames and transmits the accumulated buffer to the
         /// underlying transport.
         /// </para>
+        /// <para>
+        /// This method must not be called while a section is open (i.e. after a
+        /// <see cref="BeginSection"/> call that has not yet been matched by a corresponding
+        /// <see cref="EndSection"/> call). Doing so will result in an
+        /// <see cref="InvalidOperationException"/>.
+        /// </para>
         /// </remarks>
-        /// <exception cref="InvalidOperationException">The writer is in an invalid state.</exception>
+        /// <exception cref="InvalidOperationException">The writer is in an invalid state, such as when a section is currently open.</exception>
         /// <exception cref="System.IO.IOException">An I/O error occurred while flushing data.</exception>
         ValueTask Flush();
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 
 namespace Archivarius
@@ -132,7 +132,7 @@ namespace Archivarius
         /// </summary>
         /// <param name="dst">The destination buffer.</param>
         /// <param name="offset">The zero-based start index within <paramref name="dst"/>.</param>
-        /// <param name="count">The number of bytes to read.</param>
+        /// <param name="count">The number of bytes to read. When zero, the method is a no-op (no bytes are consumed from the stream).</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="dst"/> is <see langword="null"/>.
         /// </exception>
@@ -152,6 +152,10 @@ namespace Archivarius
     /// <summary>
     /// Extends <see cref="ILowLevelReader"/> with section management and data fetching.
     /// </summary>
+    /// <remarks>
+    /// Some implementations may detect type mismatches during deserialization and throw
+    /// <see cref="System.IO.InvalidDataException"/> in such cases, but this behavior is not mandatory.
+    /// </remarks>
     public interface IReader : ILowLevelReader
     {
         /// <summary>
@@ -231,8 +235,20 @@ namespace Archivarius
         /// </returns>
         /// <remarks>
         /// <para>
-        /// Each <see cref="Fetch"/> call must correspond to exactly one prior
-        /// <see cref="IWriter.Flush"/> call on the paired writer, and vice-versa.
+        /// <b>Always call <see cref="Fetch"/> before reading any data.</b>
+        /// Attempting to read data without a preceding <see cref="Fetch"/> call is undefined
+        /// behaviour — the data may simply not be present yet, and the outcome is
+        /// implementation-specific.
+        /// </para>
+        /// <para>
+        /// <b>Flush/Fetch must be matched 1-to-1.</b>
+        /// There is no guarantee about how many bytes a single <see cref="Fetch"/> call will
+        /// make available; that is an implementation detail of the underlying transport. The
+        /// only reliable usage pattern is therefore for both sides to perform an equal number
+        /// of <see cref="IWriter.Flush"/>/<see cref="Fetch"/> calls in lockstep — one
+        /// <see cref="IWriter.Flush"/> on the writer for every <see cref="Fetch"/> on the
+        /// reader, in the same order. Mismatching counts is not itself a hard error, but the
+        /// resulting behaviour is undefined.
         /// </para>
         /// <para>
         /// For in-memory implementations this method completes synchronously and simply
@@ -240,6 +256,7 @@ namespace Archivarius
         /// For streaming implementations it reads the next framed block from the transport.
         /// </para>
         /// </remarks>
+        /// <exception cref="InvalidOperationException">The reader is in an invalid state, such as when a section is currently open.</exception>
         /// <exception cref="System.IO.IOException">An I/O error occurred while fetching data.</exception>
         ValueTask<bool> Fetch();
     }
