@@ -142,7 +142,6 @@ namespace Archivarius
         /// but the nesting contract must still be respected.
         /// </para>
         /// </remarks>
-        /// <exception cref="InvalidOperationException">The writer is in an invalid state.</exception>
         void BeginSection();
 
         /// <summary>

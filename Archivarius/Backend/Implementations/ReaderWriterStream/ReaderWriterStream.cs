@@ -18,6 +18,8 @@ namespace Archivarius
         private readonly Queue<string?> _strings = new Queue<string?>();
         private readonly Queue<byte[]?> _arrays = new Queue<byte[]?>();
         private readonly Queue<byte[]> _byteSequeences = new();
+        
+        public bool HasDataToRead => false;
 
         public bool IsEmpty =>
             _booleans.Count == 0 &&

@@ -15,6 +15,8 @@ namespace Archivarius.BinaryBackend
         private int _position = 0;
 
         private bool _useSections = true;
+        
+        public bool HasDataToRead => false;
 
         public BinaryReader(byte[] buffer, int count = -1)
         {
@@ -30,11 +32,11 @@ namespace Archivarius.BinaryBackend
             _position = 0;
         }
 
-        public void Reset()
-        {
-            _stackOfSections.Clear();
-            _position = 0;
-        }
+        // public void Reset()
+        // {
+        //     _stackOfSections.Clear();
+        //     _position = 0;
+        // }
 
         public ValueTask<bool> Fetch()
         {

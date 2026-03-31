@@ -14,6 +14,8 @@ namespace Archivarius.BinaryBackend
         private long _maxPosition;
         
         private bool _useSections;
+        
+        public bool HasDataToRead => false;
 
         public BinaryStreamReader(Stream stream, long count = -1)
         {

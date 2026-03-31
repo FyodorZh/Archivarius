@@ -15,7 +15,8 @@ namespace Archivarius
         /// The stream does not contain enough data to read the value.
         /// </exception>
         /// <exception cref="System.IO.InvalidDataException">
-        /// The stored byte is not a valid boolean encoding.
+        /// The stored data is not a valid <see cref="bool"/> encoding, or a type mismatch was
+        /// detected by the implementation.
         /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteBool"/>
         bool ReadBool();
@@ -24,12 +25,18 @@ namespace Archivarius
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
         /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
+        /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteByte"/>
         byte ReadByte();
 
         /// <summary>Reads an <see cref="sbyte"/> value.</summary>
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
         /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteSByte"/>
         sbyte ReadSByte();
@@ -38,12 +45,18 @@ namespace Archivarius
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
         /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
+        /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteChar"/>
         char ReadChar();
 
         /// <summary>Reads a <see cref="short"/> value.</summary>
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
         /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteShort"/>
         short ReadShort();
@@ -52,12 +65,18 @@ namespace Archivarius
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
         /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadUShort"/>
         ushort ReadUShort();
 
         /// <summary>Reads an <see cref="int"/> value.</summary>
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
         /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteInt"/>
         int ReadInt();
@@ -66,12 +85,18 @@ namespace Archivarius
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
         /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
+        /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteUInt"/>
         uint ReadUInt();
 
         /// <summary>Reads a <see cref="long"/> value.</summary>
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
         /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteLong"/>
         long ReadLong();
@@ -80,12 +105,18 @@ namespace Archivarius
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
         /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
+        /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteULong"/>
         ulong ReadULong();
 
         /// <summary>Reads a <see cref="float"/> value.</summary>
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
         /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteFloat"/>
         float ReadFloat();
@@ -94,12 +125,18 @@ namespace Archivarius
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
         /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
+        /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteDouble"/>
         double ReadDouble();
 
         /// <summary>Reads a <see cref="decimal"/> value.</summary>
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
         /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteDecimal"/>
         decimal ReadDecimal();
@@ -112,6 +149,10 @@ namespace Archivarius
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
         /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// The stored data is not a valid string encoding, or a type mismatch was detected by
+        /// the implementation.
+        /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteString"/>
         string? ReadString();
 
@@ -121,6 +162,10 @@ namespace Archivarius
         /// </summary>
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read the value.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// The stored data is not a valid byte-array encoding, or a type mismatch was detected
+        /// by the implementation.
         /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteArray"/>
         byte[]? ReadArray();
@@ -145,6 +190,9 @@ namespace Archivarius
         /// <exception cref="System.IO.EndOfStreamException">
         /// The stream does not contain enough data to read <paramref name="count"/> bytes.
         /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        /// A type mismatch was detected by the implementation.
+        /// </exception>
         /// <seealso cref="ILowLevelWriter.WriteBytes"/>
         void ReadBytes(byte[] dst, int offset, int count);
     }
@@ -158,6 +206,11 @@ namespace Archivarius
     /// </remarks>
     public interface IReader : ILowLevelReader
     {
+        /// <summary>
+        /// Indicates whether there is more data available to read from the stream.
+        /// </summary>
+        bool HasDataToRead { get; }
+        
         /// <summary>
         /// Attempts to enable or disable logical section markers for deserialization.
         /// Must be configured to the same value that was used on the paired <see cref="IWriter"/>.
@@ -231,7 +284,7 @@ namespace Archivarius
         /// </summary>
         /// <returns>
         /// <see langword="true"/> if data is available and deserialization can proceed;
-        /// <see langword="false"/> if no more data is available and deserialization must stop.
+        /// <see langword="false"/> if no more data will be ever available and deserialization must stop.
         /// </returns>
         /// <remarks>
         /// <para>
