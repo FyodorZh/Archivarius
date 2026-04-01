@@ -178,6 +178,14 @@ namespace Archivarius
         /// <param name="dst">The destination buffer.</param>
         /// <param name="offset">The zero-based start index within <paramref name="dst"/>.</param>
         /// <param name="count">The number of bytes to read. When zero, the method is a no-op (no bytes are consumed from the stream).</param>
+        /// <remarks>
+        /// In type-safe implementations, if the <paramref name="count"/> supplied here differs
+        /// from the count that was passed to the paired <see cref="ILowLevelWriter.WriteBytes"/>,
+        /// an <see cref="System.IO.InvalidDataException"/> is thrown <b>during this call</b>
+        /// (not deferred to a section boundary or stream end).  Likewise, if a typed value was
+        /// written (e.g. via <see cref="ILowLevelWriter.WriteInt"/>) but <see cref="ReadBytes"/>
+        /// is called, an <see cref="System.IO.InvalidDataException"/> is thrown immediately.
+        /// </remarks>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="dst"/> is <see langword="null"/>.
         /// </exception>
@@ -201,17 +209,32 @@ namespace Archivarius
     /// Extends <see cref="ILowLevelReader"/> with section management and data fetching.
     /// </summary>
     /// <remarks>
-    /// Some implementations may detect type mismatches during deserialization and throw
-    /// <see cref="System.IO.InvalidDataException"/> in such cases, but this behavior is not mandatory.
+    /// <para>
+    /// Whether type mismatches are detected depends on the implementation.
+    /// Implementations that support type safety will throw <see cref="System.IO.InvalidDataException"/>
+    /// whenever a read method is called for a type that differs from the type that was written
+    /// (e.g. calling <see cref="ReadInt"/> when a <see cref="WriteFloat"/> was written, or
+    /// calling <see cref="ReadBytes"/> when a typed value was written). Type safety is strict:
+    /// signed/unsigned variants are distinct types (<c>short</c> ≠ <c>ushort</c>, etc.).
+    /// Implementations that do not guarantee type safety must still detect data corruption in a
+    /// weaker form: if sections are enabled they must report unconsumed or overconsumed bytes at
+    /// each <see cref="EndSection"/>; if sections are disabled they must detect insufficient data
+    /// at the end of the stream.
+    /// </para>
     /// </remarks>
     public interface IReader : ILowLevelReader
     {
         /// <summary>
-        /// Indicates whether the reader comes to the end of the data stream.
-        /// No data will ever occur.
+        /// Indicates whether the reader has reached the permanent end of the data stream —
+        /// no further data will ever become available.
         /// </summary>
+        /// <remarks>
+        /// This property becomes <see langword="true"/> only after <see cref="Fetch"/> has
+        /// returned <see langword="false"/>. Before that point the value is
+        /// <see langword="false"/> regardless of how much data remains in the current buffer.
+        /// </remarks>
         bool IsCompleted { get; }
-        
+
         /// <summary>
         /// Attempts to enable or disable logical section markers for deserialization.
         /// Must be configured to the same value that was used on the paired <see cref="IWriter"/>.
@@ -226,7 +249,18 @@ namespace Archivarius
         /// been read, or because the implementation does not support the requested mode.
         /// </returns>
         /// <remarks>
+        /// <para>
+        /// Sections are <b>disabled by default</b> on every implementation.
+        /// </para>
+        /// <para>
         /// Must be called before any data is read from the stream.
+        /// </para>
+        /// <para>
+        /// An implementation that does not support sections must still accept
+        /// <c>TrySetSectionUsage(false)</c> and return <see langword="true"/>, because
+        /// disabling sections is always valid. It must return <see langword="false"/> only
+        /// when <paramref name="useSections"/> is <see langword="true"/>.
+        /// </para>
         /// </remarks>
         bool TrySetSectionUsage(bool useSections);
 
@@ -247,9 +281,20 @@ namespace Archivarius
         /// <see cref="TrySetSectionUsage"/>. When sections are disabled this method is a no-op,
         /// but the nesting contract must still be respected.
         /// </para>
+        /// <para>
+        /// When sections are enabled, any <see cref="ILowLevelReader"/> or
+        /// <see cref="ReadBytes"/> call that would consume bytes beyond the current section's
+        /// recorded length boundary throws <see cref="System.IO.EndOfStreamException"/>, even
+        /// if more data exists further in the stream.
+        /// </para>
         /// </remarks>
         /// <exception cref="System.IO.EndOfStreamException">
-        /// The stream does not contain enough data to read the section header.
+        /// The stream does not contain enough data to read the section header
+        /// (only when sections are enabled).
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The reader has already been completed (i.e. <see cref="Fetch"/> returned
+        /// <see langword="false"/> and <see cref="IsCompleted"/> is <see langword="true"/>).
         /// </exception>
         void BeginSection();
 
@@ -261,7 +306,8 @@ namespace Archivarius
         /// </summary>
         /// <returns>
         /// <see langword="true"/> if the section was fully consumed (no bytes were skipped).
-        /// <see langword="false"/> if the section contained unread bytes that were automatically skipped.
+        /// <see langword="false"/> if the section contained unread bytes that were automatically
+        /// skipped.
         /// </returns>
         /// <remarks>
         /// <para>
@@ -269,13 +315,19 @@ namespace Archivarius
         /// Sections must be closed in reverse order of opening (LIFO).
         /// </para>
         /// <para>
-        /// Can be called regardless of whether sections are enabled via
-        /// <see cref="TrySetSectionUsage"/>. When sections are disabled this method is a no-op
-        /// and always returns <see langword="true"/>.
+        /// The BeginSection/EndSection nesting contract is <b>always enforced</b>, regardless
+        /// of whether sections are enabled or disabled. Calling <see cref="EndSection"/> without
+        /// a preceding <see cref="BeginSection"/> always throws
+        /// <see cref="InvalidOperationException"/>.
+        /// </para>
+        /// <para>
+        /// When sections are disabled, no boundary tracking occurs and the method always returns
+        /// <see langword="true"/>, but the nesting contract above still applies.
         /// </para>
         /// </remarks>
         /// <exception cref="InvalidOperationException">
-        /// Called without a matching open <see cref="BeginSection"/>.
+        /// Called without a matching open <see cref="BeginSection"/>, regardless of whether
+        /// sections are enabled or disabled.
         /// </exception>
         bool EndSection();
 
@@ -284,8 +336,9 @@ namespace Archivarius
         /// making it available for reading.
         /// </summary>
         /// <returns>
-        /// <see langword="true"/> if data is available and deserialization can proceed;
-        /// <see langword="false"/> if no more data will be ever available and deserialization must stop.
+        /// <see langword="true"/> if data is (or may be) available and deserialization can
+        /// proceed; <see langword="false"/> if no more data will ever be available and
+        /// deserialization must stop.
         /// </returns>
         /// <remarks>
         /// <para>
@@ -303,6 +356,23 @@ namespace Archivarius
         /// <see cref="IWriter.Flush"/> on the writer for every <see cref="Fetch"/> on the
         /// reader, in the same order. Mismatching counts is not itself a hard error, but the
         /// resulting behaviour is undefined.
+        /// </para>
+        /// <para>
+        /// <b><see cref="IWriter.Complete"/> counts as one <see cref="IWriter.Flush"/>.</b>
+        /// A writer that writes data and then calls <see cref="IWriter.Complete"/> (without a
+        /// prior explicit <see cref="IWriter.Flush"/>) makes that data available via exactly
+        /// one <see cref="Fetch"/> call. The subsequent <see cref="Fetch"/> will return
+        /// <see langword="false"/>.
+        /// </para>
+        /// <para>
+        /// <b>Blocking behaviour.</b> For streaming implementations, if <see cref="Fetch"/> is
+        /// called before the paired writer has called <see cref="IWriter.Flush"/>, the call
+        /// will suspend (await) until the data arrives.
+        /// </para>
+        /// <para>
+        /// <b>No-data flushes.</b> <see cref="Fetch"/> may return <see langword="true"/> even
+        /// when the paired <see cref="IWriter.Flush"/> wrote no additional data. Callers must
+        /// not assume that <see langword="true"/> means new bytes are present.
         /// </para>
         /// <para>
         /// For in-memory implementations this method completes synchronously and simply

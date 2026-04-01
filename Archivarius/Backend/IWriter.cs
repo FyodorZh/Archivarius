@@ -132,6 +132,13 @@ namespace Archivarius
         /// <param name="value">The source buffer.</param>
         /// <param name="offset">The zero-based start index within <paramref name="value"/>.</param>
         /// <param name="count">The number of bytes to write. When zero, the method is a no-op (nothing is written to the stream).</param>
+        /// <remarks>
+        /// In type-safe implementations the written <paramref name="count"/> is stored alongside
+        /// the data. If the paired <see cref="ILowLevelReader.ReadBytes"/> call specifies a
+        /// different count, or if a typed read method is called instead, an
+        /// <see cref="System.IO.InvalidDataException"/> is thrown <b>during the read call</b>
+        /// (not deferred to a section boundary or stream end).
+        /// </remarks>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="value"/> is <see langword="null"/>.
         /// </exception>
@@ -168,8 +175,19 @@ namespace Archivarius
         /// been written, or because the implementation does not support the requested mode.
         /// </returns>
         /// <remarks>
+        /// <para>
+        /// Sections are <b>disabled by default</b> on every implementation.
+        /// </para>
+        /// <para>
         /// Must be called before any data is written to the stream.
         /// The paired <see cref="IReader"/> must be configured with the same value.
+        /// </para>
+        /// <para>
+        /// An implementation that does not support sections must still accept
+        /// <c>TrySetSectionUsage(false)</c> and return <see langword="true"/>, because
+        /// disabling sections is always valid. It must return <see langword="false"/> only
+        /// when <paramref name="useSections"/> is <see langword="true"/>.
+        /// </para>
         /// </remarks>
         /// <exception cref="InvalidOperationException">
         /// The writer has already been completed via <see cref="Complete"/>.
@@ -239,15 +257,16 @@ namespace Archivarius
         /// underlying transport.
         /// </para>
         /// <para>
-        /// This method must not be called while a section is open (i.e. after a
-        /// <see cref="BeginSection"/> call that has not yet been matched by a corresponding
-        /// <see cref="EndSection"/> call). Doing so will result in an
-        /// <see cref="InvalidOperationException"/>.
+        /// When sections are <b>enabled</b>, this method must not be called while a section is
+        /// open (i.e. after a <see cref="BeginSection"/> that has not yet been matched by
+        /// <see cref="EndSection"/>). Doing so will throw <see cref="InvalidOperationException"/>.
+        /// When sections are <b>disabled</b>, an unmatched <see cref="BeginSection"/> does
+        /// <b>not</b> prevent flushing — the call succeeds normally.
         /// </para>
         /// </remarks>
         /// <exception cref="InvalidOperationException">
-        /// The writer is in an invalid state — either a section is currently open, or the writer
-        /// has already been completed via <see cref="Complete"/>.
+        /// Sections are enabled and a section is currently open, or the writer has already been
+        /// completed via <see cref="Complete"/>.
         /// </exception>
         /// <exception cref="System.IO.IOException">An I/O error occurred while flushing data.</exception>
         ValueTask Flush();
@@ -260,6 +279,13 @@ namespace Archivarius
         /// <remarks>
         /// <para>
         /// All sections must be closed before calling this method.
+        /// </para>
+        /// <para>
+        /// <b><see cref="Complete"/> counts as one <see cref="Flush"/> for lockstep purposes.</b>
+        /// Data written before calling <see cref="Complete"/> (without a preceding explicit
+        /// <see cref="Flush"/>) is made available to the paired reader via exactly one
+        /// <see cref="IReader.Fetch"/> call. The reader's subsequent <see cref="IReader.Fetch"/>
+        /// will return <see langword="false"/>.
         /// </para>
         /// <para>
         /// Calling this method more than once will throw <see cref="InvalidOperationException"/>
