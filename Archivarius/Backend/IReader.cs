@@ -213,8 +213,8 @@ namespace Archivarius
     /// Whether type mismatches are detected depends on the implementation.
     /// Implementations that support type safety will throw <see cref="System.IO.InvalidDataException"/>
     /// whenever a read method is called for a type that differs from the type that was written
-    /// (e.g. calling <see cref="ReadInt"/> when a <see cref="WriteFloat"/> was written, or
-    /// calling <see cref="ReadBytes"/> when a typed value was written). Type safety is strict:
+    /// (e.g. calling <see cref="ILowLevelReader.ReadInt"/> when a <see cref="ILowLevelWriter.WriteFloat"/> was written, or
+    /// calling <see cref="ILowLevelReader.ReadBytes"/> when a typed value was written). Type safety is strict:
     /// signed/unsigned variants are distinct types (<c>short</c> ≠ <c>ushort</c>, etc.).
     /// Implementations that do not guarantee type safety must still detect data corruption in a
     /// weaker form: if sections are enabled they must report unconsumed or overconsumed bytes at
@@ -283,7 +283,7 @@ namespace Archivarius
         /// </para>
         /// <para>
         /// When sections are enabled, any <see cref="ILowLevelReader"/> or
-        /// <see cref="ReadBytes"/> call that would consume bytes beyond the current section's
+        /// <see cref="ILowLevelReader.ReadBytes"/> call that would consume bytes beyond the current section's
         /// recorded length boundary throws <see cref="System.IO.EndOfStreamException"/>, even
         /// if more data exists further in the stream.
         /// </para>
