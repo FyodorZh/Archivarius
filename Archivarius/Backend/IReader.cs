@@ -207,9 +207,10 @@ namespace Archivarius
     public interface IReader : ILowLevelReader
     {
         /// <summary>
-        /// Indicates whether there is more data available to read from the stream.
+        /// Indicates whether the reader comes to the end of the data stream.
+        /// No data will ever occur.
         /// </summary>
-        bool HasDataToRead { get; }
+        bool IsCompleted { get; }
         
         /// <summary>
         /// Attempts to enable or disable logical section markers for deserialization.

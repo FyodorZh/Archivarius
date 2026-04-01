@@ -19,7 +19,7 @@ namespace Archivarius
         private readonly Queue<byte[]?> _arrays = new Queue<byte[]?>();
         private readonly Queue<byte[]> _byteSequeences = new();
         
-        public bool HasDataToRead => false;
+        public bool IsCompleted => false;
 
         public bool IsEmpty =>
             _booleans.Count == 0 &&
@@ -135,6 +135,11 @@ namespace Archivarius
         }
 
         ValueTask IWriter.Flush()
+        {
+            return default;
+        }
+        
+        public ValueTask Complete()
         {
             return default;
         }

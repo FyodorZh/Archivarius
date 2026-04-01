@@ -11,54 +11,93 @@ namespace Archivarius
     public interface ILowLevelWriter
     {
         /// <summary>Writes a <see cref="bool"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadBool"/>
         void WriteBool(bool value);
 
         /// <summary>Writes a <see cref="byte"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadByte"/>
         void WriteByte(byte value);
 
         /// <summary>Writes an <see cref="sbyte"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadSByte"/>
         void WriteSByte(sbyte value);
 
         /// <summary>Writes a <see cref="char"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadChar"/>
         void WriteChar(char value);
 
         /// <summary>Writes a <see cref="short"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadShort"/>
         void WriteShort(short value);
 
         /// <summary>Writes a <see cref="ushort"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadUShort"/>
         void WriteUShort(ushort value);
 
         /// <summary>Writes an <see cref="int"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadInt"/>
         void WriteInt(int value);
 
         /// <summary>Writes a <see cref="uint"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadUInt"/>
         void WriteUInt(uint value);
 
         /// <summary>Writes a <see cref="long"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadLong"/>
         void WriteLong(long value);
 
         /// <summary>Writes a <see cref="ulong"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadULong"/>
         void WriteULong(ulong value);
 
         /// <summary>Writes a <see cref="float"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadFloat"/>
         void WriteFloat(float value);
 
         /// <summary>Writes a <see cref="double"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadDouble"/>
         void WriteDouble(double value);
 
         /// <summary>Writes a <see cref="decimal"/> value.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadDecimal"/>
         void WriteDecimal(decimal value);
 
@@ -67,6 +106,9 @@ namespace Archivarius
         /// A <see langword="null"/> value is encoded as a distinct sentinel so that
         /// <see cref="ILowLevelReader.ReadString"/> can faithfully return <see langword="null"/>.
         /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadString"/>
         void WriteString(string? value);
 
@@ -75,6 +117,9 @@ namespace Archivarius
         /// A <see langword="null"/> value is encoded as a distinct sentinel so that
         /// <see cref="ILowLevelReader.ReadArray"/> can faithfully return <see langword="null"/>.
         /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
+        /// </exception>
         /// <seealso cref="ILowLevelReader.ReadArray"/>
         void WriteArray(byte[]? value);
 
@@ -95,6 +140,9 @@ namespace Archivarius
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="offset"/> + <paramref name="count"/> exceeds the length of <paramref name="value"/>.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="IWriter.Complete"/>.
         /// </exception>
         /// <seealso cref="ILowLevelReader.ReadBytes"/>
         void WriteBytes(byte[] value, int offset, int count);
@@ -123,6 +171,9 @@ namespace Archivarius
         /// Must be called before any data is written to the stream.
         /// The paired <see cref="IReader"/> must be configured with the same value.
         /// </remarks>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="Complete"/>.
+        /// </exception>
         bool TrySetSectionUsage(bool useSections);
 
         /// <summary>
@@ -142,6 +193,9 @@ namespace Archivarius
         /// but the nesting contract must still be respected.
         /// </para>
         /// </remarks>
+        /// <exception cref="InvalidOperationException">
+        /// The writer has already been completed via <see cref="Complete"/>.
+        /// </exception>
         void BeginSection();
 
         /// <summary>
@@ -160,7 +214,8 @@ namespace Archivarius
         /// </para>
         /// </remarks>
         /// <exception cref="InvalidOperationException">
-        /// Called without a matching open <see cref="BeginSection"/>.
+        /// Called without a matching open <see cref="BeginSection"/>, or the writer has already
+        /// been completed via <see cref="Complete"/>.
         /// </exception>
         void EndSection();
 
@@ -190,8 +245,32 @@ namespace Archivarius
         /// <see cref="InvalidOperationException"/>.
         /// </para>
         /// </remarks>
-        /// <exception cref="InvalidOperationException">The writer is in an invalid state, such as when a section is currently open.</exception>
+        /// <exception cref="InvalidOperationException">
+        /// The writer is in an invalid state — either a section is currently open, or the writer
+        /// has already been completed via <see cref="Complete"/>.
+        /// </exception>
         /// <exception cref="System.IO.IOException">An I/O error occurred while flushing data.</exception>
         ValueTask Flush();
+
+        /// <summary>
+        /// Flushes all buffered data and signals that no more data will be written.
+        /// After this call returns, all subsequent calls to any method on this writer will
+        /// throw <see cref="InvalidOperationException"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// All sections must be closed before calling this method.
+        /// </para>
+        /// <para>
+        /// Calling this method more than once will throw <see cref="InvalidOperationException"/>
+        /// on the second and all subsequent invocations.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">
+        /// A section is currently open, or the writer has already been completed by a prior
+        /// call to this method.
+        /// </exception>
+        /// <exception cref="System.IO.IOException">An I/O error occurred while flushing data.</exception>
+        ValueTask Complete();
     }
 }

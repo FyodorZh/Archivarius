@@ -11,7 +11,7 @@ namespace Archivarius.AsyncBackend
         private readonly ByteStream _buffer;
         private readonly Func<IByteQueueWriter, int, ValueTask> _readAsync;
         
-        public bool HasDataToRead => false;
+        public bool IsCompleted => false;
 
         public AsyncBufferedReader(Func<IByteQueueWriter, int, ValueTask> readAsync)
         {

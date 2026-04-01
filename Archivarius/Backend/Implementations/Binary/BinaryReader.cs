@@ -16,7 +16,7 @@ namespace Archivarius.BinaryBackend
 
         private bool _useSections = true;
         
-        public bool HasDataToRead => false;
+        public bool IsCompleted => false;
 
         public BinaryReader(byte[] buffer, int count = -1)
         {

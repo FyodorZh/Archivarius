@@ -19,6 +19,11 @@ namespace Archivarius.BinaryBackend
         {
             return default;
         }
+        
+        public ValueTask Complete()
+        {
+            return Flush();
+        }
 
         public bool TrySetSectionUsage(bool useSections)
         {

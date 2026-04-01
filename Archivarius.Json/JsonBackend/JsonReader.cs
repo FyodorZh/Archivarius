@@ -11,6 +11,8 @@ namespace Archivarius.JsonBackend
         private readonly Stack<JsonArray> _sectionStack = new Stack<JsonArray>();
         
         private int _cursor;
+        
+        public bool IsCompleted => false;
 
         public JsonReader(string json)
             : this((JsonArray)JsonNode.Parse(json)!)

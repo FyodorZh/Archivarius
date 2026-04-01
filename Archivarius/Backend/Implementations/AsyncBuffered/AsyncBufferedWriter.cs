@@ -44,6 +44,11 @@ namespace Archivarius.AsyncBackend
             _buffer.Put(0);
         }
 
+        public ValueTask Complete()
+        {
+            return Flush();
+        }
+
         public bool TrySetSectionUsage(bool useSections)
         {
             if (useSections)
