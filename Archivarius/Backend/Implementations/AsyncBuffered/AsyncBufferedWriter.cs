@@ -11,6 +11,11 @@ namespace Archivarius.AsyncBackend
         private readonly ByteStream _buffer;
 
         private readonly Func<IByteQueueReader, ValueTask> _asyncWriter;
+        
+        
+        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
 
         public AsyncBufferedWriter(Func<IByteQueueReader, ValueTask> asyncWriter)
         {

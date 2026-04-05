@@ -222,7 +222,7 @@ namespace Archivarius
     /// at the end of the stream.
     /// </para>
     /// </remarks>
-    public interface IReader : ILowLevelReader
+    public interface IReader : IAnyBackendCapabilities, ILowLevelReader
     {
         /// <summary>
         /// Indicates whether the reader has reached the permanent end of the data stream —

@@ -18,6 +18,10 @@ namespace Archivarius
         private readonly Queue<string?> _strings = new Queue<string?>();
         private readonly Queue<byte[]?> _arrays = new Queue<byte[]?>();
         private readonly Queue<byte[]> _byteSequeences = new();
+
+        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.Mandatory;
+        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
         
         public bool IsCompleted => false;
 

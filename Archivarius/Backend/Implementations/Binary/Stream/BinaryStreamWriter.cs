@@ -8,6 +8,11 @@ namespace Archivarius.BinaryBackend
     {
         private readonly Stream _stream;
         
+        
+        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        
         public Stream BaseStream => _stream;
 
         public BinaryStreamWriter(Stream stream)

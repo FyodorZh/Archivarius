@@ -14,6 +14,10 @@ namespace Archivarius.BinaryBackend
         private bool _useSections = true;
         private readonly Stack<int> _sectionsStack = new Stack<int>();
         
+        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        
 
         private void Grow(int value)
         {

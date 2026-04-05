@@ -15,6 +15,11 @@ namespace Archivarius.BinaryBackend
         
         private bool _useSections;
         
+        
+        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        
         public bool IsCompleted => false;
 
         public BinaryStreamReader(Stream stream, long count = -1)

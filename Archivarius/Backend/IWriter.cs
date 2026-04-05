@@ -158,7 +158,7 @@ namespace Archivarius
     /// <summary>
     /// Extends <see cref="ILowLevelWriter"/> with section management and flushing.
     /// </summary>
-    public interface IWriter : ILowLevelWriter
+    public interface IWriter : IAnyBackendCapabilities, ILowLevelWriter
     {
         /// <summary>
         /// Attempts to enable or disable logical section markers in the output stream.

@@ -12,6 +12,10 @@ namespace Archivarius.JsonBackend
         
         private int _cursor;
         
+        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.Mandatory;
+        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.Supported;
+        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+
         public bool IsCompleted => false;
 
         public JsonReader(string json)

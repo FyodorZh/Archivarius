@@ -11,6 +11,11 @@ namespace Archivarius.AsyncBackend
         private readonly ByteStream _buffer;
         private readonly Func<IByteQueueWriter, int, ValueTask> _readAsync;
         
+        
+        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        
         public bool IsCompleted => false;
 
         public AsyncBufferedReader(Func<IByteQueueWriter, int, ValueTask> readAsync)

@@ -7,6 +7,11 @@ namespace Archivarius.JsonBackend
     {
         private JsonArray _root;
         private JsonArray _currentSection;
+        
+        
+        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.Mandatory;
+        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.Supported;
+        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
 
         public JsonWriter()
         {
