@@ -15,7 +15,7 @@ namespace Archivarius.Tests
 
         private async Task RoundTripAll<T>(T[] values, Action<IWriter, T> write, Func<IReader, T> read)
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             foreach (var v in values)
                 write(writer, v);
             await FlushFetch(writer, reader);
@@ -191,7 +191,7 @@ namespace Archivarius.Tests
                 (float)Math.PI
             };
 
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             foreach (var v in values)
                 writer.WriteFloat(v);
             await FlushFetch(writer, reader);
@@ -234,7 +234,7 @@ namespace Archivarius.Tests
                 Math.PI, Math.E
             };
 
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             foreach (var v in values)
                 writer.WriteDouble(v);
             await FlushFetch(writer, reader);
@@ -280,7 +280,7 @@ namespace Archivarius.Tests
             int[] lengths = { 1, 127, 128, 16_383, 16_384 };
             foreach (int len in lengths)
             {
-                var (writer, reader, _, _) = await GetWriterReaderPair();
+                var (writer, reader, _) = await GetWriterReaderPair();
                 string s = new string('A', len);
                 writer.WriteString(s);
                 await FlushFetch(writer, reader);
@@ -294,7 +294,7 @@ namespace Archivarius.Tests
         {
             // A string whose UTF-8 byte length is ≥ 128 even though the char count is smaller
             // (3-byte UTF-8 chars): 43 × '中' = 43 × 3 bytes = 129 bytes
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             string s = new string('\u4E2D', 43);
             writer.WriteString(s);
             await FlushFetch(writer, reader);
@@ -309,7 +309,7 @@ namespace Archivarius.Tests
             int[] lengths = { 1, 127, 128, 16_383, 16_384 };
             foreach (int len in lengths)
             {
-                var (writer, reader, _, _) = await GetWriterReaderPair();
+                var (writer, reader, _) = await GetWriterReaderPair();
                 byte[] arr = new byte[len];
                 for (int i = 0; i < len; i++) arr[i] = (byte)(i % 256);
                 writer.WriteArray(arr);
@@ -325,7 +325,7 @@ namespace Archivarius.Tests
             int[] counts = { 1, 127, 128, 16_383, 16_384 };
             foreach (int count in counts)
             {
-                var (writer, reader, _, _) = await GetWriterReaderPair();
+                var (writer, reader, _) = await GetWriterReaderPair();
                 byte[] src = new byte[count];
                 for (int i = 0; i < count; i++) src[i] = (byte)(i % 256);
                 byte[] dst = new byte[count];

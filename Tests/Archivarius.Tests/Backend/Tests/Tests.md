@@ -11,26 +11,38 @@ Create a concrete subclass for each writer/reader pair you want to test:
 [TestFixture]
 public class Check_BinaryWriter_BinaryReader : Check_IWriter_IReader
 {
-    protected override Task<(IWriter, IReader, bool, bool)> GetWriterReaderPair()
+    protected override Task<(IWriter, IReader, bool)> GetWriterReaderPair()
     {
         var writer = new BinaryWriter();
         var reader = new BinaryReader(Array.Empty<byte>());
         // connect them …
-        return Task.FromResult<(IWriter, IReader, bool, bool)>(
-            (writer, reader, sectionsAreSupported: true, typeSafety: false));
+        return Task.FromResult<(IWriter, IReader, bool)>(
+            (writer, reader, typeSafety: false));
     }
 }
 ```
 
+Section-support capability is read automatically from `IWriter.SectionsSupport` /
+`IReader.SectionsSupport` on the returned objects — both always expose the same value.
+
 ### Capability flags
 
-| Flag | Meaning |
-|---|---|
-| `sectionsAreSupported` | Both writer and reader accept `TrySetSectionUsage(true)`. Section tests run. |
-| `typeSafety` | Every type mismatch throws `InvalidDataException` immediately. Type-safety tests run. |
+| Flag | Type | Meaning |
+|---|---|---|
+| `IWriter.SectionsSupport` | `IAnyBackendCapabilities.CapabilityState` | Read from the writer/reader. Controls which section test paths execute (see below). |
+| `typeSafety` | `bool` | Every type mismatch throws `InvalidDataException` immediately. Type-safety tests run. |
 
-Tests that require a capability call `Assert.Ignore(...)` when the flag is `false`, so they appear
-as **Skipped** rather than **Failed** in NUnit output.
+#### `SectionsSupport` values
+
+| Value | Meaning |
+|---|---|
+| `NotSupported` | Sections are never active. `TrySetSectionUsage(true)` → `false`; `TrySetSectionUsage(false)` → `true`. `BeginSection`/`EndSection` are no-ops (but LIFO still enforced). Only *disabled-sections* tests run. |
+| `Supported` | Sections can be toggled. `TrySetSectionUsage(true/false)` both return `true`. Initial state is **undefined** — callers must always set the mode explicitly before I/O. Both *disabled* and *enabled* test paths run. |
+| `Mandatory` | Sections are permanently on. `TrySetSectionUsage(true)` → `true`; `TrySetSectionUsage(false)` → `false`. Only *enabled-sections* tests run. |
+
+Tests that require a particular sections state call `EnableSections(writer, reader)` or
+`EnsureSectionsDisabled(writer, reader)` as appropriate. Both helpers read `writer.SectionsSupport`
+internally and call `Assert.Ignore(...)` when the capability does not allow the required mode.
 
 ---
 
@@ -38,17 +50,17 @@ as **Skipped** rather than **Failed** in NUnit output.
 
 | Test | Description |
 |---|---|
-| `Defaults_Writer_TrySetSectionUsageFalse_AlwaysReturnsTrue` | `TrySetSectionUsage(false)` must return `true` on every implementation (disabling is always valid). |
-| `Defaults_Reader_TrySetSectionUsageFalse_AlwaysReturnsTrue` | Same check on the reader side. |
-| `Defaults_Writer_TrySetSectionUsageTrue_MatchesSupportsSectionsFlag` | Return value of `TrySetSectionUsage(true)` matches the `sectionsAreSupported` capability flag. |
-| `Defaults_Reader_TrySetSectionUsageTrue_MatchesSupportsSectionsFlag` | Same check on the reader side. |
+| `Defaults_Writer_TrySetSectionUsageFalse_MatchesSectionsSupport` | `TrySetSectionUsage(false)` returns `true` for `NotSupported`/`Supported`; returns `false` for `Mandatory` (cannot disable mandatory sections). |
+| `Defaults_Reader_TrySetSectionUsageFalse_MatchesSectionsSupport` | Same check on the reader side. |
+| `Defaults_Writer_TrySetSectionUsageTrue_MatchesSectionsSupport` | `TrySetSectionUsage(true)` returns `false` for `NotSupported`; returns `true` for `Supported`/`Mandatory`. |
+| `Defaults_Reader_TrySetSectionUsageTrue_MatchesSectionsSupport` | Same check on the reader side. |
 | `Defaults_Reader_IsCompleted_FalseBeforeAnyFetch` | `IsCompleted` is `false` right after construction. |
 | `Defaults_Fetch_ReturnsTrueAfterComplete` | First `Fetch()` after `Complete()` returns `true`. |
 | `Defaults_Fetch_ReturnsFalseAfterDataConsumedAndComplete` | Second `Fetch()` after data is consumed and writer is complete returns `false`. |
 | `Defaults_IsCompleted_TrueAfterTerminalFetch` | `IsCompleted` flips to `true` only after `Fetch()` returns `false`. |
 | `Defaults_Reader_EndSection_WithoutBeginSection_ThrowsInvalidOp` | `EndSection()` without matching `BeginSection()` always throws on the reader. |
 | `Defaults_Writer_EndSection_WithoutBeginSection_ThrowsInvalidOp` | Same on the writer. |
-| `Defaults_SectionsDisabledByDefault_BeginEndAreNoop_BehavioralCheck` | With default settings, `BeginSection`/`EndSection` on the writer inject no extra bytes into the stream. |
+| `Defaults_SectionsDisabledByDefault_BeginEndAreNoop_BehavioralCheck` | **`NotSupported` only.** With no `TrySetSectionUsage` call, `BeginSection`/`EndSection` on the writer inject no extra bytes into the stream. Skipped for `Supported` (initial state undefined) and `Mandatory` (always on). |
 | `Defaults_Writer_ExtraEndSection_AfterBalancedPair_Throws` | A second `EndSection()` after a balanced pair throws. |
 | `Defaults_Reader_ExtraEndSection_AfterBalancedPair_Throws` | Same on the reader side. |
 
@@ -132,40 +144,54 @@ Catches bugs in LEB128/ZigZag encoders at byte-count thresholds. Fixed-width imp
 
 ---
 
-## File: `Check_IWriter_IReader.Sections.cs` — Section behavior (23 tests)
+## File: `Check_IWriter_IReader.Sections.cs` — Section behavior (28 tests)
 
-Tests 1–7 run unconditionally. Tests 8–23 require `sectionsAreSupported = true`.
+### Sections-disabled tests (7 tests)
+Run for `NotSupported` (always disabled) and `Supported` (explicitly disabled via `TrySetSectionUsage(false)`).
+Skipped for `Mandatory` (sections cannot be disabled).
 
-| Test | Requires sections | Description |
-|---|---|---|
-| `Sections_Disabled_DataIntegrityPreserved_BeginEndAreNoop` | No | Writer's `BeginSection`/`EndSection` inject no bytes; reader reads without section calls. |
-| `Sections_Disabled_EndSection_ReturnsTrue` | No | `EndSection()` after `BeginSection()` returns `true` when disabled. |
-| `Sections_Disabled_Flush_WithOpenSection_DoesNotThrow` | No | `Flush()` with open section does NOT throw when disabled. |
-| `Sections_Disabled_Complete_WithOpenSection_DoesNotThrow` | No | `Complete()` with open section does NOT throw when disabled. |
-| `Sections_Disabled_NestedTwoLevels_Works` | No | Two nested sections (disabled) round-trip data correctly. |
-| `Sections_Disabled_Writer_EndSection_WithoutBeginSection_Throws` | No | LIFO guard always active on writer. |
-| `Sections_Disabled_Reader_EndSection_WithoutBeginSection_Throws` | No | LIFO guard always active on reader. |
-| `Sections_Enabled_EmptySection_ReturnsTrue` | Yes | Empty section → `EndSection()` returns `true`. |
-| `Sections_Enabled_SingleValue_FullConsumption_ReturnsTrue` | Yes | One int written and read → returns `true`. |
-| `Sections_Enabled_MultipleValues_FullConsumption_ReturnsTrue` | Yes | Three ints, all read → returns `true`. |
-| `Sections_Enabled_PartialConsumption_EndSection_ReturnsFalse` | Yes | Reading fewer ints than written → returns `false`. |
-| `Sections_Enabled_PartialConsumption_DataAfterSection_StillReadable` | Yes | After `EndSection()` skips bytes, data outside the section is still readable (stream alignment check). |
-| `Sections_Enabled_OverConsumption_ThrowsEndOfStreamException` | Yes | Reading beyond section boundary throws `EndOfStreamException`. |
-| `Sections_Enabled_OverConsumption_ExceptionImmediateNotDeferred` | Yes | The exception comes from `Read*()` itself, not from `EndSection()`. |
-| `Sections_Enabled_NestedSections_BothFullyConsumed_BothReturnTrue` | Yes | Two nested levels, both fully consumed. |
-| `Sections_Enabled_NestedSections_InnerPartial_OuterFullyConsumed` | Yes | Inner section skips; outer is fully consumed. |
-| `Sections_Enabled_NestedSections_ThreeLevels_AllFull` | Yes | Three nested levels, all fully consumed. |
-| `Sections_Enabled_MultipleSequentialSections_AllCorrect` | Yes | Five sequential sections, each fully consumed. |
-| `Sections_Enabled_Flush_WithOpenSection_ThrowsInvalidOp` | Yes | `Flush()` inside open section (enabled) throws `InvalidOperationException`. |
-| `Sections_Enabled_Complete_WithOpenSection_ThrowsInvalidOp` | Yes | Same for `Complete()`. |
-| `Sections_Enabled_Writer_EndSection_WithoutBeginSection_Throws` | Yes | LIFO guard active even when sections are enabled. |
-| `Sections_Enabled_Reader_EndSection_WithoutBeginSection_Throws` | Yes | Same on reader. |
-| `Sections_Enabled_LargeSection_FullConsumption` | Yes | 1000 ints in one section, all read. |
-| `Sections_Enabled_ReadBytes_BeyondSectionBoundary_ThrowsEndOfStream` | Yes | `ReadBytes()` that exceeds the section's byte boundary throws `EndOfStreamException`. |
-| `Sections_Enabled_Fetch_WithOpenSection_ThrowsInvalidOp` | Yes | `Fetch()` while a section is open on the reader throws `InvalidOperationException`. |
-| `Sections_TrySetSectionUsage_AfterDataWritten_ReturnsFalse` | — | Cannot change section mode after writing has started. |
-| `Sections_TrySetSectionUsage_AfterDataRead_ReturnsFalse` | — | Cannot change section mode after reading has started. |
-| `Sections_Reader_BeginSection_WhenIsCompleted_Throws` | — | `BeginSection()` on a completed reader throws. |
+| Test | Description |
+|---|---|
+| `Sections_Disabled_DataIntegrityPreserved_BeginEndAreNoop` | Writer's `BeginSection`/`EndSection` inject no bytes; reader reads without section calls. |
+| `Sections_Disabled_EndSection_ReturnsTrue` | `EndSection()` after `BeginSection()` returns `true` when disabled. |
+| `Sections_Disabled_Flush_WithOpenSection_DoesNotThrow` | `Flush()` with open section does NOT throw when disabled. |
+| `Sections_Disabled_Complete_WithOpenSection_DoesThrow` | `Complete()` with open section throws `InvalidOperationException` (LIFO nesting always enforced). |
+| `Sections_Disabled_NestedTwoLevels_Works` | Two nested sections (disabled) round-trip data correctly. |
+| `Sections_Disabled_Writer_EndSection_WithoutBeginSection_Throws` | LIFO guard always active on writer regardless of sections mode. |
+| `Sections_Disabled_Reader_EndSection_WithoutBeginSection_Throws` | LIFO guard always active on reader regardless of sections mode. |
+
+### Sections-enabled tests (18 tests)
+Run for `Mandatory` (always enabled) and `Supported` (explicitly enabled via `TrySetSectionUsage(true)`).
+Skipped for `NotSupported` (sections unavailable).
+
+| Test | Description |
+|---|---|
+| `Sections_Enabled_EmptySection_ReturnsTrue` | Empty section → `EndSection()` returns `true`. |
+| `Sections_Enabled_SingleValue_FullConsumption_ReturnsTrue` | One int written and read → returns `true`. |
+| `Sections_Enabled_MultipleValues_FullConsumption_ReturnsTrue` | Three ints, all read → returns `true`. |
+| `Sections_Enabled_PartialConsumption_EndSection_ReturnsFalse` | Reading fewer ints than written → returns `false`. |
+| `Sections_Enabled_PartialConsumption_DataAfterSection_StillReadable` | After `EndSection()` skips bytes, data outside the section is still readable (stream alignment check). |
+| `Sections_Enabled_OverConsumption_ThrowsEndOfStreamException` | Reading beyond section boundary throws `EndOfStreamException`. |
+| `Sections_Enabled_OverConsumption_ExceptionImmediateNotDeferred` | The exception comes from `Read*()` itself, not from `EndSection()`. |
+| `Sections_Enabled_NestedSections_BothFullyConsumed_BothReturnTrue` | Two nested levels, both fully consumed. |
+| `Sections_Enabled_NestedSections_InnerPartial_OuterFullyConsumed` | Inner section skips; outer is fully consumed. |
+| `Sections_Enabled_NestedSections_ThreeLevels_AllFull` | Three nested levels, all fully consumed. |
+| `Sections_Enabled_MultipleSequentialSections_AllCorrect` | Five sequential sections, each fully consumed. |
+| `Sections_Enabled_Flush_WithOpenSection_ThrowsInvalidOp` | `Flush()` inside open section (enabled) throws `InvalidOperationException`. |
+| `Sections_Enabled_Complete_WithOpenSection_ThrowsInvalidOp` | Same for `Complete()`. |
+| `Sections_Enabled_Writer_EndSection_WithoutBeginSection_Throws` | LIFO guard active even when sections are enabled. |
+| `Sections_Enabled_Reader_EndSection_WithoutBeginSection_Throws` | Same on reader. |
+| `Sections_Enabled_LargeSection_FullConsumption` | 1000 ints in one section, all read. |
+| `Sections_Enabled_ReadBytes_BeyondSectionBoundary_ThrowsEndOfStream` | `ReadBytes()` that exceeds the section's byte boundary throws `EndOfStreamException`. |
+| `Sections_Enabled_Fetch_WithOpenSection_ThrowsInvalidOp` | `Fetch()` while a section is open on the reader throws `InvalidOperationException`. |
+
+### Mode-independent tests (3 tests)
+
+| Test | Description |
+|---|---|
+| `Sections_TrySetSectionUsage_AfterDataWritten_ReturnsFalse` | Cannot change section mode after writing has started (applies to all implementations). |
+| `Sections_TrySetSectionUsage_AfterDataRead_ReturnsFalse` | Cannot change section mode after reading has started. |
+| `Sections_Reader_BeginSection_WhenIsCompleted_Throws` | `BeginSection()` on a completed reader throws. |
 
 ---
 
@@ -217,16 +243,16 @@ Tests 1–30 require `typeSafety = true`. Tests 31–35 require `typeSafety = fa
 | `TypeSafety_WriteBytes0_ReadBytes1_ThrowsImmediately` | 0 bytes written, 1 expected |
 | `TypeSafety_WriteBytes1_ReadBytes0_ThrowsImmediately` | 1 byte written, 0 expected |
 | `TypeSafety_WriteBytes_ReadBytes_SameCount_NoThrow` | matching counts → no exception (sanity) |
-| `TypeSafety_MismatchIsImmediate_NotDeferredToEndSection` | Confirms the exception fires on `Read*()`, not on `EndSection()`. |
+| `TypeSafety_MismatchIsImmediate_NotDeferredToEndSection` | Confirms the exception fires on `Read*()`, not on `EndSection()`. Requires sections (`Supported` or `Mandatory`). |
 
 ### Weak-safety tests (`typeSafety = false`)
 
-| Test | Requires sections | Description |
+| Test | Sections required | Description |
 |---|---|---|
-| `WeakSafety_Sections_UnderConsumption_EndSectionReturnsFalse` | Yes | Unconsumed bytes → `EndSection()` returns `false`. |
-| `WeakSafety_Sections_OverConsumption_ThrowsEndOfStream` | Yes | Over-reading inside section → `EndOfStreamException`. |
-| `WeakSafety_Sections_ExactConsumption_EndSectionReturnsTrue` | Yes | Exact read → `EndSection()` returns `true`. |
-| `WeakSafety_NoSections_ReadBeyondEnd_Throws` | No | Reading past stream end without sections → `EndOfStreamException`. |
+| `WeakSafety_Sections_UnderConsumption_EndSectionReturnsFalse` | `Supported` or `Mandatory` | Unconsumed bytes → `EndSection()` returns `false`. |
+| `WeakSafety_Sections_OverConsumption_ThrowsEndOfStream` | `Supported` or `Mandatory` | Over-reading inside section → `EndOfStreamException`. |
+| `WeakSafety_Sections_ExactConsumption_EndSectionReturnsTrue` | `Supported` or `Mandatory` | Exact read → `EndSection()` returns `true`. |
+| `WeakSafety_NoSections_ReadBeyondEnd_Throws` | `NotSupported` only | Reading past stream end without sections → `EndOfStreamException`. |
 
 ---
 
@@ -291,7 +317,7 @@ attempt the operation → `InvalidOperationException`.
 |---|---|
 | `Errors_TrySetSectionUsage_AfterDataWritten_ReturnsFalse` | Returns `false` (not throw) once data has been written. |
 | `Errors_TrySetSectionUsage_AfterDataRead_ReturnsFalse` | Returns `false` once data has been read. |
-| `Errors_TrySetSectionUsage_AfterBeginSection_ReturnsFalse` | Returns `false` after `BeginSection()` wrote infrastructure bytes (only tested when sections are supported). |
+| `Errors_TrySetSectionUsage_AfterBeginSection_ReturnsFalse` | Returns `false` after `BeginSection()` wrote infrastructure bytes. Skipped for `NotSupported` (no bytes written). Runs for `Supported` (after explicit enable) and `Mandatory` (always active). |
 
 ### Section nesting errors
 
@@ -320,4 +346,4 @@ attempt the operation → `InvalidOperationException`.
 - `Sections_Enabled_Flush_WithOpenSection_ThrowsInvalidOp` and `Errors_Sections_Enabled_Flush_WithOpenSection_Throws` test the same invariant from different angles (sections file vs errors file).
 - `WeakSafety_*` tests mirror the `Sections_Enabled_*` tests but target the `typeSafety=false` path.
 - `MultiCycle_FetchBlocksUntilFlush` and `MultiCycle_FetchUnblockedByComplete` are only meaningful for streaming (non-in-memory) implementations.
-
+- For `SectionsSupport = Supported`, both the disabled and enabled test groups execute, providing full coverage of both modes via `TrySetSectionUsage`.

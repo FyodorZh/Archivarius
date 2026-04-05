@@ -16,9 +16,9 @@ namespace Archivarius.BinaryBackend
 
         private bool _useSections = true;
         
-        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
-        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
-        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public CapabilityState SectionsSupport => CapabilityState.NotSupported;
+        public CapabilityState TypeSafetySupport => CapabilityState.NotSupported;
+        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
         
         public bool IsCompleted => false;
 

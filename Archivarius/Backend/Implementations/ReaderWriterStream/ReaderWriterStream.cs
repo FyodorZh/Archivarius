@@ -19,9 +19,9 @@ namespace Archivarius
         private readonly Queue<byte[]?> _arrays = new Queue<byte[]?>();
         private readonly Queue<byte[]> _byteSequeences = new();
 
-        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
-        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.Mandatory;
-        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public CapabilityState SectionsSupport => CapabilityState.NotSupported;
+        public CapabilityState TypeSafetySupport => CapabilityState.Mandatory;
+        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
         
         public bool IsCompleted => false;
 
@@ -153,22 +153,12 @@ namespace Archivarius
             return default;
         }
 
-        void IWriter.BeginSection()
+        void ISectionsCapability.BeginSection()
         {
             // DO NOTHING
         }
 
-        void IWriter.EndSection()
-        {
-            // DO NOTHING
-        }
-
-        void IReader.BeginSection()
-        {
-            // DO NOTHING
-        }
-
-        bool IReader.EndSection()
+        bool ISectionsCapability.EndSection()
         {
             return true;
         }

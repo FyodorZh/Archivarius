@@ -14,9 +14,9 @@ namespace Archivarius.BinaryBackend
         private bool _useSections = true;
         private readonly Stack<int> _sectionsStack = new Stack<int>();
         
-        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
-        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
-        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public CapabilityState SectionsSupport => CapabilityState.NotSupported;
+        public CapabilityState TypeSafetySupport => CapabilityState.NotSupported;
+        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
         
 
         private void Grow(int value)
@@ -91,7 +91,7 @@ namespace Archivarius.BinaryBackend
             }
         }
 
-        public void EndSection()
+        public bool EndSection()
         {
             if (_useSections)
             {
@@ -103,7 +103,10 @@ namespace Archivarius.BinaryBackend
                 _buffer[pos++] = block.Byte1;
                 _buffer[pos++] = block.Byte2;
                 _buffer[pos++] = block.Byte3;
+                return true;
             }
+
+            return false;
         }
 
         public void WriteBool(bool value)

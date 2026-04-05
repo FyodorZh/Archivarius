@@ -13,9 +13,9 @@ namespace Archivarius.AsyncBackend
         private readonly Func<IByteQueueReader, ValueTask> _asyncWriter;
         
         
-        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
-        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
-        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public CapabilityState SectionsSupport => CapabilityState.NotSupported;
+        public CapabilityState TypeSafetySupport => CapabilityState.NotSupported;
+        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
 
         public AsyncBufferedWriter(Func<IByteQueueReader, ValueTask> asyncWriter)
         {
@@ -69,9 +69,9 @@ namespace Archivarius.AsyncBackend
             // DO NOTHING
         }
 
-        public void EndSection()
+        public bool EndSection()
         {
-            // DO NOTHING
+            return true;
         }
 
         public void WriteBool(bool value)

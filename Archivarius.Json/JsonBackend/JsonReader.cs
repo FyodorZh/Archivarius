@@ -12,9 +12,9 @@ namespace Archivarius.JsonBackend
         
         private int _cursor;
         
-        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.Mandatory;
-        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.Supported;
-        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public CapabilityState SectionsSupport => CapabilityState.Mandatory;
+        public CapabilityState TypeSafetySupport => CapabilityState.Supported;
+        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
 
         public bool IsCompleted => false;
 

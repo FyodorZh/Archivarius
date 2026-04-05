@@ -17,16 +17,24 @@ namespace Archivarius.Tests
     /// [TestFixture]
     /// public class Check_MyWriter_MyReader : Check_IWriter_IReader
     /// {
-    ///     protected override Task&lt;(IWriter, IReader, bool, bool)&gt; GetWriterReaderPair()
-    ///         =&gt; Task.FromResult&lt;(IWriter, IReader, bool, bool)&gt;(
-    ///             (new MyWriter(), new MyReader(), sectionsAreSupported: true, typeSafety: false));
+    ///     protected override Task&lt;(IWriter, IReader, bool)&gt; GetWriterReaderPair()
+    ///         =&gt; Task.FromResult&lt;(IWriter, IReader, bool)&gt;(
+    ///             (new MyWriter(), new MyReader(), typeSafety: false));
     /// }
     /// </code>
     /// </para>
+    /// <para>
+    /// Section-support capability is read directly from
+    /// <see cref="IAnyBackend.SectionsSupport"/> on the returned writer/reader.
+    /// Both objects always expose the same value for this property.
+    /// </para>
     /// <para>Capability flags:</para>
     /// <list type="bullet">
-    ///   <item><term>sectionsAreSupported</term><description>
-    ///     Both writer and reader honour <c>TrySetSectionUsage(true)</c>. Section-specific tests run only when this is <see langword="true"/>.
+    ///   <item><term><see cref="IAnyBackend.SectionsSupport"/></term><description>
+    ///     Read from the writer/reader. Controls which section-related test paths execute:
+    ///     <see cref="CapabilityState.NotSupported"/>: only disabled-sections tests run.
+    ///     <see cref="CapabilityState.Mandatory"/>: only enabled-sections tests run (sections always on).
+    ///     <see cref="CapabilityState.Supported"/>: both paths run via <c>TrySetSectionUsage</c>.
     ///   </description></item>
     ///   <item><term>typeSafety</term><description>
     ///     Every type mismatch on read immediately throws <see cref="InvalidDataException"/>.
@@ -44,7 +52,12 @@ namespace Archivarius.Tests
         /// The writer and reader must be connected: data flushed by the writer becomes
         /// available to the reader after the matching <see cref="IReader.Fetch"/> call.
         /// </summary>
-        protected abstract Task<(IWriter writer, IReader reader, bool sectionsAreSupported, bool typeSafety)>
+        /// <remarks>
+        /// Section-support capability is determined by reading
+        /// <see cref="IAnyBackend.SectionsSupport"/> on the returned objects.
+        /// Both writer and reader always return the same value for this property.
+        /// </remarks>
+        protected abstract Task<(IWriter writer, IReader reader, bool typeSafety)>
             GetWriterReaderPair();
 
         // ── Shared constants ─────────────────────────────────────────────────────
@@ -69,55 +82,129 @@ namespace Archivarius.Tests
             => reader.Fetch().AsTask().WaitAsync(TestTimeout);
 
         /// <summary>
-        /// Enables sections on both writer and reader. Calls <c>Assert.Ignore</c>
-        /// if the implementation does not support sections.
+        /// Ensures sections are ENABLED on both writer and reader for the current test.
+        /// The required capability is read from <see cref="IAnyBackend.SectionsSupport"/>
+        /// on the <paramref name="writer"/>.
+        /// <list type="bullet">
+        ///   <item><see cref="CapabilityState.NotSupported"/>:
+        ///     calls <c>Assert.Ignore</c> — sections cannot be enabled.</item>
+        ///   <item><see cref="CapabilityState.Mandatory"/>:
+        ///     no-op — sections are already permanently active.</item>
+        ///   <item><see cref="CapabilityState.Supported"/>:
+        ///     calls <c>TrySetSectionUsage(true)</c> on both writer and reader.</item>
+        /// </list>
+        /// Must be called before any data is written or read.
         /// </summary>
         protected static void EnableSections(IWriter writer, IReader reader)
         {
-            if (!writer.TrySetSectionUsage(true))
-                Assert.Ignore("This implementation does not support sections (writer returned false).");
-            if (!reader.TrySetSectionUsage(true))
-                Assert.Ignore("This implementation does not support sections (reader returned false).");
+            switch (writer.SectionsSupport)
+            {
+                case CapabilityState.NotSupported:
+                    Assert.Ignore("This implementation does not support sections (SectionsSupport = NotSupported).");
+                    break;
+                case CapabilityState.Mandatory:
+                    // Sections are permanently active — nothing to do.
+                    break;
+                case CapabilityState.Supported:
+                    if (!writer.TrySetSectionUsage(true))
+                        Assert.Ignore("TrySetSectionUsage(true) returned false unexpectedly on writer.");
+                    if (!reader.TrySetSectionUsage(true))
+                        Assert.Ignore("TrySetSectionUsage(true) returned false unexpectedly on reader.");
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Ensures sections are DISABLED on both writer and reader for the current test.
+        /// The required capability is read from <see cref="IAnyBackend.SectionsSupport"/>
+        /// on the <paramref name="writer"/>.
+        /// <list type="bullet">
+        ///   <item><see cref="CapabilityState.NotSupported"/>:
+        ///     no-op — sections are always off.</item>
+        ///   <item><see cref="CapabilityState.Mandatory"/>:
+        ///     calls <c>Assert.Ignore</c> — sections cannot be disabled.</item>
+        ///   <item><see cref="CapabilityState.Supported"/>:
+        ///     calls <c>TrySetSectionUsage(false)</c> on both writer and reader.
+        ///     Fails the test if the call is rejected (must be invoked before any I/O).</item>
+        /// </list>
+        /// Must be called before any data is written or read.
+        /// </summary>
+        protected static void EnsureSectionsDisabled(IWriter writer, IReader reader)
+        {
+            switch (writer.SectionsSupport)
+            {
+                case CapabilityState.NotSupported:
+                    // Already disabled — nothing to do.
+                    break;
+                case CapabilityState.Mandatory:
+                    Assert.Ignore("Sections are Mandatory for this implementation and cannot be disabled; test skipped.");
+                    break;
+                case CapabilityState.Supported:
+                    if (!writer.TrySetSectionUsage(false))
+                        Assert.Fail("TrySetSectionUsage(false) returned false for a Supported writer before any I/O.");
+                    if (!reader.TrySetSectionUsage(false))
+                        Assert.Fail("TrySetSectionUsage(false) returned false for a Supported reader before any I/O.");
+                    break;
+            }
         }
 
         // ── Defaults ─────────────────────────────────────────────────────────────
 
-        /// <summary>TrySetSectionUsage(false) must always succeed for every implementation.</summary>
+        /// <summary>
+        /// <c>TrySetSectionUsage(false)</c> must succeed (return <see langword="true"/>) for
+        /// <see cref="CapabilityState.NotSupported"/> and
+        /// <see cref="CapabilityState.Supported"/> implementations.
+        /// For <see cref="CapabilityState.Mandatory"/> it must return
+        /// <see langword="false"/> because disabling mandatory sections is not allowed.
+        /// </summary>
         [Test, Category("Defaults")]
-        public async Task Defaults_Writer_TrySetSectionUsageFalse_AlwaysReturnsTrue()
+        public async Task Defaults_Writer_TrySetSectionUsageFalse_MatchesSectionsSupport()
         {
-            var (writer, _, _, _) = await GetWriterReaderPair();
-            Assert.That(writer.TrySetSectionUsage(false), Is.True,
-                "TrySetSectionUsage(false) must always return true — disabling is always valid.");
+            var (writer, _, _) = await GetWriterReaderPair();
+            bool expected = writer.SectionsSupport != CapabilityState.Mandatory;
+            Assert.That(writer.TrySetSectionUsage(false), Is.EqualTo(expected),
+                $"TrySetSectionUsage(false) expected {expected} for SectionsSupport={writer.SectionsSupport}.");
         }
 
         [Test, Category("Defaults")]
-        public async Task Defaults_Reader_TrySetSectionUsageFalse_AlwaysReturnsTrue()
+        public async Task Defaults_Reader_TrySetSectionUsageFalse_MatchesSectionsSupport()
         {
-            var (_, reader, _, _) = await GetWriterReaderPair();
-            Assert.That(reader.TrySetSectionUsage(false), Is.True);
+            var (_, reader, _) = await GetWriterReaderPair();
+            bool expected = reader.SectionsSupport != CapabilityState.Mandatory;
+            Assert.That(reader.TrySetSectionUsage(false), Is.EqualTo(expected),
+                $"TrySetSectionUsage(false) expected {expected} for SectionsSupport={reader.SectionsSupport}.");
         }
 
-        /// <summary>TrySetSectionUsage(true) must return the same value as the sectionsAreSupported flag.</summary>
+        /// <summary>
+        /// <c>TrySetSectionUsage(true)</c> must succeed (return <see langword="true"/>) for
+        /// <see cref="CapabilityState.Supported"/> and
+        /// <see cref="CapabilityState.Mandatory"/> implementations.
+        /// For <see cref="CapabilityState.NotSupported"/> it must return
+        /// <see langword="false"/> because enabling unsupported sections is not allowed.
+        /// </summary>
         [Test, Category("Defaults")]
-        public async Task Defaults_Writer_TrySetSectionUsageTrue_MatchesSupportsSectionsFlag()
+        public async Task Defaults_Writer_TrySetSectionUsageTrue_MatchesSectionsSupport()
         {
-            var (writer, _, sectionsAreSupported, _) = await GetWriterReaderPair();
-            Assert.That(writer.TrySetSectionUsage(true), Is.EqualTo(sectionsAreSupported));
+            var (writer, _, _) = await GetWriterReaderPair();
+            bool expected = writer.SectionsSupport != CapabilityState.NotSupported;
+            Assert.That(writer.TrySetSectionUsage(true), Is.EqualTo(expected),
+                $"TrySetSectionUsage(true) expected {expected} for SectionsSupport={writer.SectionsSupport}.");
         }
 
         [Test, Category("Defaults")]
-        public async Task Defaults_Reader_TrySetSectionUsageTrue_MatchesSupportsSectionsFlag()
+        public async Task Defaults_Reader_TrySetSectionUsageTrue_MatchesSectionsSupport()
         {
-            var (_, reader, sectionsAreSupported, _) = await GetWriterReaderPair();
-            Assert.That(reader.TrySetSectionUsage(true), Is.EqualTo(sectionsAreSupported));
+            var (_, reader, _) = await GetWriterReaderPair();
+            bool expected = reader.SectionsSupport != CapabilityState.NotSupported;
+            Assert.That(reader.TrySetSectionUsage(true), Is.EqualTo(expected),
+                $"TrySetSectionUsage(true) expected {expected} for SectionsSupport={reader.SectionsSupport}.");
         }
 
         /// <summary>IsCompleted must be false before any Fetch() call.</summary>
         [Test, Category("Defaults")]
         public async Task Defaults_Reader_IsCompleted_FalseBeforeAnyFetch()
         {
-            var (_, reader, _, _) = await GetWriterReaderPair();
+            var (_, reader, _) = await GetWriterReaderPair();
             Assert.That(reader.IsCompleted, Is.False);
         }
 
@@ -125,7 +212,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Fetch_ReturnsTrueAfterComplete()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             bool first = await FetchWithTimeout(reader);
@@ -136,7 +223,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Fetch_ReturnsFalseAfterDataConsumedAndComplete()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
@@ -149,7 +236,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_IsCompleted_TrueAfterTerminalFetch()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
@@ -163,7 +250,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Reader_EndSection_WithoutBeginSection_ThrowsInvalidOp()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             Assert.Throws<InvalidOperationException>(() => reader.EndSection());
@@ -173,27 +260,35 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Writer_EndSection_WithoutBeginSection_ThrowsInvalidOp()
         {
-            var (writer, _, _, _) = await GetWriterReaderPair();
+            var (writer, _, _) = await GetWriterReaderPair();
             Assert.Throws<InvalidOperationException>(() => writer.EndSection());
         }
 
         /// <summary>
-        /// Sections are disabled by default. With no TrySetSectionUsage(true) call, BeginSection/EndSection on the
-        /// writer must be no-ops that write no extra bytes so the reader can read values without matching
-        /// BeginSection/EndSection calls.
+        /// For <see cref="CapabilityState.NotSupported"/> implementations:
+        /// BeginSection/EndSection must be no-ops that inject no extra bytes, so the reader can
+        /// consume values without matching Begin/End calls.
+        /// This test only applies to <c>NotSupported</c> because that is the only mode with a
+        /// well-defined "always disabled" default. For <c>Supported</c> the explicit-disable path is
+        /// covered by <c>Sections_Disabled_*</c> tests; for <c>Mandatory</c> sections are always on.
         /// </summary>
         [Test, Category("Defaults")]
         public async Task Defaults_SectionsDisabledByDefault_BeginEndAreNoop_BehavioralCheck()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
-            // Writer: BeginSection (should be no-op), write two ints, EndSection (no-op)
+            var (writer, reader, _) = await GetWriterReaderPair();
+            if (writer.SectionsSupport != CapabilityState.NotSupported)
+                Assert.Ignore(
+                    "This test verifies default-disabled (no TrySetSectionUsage call) behavior; " +
+                    "only applicable to NotSupported implementations.");
+
+            // Writer: BeginSection (no-op), write two ints, EndSection (no-op)
             writer.BeginSection();
             writer.WriteInt(42);
             writer.WriteInt(99);
             writer.EndSection();
             await FlushFetch(writer, reader);
-            // Reader reads without any section calls — if sections had been enabled, the length header
-            // would land as the first ReadInt() result, causing the assertion below to fail.
+            // Reader reads without any section calls — if sections injected a length header,
+            // ReadInt() would return the header bytes instead of 42.
             Assert.That(reader.ReadInt(), Is.EqualTo(42));
             Assert.That(reader.ReadInt(), Is.EqualTo(99));
         }
@@ -204,7 +299,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Writer_ExtraEndSection_AfterBalancedPair_Throws()
         {
-            var (writer, _, _, _) = await GetWriterReaderPair();
+            var (writer, _, _) = await GetWriterReaderPair();
             writer.BeginSection();
             writer.WriteInt(1);
             writer.EndSection();
@@ -214,7 +309,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Reader_ExtraEndSection_AfterBalancedPair_Throws()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             reader.BeginSection();

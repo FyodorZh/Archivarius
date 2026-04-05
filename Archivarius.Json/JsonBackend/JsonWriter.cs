@@ -9,9 +9,9 @@ namespace Archivarius.JsonBackend
         private JsonArray _currentSection;
         
         
-        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.Mandatory;
-        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.Supported;
-        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public CapabilityState SectionsSupport => CapabilityState.Mandatory;
+        public CapabilityState TypeSafetySupport => CapabilityState.Supported;
+        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
 
         public JsonWriter()
         {
@@ -143,9 +143,10 @@ namespace Archivarius.JsonBackend
             _currentSection = section;
         }
 
-        public void EndSection()
+        public bool EndSection()
         {
             _currentSection = (JsonArray)_currentSection.Parent!;
+            return true;
         }
     }
 }

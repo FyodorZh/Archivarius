@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
@@ -11,7 +10,7 @@ namespace Archivarius.Tests
 
         private async Task RoundTrip<T>(Action<IWriter, T> write, Func<IReader, T> read, T value)
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             write(writer, value);
             await FlushFetch(writer, reader);
             Assert.That(read(reader), Is.EqualTo(value));
@@ -206,7 +205,7 @@ namespace Archivarius.Tests
         [Test, Category("Primitives")]
         public async Task Primitives_Float_NegativeZero()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteFloat(-0f);
             await FlushFetch(writer, reader);
             float result = reader.ReadFloat();
@@ -219,7 +218,7 @@ namespace Archivarius.Tests
         [Test, Category("Primitives")]
         public async Task Primitives_Float_NaN()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteFloat(float.NaN);
             await FlushFetch(writer, reader);
             Assert.That(float.IsNaN(reader.ReadFloat()), Is.True, "NaN must round-trip as NaN.");
@@ -228,7 +227,7 @@ namespace Archivarius.Tests
         [Test, Category("Primitives")]
         public async Task Primitives_Float_PositiveInfinity()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteFloat(float.PositiveInfinity);
             await FlushFetch(writer, reader);
             Assert.That(reader.ReadFloat(), Is.EqualTo(float.PositiveInfinity));
@@ -237,7 +236,7 @@ namespace Archivarius.Tests
         [Test, Category("Primitives")]
         public async Task Primitives_Float_NegativeInfinity()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteFloat(float.NegativeInfinity);
             await FlushFetch(writer, reader);
             Assert.That(reader.ReadFloat(), Is.EqualTo(float.NegativeInfinity));
@@ -272,7 +271,7 @@ namespace Archivarius.Tests
         [Test, Category("Primitives")]
         public async Task Primitives_Double_NegativeZero()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteDouble(-0d);
             await FlushFetch(writer, reader);
             double result = reader.ReadDouble();
@@ -284,7 +283,7 @@ namespace Archivarius.Tests
         [Test, Category("Primitives")]
         public async Task Primitives_Double_NaN()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteDouble(double.NaN);
             await FlushFetch(writer, reader);
             Assert.That(double.IsNaN(reader.ReadDouble()), Is.True, "NaN must round-trip as NaN.");
@@ -293,7 +292,7 @@ namespace Archivarius.Tests
         [Test, Category("Primitives")]
         public async Task Primitives_Double_PositiveInfinity()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteDouble(double.PositiveInfinity);
             await FlushFetch(writer, reader);
             Assert.That(reader.ReadDouble(), Is.EqualTo(double.PositiveInfinity));
@@ -302,7 +301,7 @@ namespace Archivarius.Tests
         [Test, Category("Primitives")]
         public async Task Primitives_Double_NegativeInfinity()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteDouble(double.NegativeInfinity);
             await FlushFetch(writer, reader);
             Assert.That(reader.ReadDouble(), Is.EqualTo(double.NegativeInfinity));
@@ -398,7 +397,7 @@ namespace Archivarius.Tests
         [Test, Category("Primitives")]
         public async Task Primitives_AllTypes_Sequential_RoundTrip()
         {
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
 
             writer.WriteBool(true);
             writer.WriteByte(0xFF);
@@ -443,7 +442,7 @@ namespace Archivarius.Tests
         public async Task Primitives_SameType_MultipleValues_Sequential()
         {
             // Write 100 ints in sequence to stress sequential consistency.
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             const int count = 100;
             for (int i = 0; i < count; i++)
                 writer.WriteInt(i);
@@ -456,7 +455,7 @@ namespace Archivarius.Tests
         public async Task Primitives_StringAndArrayInterleaved()
         {
             // Verify that null/non-null strings and arrays are correctly distinguished.
-            var (writer, reader, _, _) = await GetWriterReaderPair();
+            var (writer, reader, _) = await GetWriterReaderPair();
             writer.WriteString("first");
             writer.WriteArray(new byte[] { 10, 20 });
             writer.WriteString(null);

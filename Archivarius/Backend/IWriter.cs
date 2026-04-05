@@ -158,84 +158,9 @@ namespace Archivarius
     /// <summary>
     /// Extends <see cref="ILowLevelWriter"/> with section management and flushing.
     /// </summary>
-    public interface IWriter : IAnyBackendCapabilities, ILowLevelWriter
+    public interface IWriter : IAnyBackend, ILowLevelWriter
     {
-        /// <summary>
-        /// Attempts to enable or disable logical section markers in the output stream.
-        /// When sections are enabled, every <see cref="BeginSection"/>/<see cref="EndSection"/>
-        /// pair embeds a byte-length header that allows the paired <see cref="IReader"/> to
-        /// detect and skip unknown or added fields, providing forward and backward compatibility.
-        /// </summary>
-        /// <param name="useSections">
-        /// <see langword="true"/> to write section length headers; <see langword="false"/> to omit them.
-        /// </param>
-        /// <returns>
-        /// <see langword="true"/> if the mode was successfully applied.
-        /// <see langword="false"/> if the request was rejected — either because data has already
-        /// been written, or because the implementation does not support the requested mode.
-        /// </returns>
-        /// <remarks>
-        /// <para>
-        /// Sections are <b>disabled by default</b> on every implementation.
-        /// </para>
-        /// <para>
-        /// Must be called before any data is written to the stream.
-        /// The paired <see cref="IReader"/> must be configured with the same value.
-        /// </para>
-        /// <para>
-        /// An implementation that does not support sections must still accept
-        /// <c>TrySetSectionUsage(false)</c> and return <see langword="true"/>, because
-        /// disabling sections is always valid. It must return <see langword="false"/> only
-        /// when <paramref name="useSections"/> is <see langword="true"/>.
-        /// </para>
-        /// </remarks>
-        /// <exception cref="InvalidOperationException">
-        /// The writer has already been completed via <see cref="Complete"/>.
-        /// </exception>
-        bool TrySetSectionUsage(bool useSections);
 
-        /// <summary>
-        /// Marks the beginning of a logical section.
-        /// When sections are enabled, reserves space in the stream for the section's
-        /// byte-length header, which is filled in by the matching <see cref="EndSection"/> call.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// Every <see cref="BeginSection"/> call must be balanced by exactly one
-        /// <see cref="EndSection"/> call. Sections must be properly nested — i.e. sections
-        /// behave like matching brackets: the most recently opened section must be closed first.
-        /// </para>
-        /// <para>
-        /// Can be called regardless of whether sections are enabled via
-        /// <see cref="TrySetSectionUsage"/>. When sections are disabled this method is a no-op,
-        /// but the nesting contract must still be respected.
-        /// </para>
-        /// </remarks>
-        /// <exception cref="InvalidOperationException">
-        /// The writer has already been completed via <see cref="Complete"/>.
-        /// </exception>
-        void BeginSection();
-
-        /// <summary>
-        /// Marks the end of the most recently opened section and writes its byte-length
-        /// header into the stream.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// Must be preceded by a matching <see cref="BeginSection"/> call.
-        /// Sections must be closed in reverse order of opening (LIFO).
-        /// </para>
-        /// <para>
-        /// Can be called regardless of whether sections are enabled via
-        /// <see cref="TrySetSectionUsage"/>. When sections are disabled this method is a no-op,
-        /// but the nesting contract must still be respected.
-        /// </para>
-        /// </remarks>
-        /// <exception cref="InvalidOperationException">
-        /// Called without a matching open <see cref="BeginSection"/>, or the writer has already
-        /// been completed via <see cref="Complete"/>.
-        /// </exception>
-        void EndSection();
 
         /// <summary>
         /// Commits all buffered data to the underlying store and signals that a complete

@@ -9,9 +9,9 @@ namespace Archivarius.BinaryBackend
         private readonly Stream _stream;
         
         
-        public IAnyBackendCapabilities.CapabilityState SectionsSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
-        public IAnyBackendCapabilities.CapabilityState TypeSafetySupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
-        public IAnyBackendCapabilities.CapabilityState PartialFlushSupport => IAnyBackendCapabilities.CapabilityState.NotSupported;
+        public CapabilityState SectionsSupport => CapabilityState.NotSupported;
+        public CapabilityState TypeSafetySupport => CapabilityState.NotSupported;
+        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
         
         public Stream BaseStream => _stream;
 
@@ -45,9 +45,9 @@ namespace Archivarius.BinaryBackend
             // DO NOTHING
         }
 
-        public void EndSection()
+        public bool EndSection()
         {
-            // DO NOTHING
+            return true;
         }
 
         public void WriteBool(bool value)

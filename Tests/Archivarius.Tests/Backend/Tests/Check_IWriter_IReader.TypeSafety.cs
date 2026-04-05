@@ -21,7 +21,7 @@ namespace Archivarius.Tests
             Action<IReader> wrongRead,
             string description)
         {
-            var (writer, reader, _, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore($"Type safety not supported by this implementation (test: {description}).");
 
@@ -181,7 +181,7 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task TypeSafety_WriteBytes_ReadInt_ThrowsImmediately()
         {
-            var (writer, reader, _, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore("Type safety not supported.");
 
@@ -195,7 +195,7 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task TypeSafety_WriteBytes_ReadFloat_ThrowsImmediately()
         {
-            var (writer, reader, _, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore("Type safety not supported.");
 
@@ -209,7 +209,7 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task TypeSafety_WriteInt_ReadBytes_ThrowsImmediately()
         {
-            var (writer, reader, _, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore("Type safety not supported.");
 
@@ -224,7 +224,7 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task TypeSafety_WriteFloat_ReadBytes_ThrowsImmediately()
         {
-            var (writer, reader, _, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore("Type safety not supported.");
 
@@ -244,7 +244,7 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task TypeSafety_WriteBytes5_ReadBytes3_ThrowsImmediately()
         {
-            var (writer, reader, _, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore("Type safety not supported.");
 
@@ -264,7 +264,7 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task TypeSafety_WriteBytes3_ReadBytes7_ThrowsImmediately()
         {
-            var (writer, reader, _, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore("Type safety not supported.");
 
@@ -278,7 +278,7 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task TypeSafety_WriteBytes0_ReadBytes1_ThrowsImmediately()
         {
-            var (writer, reader, _, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore("Type un-safety not supported.");
 
@@ -292,7 +292,7 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task TypeSafety_WriteBytes1_ReadBytes2_ThrowsImmediately()
         {
-            var (writer, reader, _, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore("Type safety not supported.");
 
@@ -307,7 +307,7 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task TypeSafety_WriteBytes_ReadBytes_SameCount_NoThrow()
         {
-            var (writer, reader, _, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore("Type safety not supported.");
 
@@ -326,10 +326,10 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task TypeSafety_MismatchIsImmediate_NotDeferredToEndSection()
         {
-            var (writer, reader, sectionsAreSupported, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (!typeSafety)
                 Assert.Ignore("Type safety not supported.");
-            if (!sectionsAreSupported)
+            if (writer.SectionsSupport == CapabilityState.NotSupported)
                 Assert.Ignore("Sections not supported (needed for this test to have context).");
 
             EnableSections(writer, reader);
@@ -361,10 +361,10 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task WeakSafety_Sections_UnderConsumption_EndSectionReturnsFalse()
         {
-            var (writer, reader, sectionsAreSupported, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (typeSafety)
                 Assert.Ignore("This test is for weak-safety (typeSafety=false) only.");
-            if (!sectionsAreSupported)
+            if (writer.SectionsSupport == CapabilityState.NotSupported)
                 Assert.Ignore("Sections required for this weak-safety test.");
 
             EnableSections(writer, reader);
@@ -388,10 +388,10 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task WeakSafety_Sections_OverConsumption_ThrowsEndOfStream()
         {
-            var (writer, reader, sectionsAreSupported, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (typeSafety)
                 Assert.Ignore("This test is for weak-safety (typeSafety=false) only.");
-            if (!sectionsAreSupported)
+            if (writer.SectionsSupport == CapabilityState.NotSupported)
                 Assert.Ignore("Sections required for this weak-safety test.");
 
             EnableSections(writer, reader);
@@ -411,10 +411,10 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task WeakSafety_Sections_ExactConsumption_EndSectionReturnsTrue()
         {
-            var (writer, reader, sectionsAreSupported, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (typeSafety)
                 Assert.Ignore("This test is for weak-safety (typeSafety=false) only.");
-            if (!sectionsAreSupported)
+            if (writer.SectionsSupport == CapabilityState.NotSupported)
                 Assert.Ignore("Sections required.");
 
             EnableSections(writer, reader);
@@ -437,11 +437,11 @@ namespace Archivarius.Tests
         [Test, Category("TypeSafety")]
         public async Task WeakSafety_NoSections_ReadBeyondEnd_Throws()
         {
-            var (writer, reader, sectionsAreSupported, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader, typeSafety) = await GetWriterReaderPair();
             if (typeSafety)
                 Assert.Ignore("This test is for weak-safety (typeSafety=false) only.");
-            if (sectionsAreSupported)
-                Assert.Ignore("This test targets section-less weak-safety.");
+            if (writer.SectionsSupport != CapabilityState.NotSupported)
+                Assert.Ignore("This test targets section-less weak-safety (SectionsSupport must be NotSupported).");
 
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
