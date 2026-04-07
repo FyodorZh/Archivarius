@@ -13,7 +13,7 @@ namespace Archivarius.Tests
 
         private async Task<(IWriter writer, IReader reader)> GetCompletedWriter()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             // Drain reader to avoid blocking transports
@@ -184,7 +184,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_TrySetSectionUsage_AfterDataWritten_ReturnsFalse()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             writer.WriteInt(1);
             Assert.That(writer.TrySetSectionUsage(false), Is.False,
                 "TrySetSectionUsage must return false after any data has been written.");
@@ -193,7 +193,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_TrySetSectionUsage_AfterDataRead_ReturnsFalse()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             reader.ReadInt();
@@ -206,7 +206,7 @@ namespace Archivarius.Tests
         {
             // When sections ARE active, BeginSection() writes infrastructure bytes to the stream.
             // Any further TrySetSectionUsage() call must then return false.
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             if (writer.SectionsSupport == CapabilityState.NotSupported)
                 Assert.Ignore("BeginSection is a no-op when sections are not supported; no bytes are written.");
 
@@ -227,7 +227,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_Writer_ExtraEndSection_AfterAllClosed_Throws()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             writer.BeginSection();
             writer.WriteInt(1);
             writer.EndSection();
@@ -238,7 +238,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_Reader_ExtraEndSection_AfterAllClosed_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             reader.BeginSection();
@@ -250,7 +250,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_Sections_Enabled_Flush_WithOpenSection_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -263,7 +263,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_Sections_Enabled_Complete_WithOpenSection_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -278,7 +278,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_Read_BeyondStreamEnd_ReadInt_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             reader.ReadInt();
@@ -290,7 +290,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_Read_BeyondStreamEnd_ReadString_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteString("x");
             await FlushFetch(writer, reader);
             reader.ReadString();
@@ -300,7 +300,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_Read_BeyondStreamEnd_ReadBool_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteBool(true);
             await FlushFetch(writer, reader);
             reader.ReadBool();
@@ -310,7 +310,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_Read_BeyondStreamEnd_ReadArray_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteArray(new byte[] { 1 });
             await FlushFetch(writer, reader);
             reader.ReadArray();
@@ -321,7 +321,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_Reader_BeginSection_WhenIsCompleted_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
@@ -341,7 +341,7 @@ namespace Archivarius.Tests
         public async Task Errors_Sections_Disabled_NestedEndSection_WrongOrder_Throws()
         {
             // Even with sections disabled, you can't call EndSection() one time too many.
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             writer.BeginSection();       // depth = 1
             writer.BeginSection();       // depth = 2
             writer.EndSection();         // depth = 1
@@ -357,7 +357,7 @@ namespace Archivarius.Tests
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_TrySetSectionUsageFalse_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             // Drain to unblock transport if needed

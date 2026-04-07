@@ -14,7 +14,7 @@ namespace Archivarius.AsyncBackend
         
         public CapabilityState SectionsSupport => CapabilityState.NotSupported;
         public CapabilityState TypeSafetySupport => CapabilityState.NotSupported;
-        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
+        public CapabilityState FlushSupport => CapabilityState.NotSupported;
         
         public bool IsCompleted => false;
 
@@ -52,6 +52,11 @@ namespace Archivarius.AsyncBackend
             }
 
             return true;
+        }
+        
+        public bool TrySetTypeSafety(bool enabled)
+        {
+            throw new NotImplementedException();
         }
 
         public void BeginSection()

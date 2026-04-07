@@ -10,7 +10,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_SingleFlushFetch_DataReadable()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(12345);
             await FlushFetch(writer, reader);
             Assert.That(reader.ReadInt(), Is.EqualTo(12345));
@@ -23,7 +23,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_EmptyFlush_FetchReturnsTrue()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             // Flush with no data written
             await writer.Flush();
             bool ok = await FetchWithTimeout(reader);
@@ -35,7 +35,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_TwoCycles_EachCycleDataCorrect()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
 
             // Cycle 1
             writer.WriteInt(1);
@@ -53,7 +53,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_FiveCycles_AllDataCorrect()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             for (int i = 0; i < 5; i++)
             {
                 writer.WriteInt(i * 100);
@@ -71,7 +71,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_Complete_CountsAsOneFlush_NoExplicitFlush()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(777);
             await writer.Complete();   // one implicit flush
 
@@ -88,7 +88,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_ExplicitFlushThenComplete_TwoFetchesBeforeTerminal()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
 
             // Cycle 1 — explicit flush
             writer.WriteInt(10);
@@ -115,7 +115,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_IsCompleted_FalseAfterDataFetch()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
@@ -126,7 +126,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_IsCompleted_TrueAfterTerminalFetch()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
@@ -140,7 +140,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_MultipleEmptyFlushes_AllFetchesReturnTrue()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             for (int i = 0; i < 4; i++)
             {
                 await writer.Flush();
@@ -154,7 +154,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_DifferentTypesEachCycle_AllCorrect()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
 
             writer.WriteInt(42);
             await FlushFetch(writer, reader);
@@ -178,7 +178,7 @@ namespace Archivarius.Tests
         {
             const int cycles = 3;
             const int bytesPerCycle = 50 * 1024;
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
 
             for (int c = 0; c < cycles; c++)
             {
@@ -196,7 +196,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_NoDataFlushedBeforeComplete_OneSuccessfulFetch()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             await writer.Complete();
             bool first = await FetchWithTimeout(reader);
             // Per contract, Complete() counts as one Flush() and Fetch() may return true
@@ -224,7 +224,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_ConcurrentFetchAndFlush_DataCorrect()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(99999);
 
             // Start Fetch *before* Flush
@@ -248,7 +248,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_FetchBlocksUntilFlush()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(42);
 
             // Start Fetch before Flush
@@ -274,7 +274,7 @@ namespace Archivarius.Tests
         [Test, Category("MultiCycle")]
         public async Task MultiCycle_FetchUnblockedByComplete()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(555);
 
             var fetchTask = reader.Fetch().AsTask();

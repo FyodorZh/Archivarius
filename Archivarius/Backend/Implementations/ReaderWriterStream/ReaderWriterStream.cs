@@ -21,7 +21,7 @@ namespace Archivarius
 
         public CapabilityState SectionsSupport => CapabilityState.NotSupported;
         public CapabilityState TypeSafetySupport => CapabilityState.Mandatory;
-        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
+        public CapabilityState FlushSupport => CapabilityState.NotSupported;
         
         public bool IsCompleted => false;
 
@@ -136,6 +136,11 @@ namespace Archivarius
             }
             // DO NOTHING
             return true;
+        }
+        
+        public bool TrySetTypeSafety(bool enabled)
+        {
+            throw new NotImplementedException();
         }
 
         ValueTask IWriter.Flush()

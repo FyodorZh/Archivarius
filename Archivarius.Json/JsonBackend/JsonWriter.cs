@@ -11,7 +11,8 @@ namespace Archivarius.JsonBackend
         
         public CapabilityState SectionsSupport => CapabilityState.Mandatory;
         public CapabilityState TypeSafetySupport => CapabilityState.Supported;
-        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
+
+        public CapabilityState FlushSupport => CapabilityState.NotSupported;
 
         public JsonWriter()
         {
@@ -134,6 +135,11 @@ namespace Archivarius.JsonBackend
             }
 
             return false;
+        }
+        
+        public bool TrySetTypeSafety(bool enabled)
+        {
+            throw new NotImplementedException();
         }
 
         public void BeginSection()

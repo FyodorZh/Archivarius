@@ -1,8 +1,6 @@
 namespace Archivarius
 {
-    public interface IAnyBackend : ISectionsCapability
+    public interface IAnyBackend : ISectionsCapability, ITypeSafetyCapability, IFlushCapability
     {
-        //CapabilityState TypeSafetySupport { get; }
-        //CapabilityState PartialFlushSupport { get; }
     }
 }

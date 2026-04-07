@@ -17,28 +17,25 @@ namespace Archivarius.Tests
     /// [TestFixture]
     /// public class Check_MyWriter_MyReader : Check_IWriter_IReader
     /// {
-    ///     protected override Task&lt;(IWriter, IReader, bool)&gt; GetWriterReaderPair()
-    ///         =&gt; Task.FromResult&lt;(IWriter, IReader, bool)&gt;(
-    ///             (new MyWriter(), new MyReader(), typeSafety: false));
+    ///     protected override Task&lt;(IWriter, IReader)&gt; GetWriterReaderPair()
+    ///         =&gt; Task.FromResult&lt;(IWriter, IReader)&gt;(
+    ///             (new MyWriter(), new MyReader()));
     /// }
     /// </code>
     /// </para>
-    /// <para>
-    /// Section-support capability is read directly from
-    /// <see cref="IAnyBackend.SectionsSupport"/> on the returned writer/reader.
-    /// Both objects always expose the same value for this property.
-    /// </para>
-    /// <para>Capability flags:</para>
+    /// <para>Capability flags (both read directly from the returned writer/reader):</para>
     /// <list type="bullet">
     ///   <item><term><see cref="IAnyBackend.SectionsSupport"/></term><description>
-    ///     Read from the writer/reader. Controls which section-related test paths execute:
+    ///     Controls which section-related test paths execute:
     ///     <see cref="CapabilityState.NotSupported"/>: only disabled-sections tests run.
     ///     <see cref="CapabilityState.Mandatory"/>: only enabled-sections tests run (sections always on).
     ///     <see cref="CapabilityState.Supported"/>: both paths run via <c>TrySetSectionUsage</c>.
     ///   </description></item>
-    ///   <item><term>typeSafety</term><description>
-    ///     Every type mismatch on read immediately throws <see cref="InvalidDataException"/>.
-    ///     When <see langword="false"/>, weak-safety tests run instead.
+    ///   <item><term><see cref="IAnyBackend.TypeSafetySupport"/></term><description>
+    ///     Controls which type-safety test paths execute:
+    ///     <see cref="CapabilityState.NotSupported"/>: only weak-safety tests run.
+    ///     <see cref="CapabilityState.Mandatory"/>: only type-safe tests run (type safety always on).
+    ///     <see cref="CapabilityState.Supported"/>: both paths run via <c>TrySetTypeSafety</c>.
     ///   </description></item>
     /// </list>
     /// </remarks>
@@ -53,11 +50,12 @@ namespace Archivarius.Tests
         /// available to the reader after the matching <see cref="IReader.Fetch"/> call.
         /// </summary>
         /// <remarks>
-        /// Section-support capability is determined by reading
-        /// <see cref="IAnyBackend.SectionsSupport"/> on the returned objects.
-        /// Both writer and reader always return the same value for this property.
+        /// Capability flags (<see cref="IAnyBackend.SectionsSupport"/>,
+        /// <see cref="IAnyBackend.TypeSafetySupport"/>) are determined by reading the
+        /// corresponding properties on the returned objects.
+        /// Both writer and reader always return the same value for each property.
         /// </remarks>
-        protected abstract Task<(IWriter writer, IReader reader, bool typeSafety)>
+        protected abstract Task<(IWriter writer, IReader reader)>
             GetWriterReaderPair();
 
         // ── Shared constants ─────────────────────────────────────────────────────
@@ -148,6 +146,73 @@ namespace Archivarius.Tests
             }
         }
 
+        /// <summary>
+        /// Ensures type safety is ENABLED on both writer and reader for the current test.
+        /// The required capability is read from <see cref="IAnyBackend.TypeSafetySupport"/>
+        /// on the <paramref name="writer"/>.
+        /// <list type="bullet">
+        ///   <item><see cref="CapabilityState.NotSupported"/>:
+        ///     calls <c>Assert.Ignore</c> — type safety cannot be enabled.</item>
+        ///   <item><see cref="CapabilityState.Mandatory"/>:
+        ///     no-op — type safety is already permanently active.</item>
+        ///   <item><see cref="CapabilityState.Supported"/>:
+        ///     calls <c>TrySetTypeSafety(true)</c> on both writer and reader.</item>
+        /// </list>
+        /// Must be called before any data is written or read.
+        /// </summary>
+        protected static void EnableTypeSafety(IWriter writer, IReader reader)
+        {
+            switch (writer.TypeSafetySupport)
+            {
+                case CapabilityState.NotSupported:
+                    Assert.Ignore("This implementation does not support type safety (TypeSafetySupport = NotSupported).");
+                    break;
+                case CapabilityState.Mandatory:
+                    // Type safety is permanently active — nothing to do.
+                    break;
+                case CapabilityState.Supported:
+                    if (!writer.TrySetTypeSafety(true))
+                        Assert.Ignore("TrySetTypeSafety(true) returned false unexpectedly on writer.");
+                    if (!reader.TrySetTypeSafety(true))
+                        Assert.Ignore("TrySetTypeSafety(true) returned false unexpectedly on reader.");
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Ensures type safety is DISABLED on both writer and reader for the current test.
+        /// The required capability is read from <see cref="IAnyBackend.TypeSafetySupport"/>
+        /// on the <paramref name="writer"/>.
+        /// <list type="bullet">
+        ///   <item><see cref="CapabilityState.NotSupported"/>:
+        ///     no-op — type safety is always off.</item>
+        ///   <item><see cref="CapabilityState.Mandatory"/>:
+        ///     calls <c>Assert.Ignore</c> — type safety cannot be disabled.</item>
+        ///   <item><see cref="CapabilityState.Supported"/>:
+        ///     calls <c>TrySetTypeSafety(false)</c> on both writer and reader.
+        ///     Fails the test if the call is rejected (must be invoked before any I/O).</item>
+        /// </list>
+        /// Must be called before any data is written or read.
+        /// </summary>
+        protected static void EnsureTypeSafetyDisabled(IWriter writer, IReader reader)
+        {
+            switch (writer.TypeSafetySupport)
+            {
+                case CapabilityState.NotSupported:
+                    // Already disabled — nothing to do.
+                    break;
+                case CapabilityState.Mandatory:
+                    Assert.Ignore("Type safety is Mandatory for this implementation and cannot be disabled; test skipped.");
+                    break;
+                case CapabilityState.Supported:
+                    if (!writer.TrySetTypeSafety(false))
+                        Assert.Fail("TrySetTypeSafety(false) returned false for a Supported writer before any I/O.");
+                    if (!reader.TrySetTypeSafety(false))
+                        Assert.Fail("TrySetTypeSafety(false) returned false for a Supported reader before any I/O.");
+                    break;
+            }
+        }
+
         // ── Defaults ─────────────────────────────────────────────────────────────
 
         /// <summary>
@@ -160,7 +225,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Writer_TrySetSectionUsageFalse_MatchesSectionsSupport()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             bool expected = writer.SectionsSupport != CapabilityState.Mandatory;
             Assert.That(writer.TrySetSectionUsage(false), Is.EqualTo(expected),
                 $"TrySetSectionUsage(false) expected {expected} for SectionsSupport={writer.SectionsSupport}.");
@@ -169,7 +234,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Reader_TrySetSectionUsageFalse_MatchesSectionsSupport()
         {
-            var (_, reader, _) = await GetWriterReaderPair();
+            var (_, reader) = await GetWriterReaderPair();
             bool expected = reader.SectionsSupport != CapabilityState.Mandatory;
             Assert.That(reader.TrySetSectionUsage(false), Is.EqualTo(expected),
                 $"TrySetSectionUsage(false) expected {expected} for SectionsSupport={reader.SectionsSupport}.");
@@ -185,7 +250,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Writer_TrySetSectionUsageTrue_MatchesSectionsSupport()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             bool expected = writer.SectionsSupport != CapabilityState.NotSupported;
             Assert.That(writer.TrySetSectionUsage(true), Is.EqualTo(expected),
                 $"TrySetSectionUsage(true) expected {expected} for SectionsSupport={writer.SectionsSupport}.");
@@ -194,17 +259,67 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Reader_TrySetSectionUsageTrue_MatchesSectionsSupport()
         {
-            var (_, reader, _) = await GetWriterReaderPair();
+            var (_, reader) = await GetWriterReaderPair();
             bool expected = reader.SectionsSupport != CapabilityState.NotSupported;
             Assert.That(reader.TrySetSectionUsage(true), Is.EqualTo(expected),
                 $"TrySetSectionUsage(true) expected {expected} for SectionsSupport={reader.SectionsSupport}.");
+        }
+
+        /// <summary>
+        /// <c>TrySetTypeSafety(false)</c> must succeed (return <see langword="true"/>) for
+        /// <see cref="CapabilityState.NotSupported"/> and
+        /// <see cref="CapabilityState.Supported"/> implementations.
+        /// For <see cref="CapabilityState.Mandatory"/> it must return
+        /// <see langword="false"/> because disabling mandatory type safety is not allowed.
+        /// </summary>
+        [Test, Category("Defaults")]
+        public async Task Defaults_Writer_TrySetTypeSafetyFalse_MatchesTypeSafetySupport()
+        {
+            var (writer, _) = await GetWriterReaderPair();
+            bool expected = writer.TypeSafetySupport != CapabilityState.Mandatory;
+            Assert.That(writer.TrySetTypeSafety(false), Is.EqualTo(expected),
+                $"TrySetTypeSafety(false) expected {expected} for TypeSafetySupport={writer.TypeSafetySupport}.");
+        }
+
+        [Test, Category("Defaults")]
+        public async Task Defaults_Reader_TrySetTypeSafetyFalse_MatchesTypeSafetySupport()
+        {
+            var (_, reader) = await GetWriterReaderPair();
+            bool expected = reader.TypeSafetySupport != CapabilityState.Mandatory;
+            Assert.That(reader.TrySetTypeSafety(false), Is.EqualTo(expected),
+                $"TrySetTypeSafety(false) expected {expected} for TypeSafetySupport={reader.TypeSafetySupport}.");
+        }
+
+        /// <summary>
+        /// <c>TrySetTypeSafety(true)</c> must succeed (return <see langword="true"/>) for
+        /// <see cref="CapabilityState.Supported"/> and
+        /// <see cref="CapabilityState.Mandatory"/> implementations.
+        /// For <see cref="CapabilityState.NotSupported"/> it must return
+        /// <see langword="false"/> because enabling unsupported type safety is not allowed.
+        /// </summary>
+        [Test, Category("Defaults")]
+        public async Task Defaults_Writer_TrySetTypeSafetyTrue_MatchesTypeSafetySupport()
+        {
+            var (writer, _) = await GetWriterReaderPair();
+            bool expected = writer.TypeSafetySupport != CapabilityState.NotSupported;
+            Assert.That(writer.TrySetTypeSafety(true), Is.EqualTo(expected),
+                $"TrySetTypeSafety(true) expected {expected} for TypeSafetySupport={writer.TypeSafetySupport}.");
+        }
+
+        [Test, Category("Defaults")]
+        public async Task Defaults_Reader_TrySetTypeSafetyTrue_MatchesTypeSafetySupport()
+        {
+            var (_, reader) = await GetWriterReaderPair();
+            bool expected = reader.TypeSafetySupport != CapabilityState.NotSupported;
+            Assert.That(reader.TrySetTypeSafety(true), Is.EqualTo(expected),
+                $"TrySetTypeSafety(true) expected {expected} for TypeSafetySupport={reader.TypeSafetySupport}.");
         }
 
         /// <summary>IsCompleted must be false before any Fetch() call.</summary>
         [Test, Category("Defaults")]
         public async Task Defaults_Reader_IsCompleted_FalseBeforeAnyFetch()
         {
-            var (_, reader, _) = await GetWriterReaderPair();
+            var (_, reader) = await GetWriterReaderPair();
             Assert.That(reader.IsCompleted, Is.False);
         }
 
@@ -212,7 +327,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Fetch_ReturnsTrueAfterComplete()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             bool first = await FetchWithTimeout(reader);
@@ -223,7 +338,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Fetch_ReturnsFalseAfterDataConsumedAndComplete()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
@@ -236,7 +351,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_IsCompleted_TrueAfterTerminalFetch()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
@@ -250,7 +365,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Reader_EndSection_WithoutBeginSection_ThrowsInvalidOp()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             Assert.Throws<InvalidOperationException>(() => reader.EndSection());
@@ -260,7 +375,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Writer_EndSection_WithoutBeginSection_ThrowsInvalidOp()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             Assert.Throws<InvalidOperationException>(() => writer.EndSection());
         }
 
@@ -275,7 +390,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_SectionsDisabledByDefault_BeginEndAreNoop_BehavioralCheck()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             if (writer.SectionsSupport != CapabilityState.NotSupported)
                 Assert.Ignore(
                     "This test verifies default-disabled (no TrySetSectionUsage call) behavior; " +
@@ -299,7 +414,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Writer_ExtraEndSection_AfterBalancedPair_Throws()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             writer.BeginSection();
             writer.WriteInt(1);
             writer.EndSection();
@@ -309,7 +424,7 @@ namespace Archivarius.Tests
         [Test, Category("Defaults")]
         public async Task Defaults_Reader_ExtraEndSection_AfterBalancedPair_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             reader.BeginSection();

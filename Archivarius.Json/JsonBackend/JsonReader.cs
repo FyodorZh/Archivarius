@@ -14,7 +14,7 @@ namespace Archivarius.JsonBackend
         
         public CapabilityState SectionsSupport => CapabilityState.Mandatory;
         public CapabilityState TypeSafetySupport => CapabilityState.Supported;
-        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
+        public CapabilityState FlushSupport => CapabilityState.NotSupported;
 
         public bool IsCompleted => false;
 
@@ -182,12 +182,12 @@ namespace Archivarius.JsonBackend
 
         public bool TrySetSectionUsage(bool useSections)
         {
-            if (useSections)
-            {
-                return true;
-            }
-
-            return false;
+            return useSections;
+        }
+        
+        public bool TrySetTypeSafety(bool enabled)
+        {
+            return !enabled;
         }
 
         public void BeginSection()

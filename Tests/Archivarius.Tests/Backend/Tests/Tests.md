@@ -11,26 +11,25 @@ Create a concrete subclass for each writer/reader pair you want to test:
 [TestFixture]
 public class Check_BinaryWriter_BinaryReader : Check_IWriter_IReader
 {
-    protected override Task<(IWriter, IReader, bool)> GetWriterReaderPair()
+    protected override Task<(IWriter, IReader)> GetWriterReaderPair()
     {
         var writer = new BinaryWriter();
         var reader = new BinaryReader(Array.Empty<byte>());
         // connect them …
-        return Task.FromResult<(IWriter, IReader, bool)>(
-            (writer, reader, typeSafety: false));
+        return Task.FromResult<(IWriter, IReader)>((writer, reader));
     }
 }
 ```
 
-Section-support capability is read automatically from `IWriter.SectionsSupport` /
-`IReader.SectionsSupport` on the returned objects — both always expose the same value.
+Capability flags are read automatically from the returned writer/reader objects — both always
+expose the same value for each property.
 
 ### Capability flags
 
 | Flag | Type | Meaning |
 |---|---|---|
-| `IWriter.SectionsSupport` | `IAnyBackendCapabilities.CapabilityState` | Read from the writer/reader. Controls which section test paths execute (see below). |
-| `typeSafety` | `bool` | Every type mismatch throws `InvalidDataException` immediately. Type-safety tests run. |
+| `IWriter.SectionsSupport` | `CapabilityState` | Read from the writer/reader. Controls which section test paths execute (see below). |
+| `IWriter.TypeSafetySupport` | `CapabilityState` | Read from the writer/reader. Controls which type-safety test paths execute (see below). |
 
 #### `SectionsSupport` values
 
@@ -40,13 +39,24 @@ Section-support capability is read automatically from `IWriter.SectionsSupport` 
 | `Supported` | Sections can be toggled. `TrySetSectionUsage(true/false)` both return `true`. Initial state is **undefined** — callers must always set the mode explicitly before I/O. Both *disabled* and *enabled* test paths run. |
 | `Mandatory` | Sections are permanently on. `TrySetSectionUsage(true)` → `true`; `TrySetSectionUsage(false)` → `false`. Only *enabled-sections* tests run. |
 
+#### `TypeSafetySupport` values
+
+| Value | Meaning |
+|---|---|
+| `NotSupported` | Type safety is never active. `TrySetTypeSafety(true)` → `false`; `TrySetTypeSafety(false)` → `true`. Type mismatches are undetected. Only *weak-safety* tests run. |
+| `Supported` | Type safety can be toggled. `TrySetTypeSafety(true/false)` both return `true`. Initial state is **undefined** — callers must always set the mode explicitly before I/O. Both *type-safe* and *weak-safety* test paths run. |
+| `Mandatory` | Type safety is permanently on. `TrySetTypeSafety(true)` → `true`; `TrySetTypeSafety(false)` → `false`. Only *type-safe* tests run. |
+
 Tests that require a particular sections state call `EnableSections(writer, reader)` or
-`EnsureSectionsDisabled(writer, reader)` as appropriate. Both helpers read `writer.SectionsSupport`
-internally and call `Assert.Ignore(...)` when the capability does not allow the required mode.
+`EnsureSectionsDisabled(writer, reader)` as appropriate.
+Tests that require a particular type-safety state call `EnableTypeSafety(writer, reader)` or
+`EnsureTypeSafetyDisabled(writer, reader)` as appropriate.
+All helpers read the corresponding `writer.*Support` property internally and call
+`Assert.Ignore(...)` when the capability does not allow the required mode.
 
 ---
 
-## File: `Check_IWriter_IReader.cs` — Defaults (13 tests)
+## File: `Check_IWriter_IReader.cs` — Defaults (17 tests)
 
 | Test | Description |
 |---|---|
@@ -54,6 +64,10 @@ internally and call `Assert.Ignore(...)` when the capability does not allow the 
 | `Defaults_Reader_TrySetSectionUsageFalse_MatchesSectionsSupport` | Same check on the reader side. |
 | `Defaults_Writer_TrySetSectionUsageTrue_MatchesSectionsSupport` | `TrySetSectionUsage(true)` returns `false` for `NotSupported`; returns `true` for `Supported`/`Mandatory`. |
 | `Defaults_Reader_TrySetSectionUsageTrue_MatchesSectionsSupport` | Same check on the reader side. |
+| `Defaults_Writer_TrySetTypeSafetyFalse_MatchesTypeSafetySupport` | `TrySetTypeSafety(false)` returns `true` for `NotSupported`/`Supported`; returns `false` for `Mandatory` (cannot disable mandatory type safety). |
+| `Defaults_Reader_TrySetTypeSafetyFalse_MatchesTypeSafetySupport` | Same check on the reader side. |
+| `Defaults_Writer_TrySetTypeSafetyTrue_MatchesTypeSafetySupport` | `TrySetTypeSafety(true)` returns `false` for `NotSupported`; returns `true` for `Supported`/`Mandatory`. |
+| `Defaults_Reader_TrySetTypeSafetyTrue_MatchesTypeSafetySupport` | Same check on the reader side. |
 | `Defaults_Reader_IsCompleted_FalseBeforeAnyFetch` | `IsCompleted` is `false` right after construction. |
 | `Defaults_Fetch_ReturnsTrueAfterComplete` | First `Fetch()` after `Complete()` returns `true`. |
 | `Defaults_Fetch_ReturnsFalseAfterDataConsumedAndComplete` | Second `Fetch()` after data is consumed and writer is complete returns `false`. |
@@ -118,7 +132,7 @@ Catches bugs in LEB128/ZigZag encoders at byte-count thresholds. Fixed-width imp
 
 ---
 
-## File: `Check_IWriter_IReader.Bytes.cs` — WriteBytes / ReadBytes (19 tests)
+## File: `Check_IWriter_IReader.Bytes.cs` — WriteBytes / ReadBytes (20 tests)
 
 | Test | Description |
 |---|---|
@@ -140,7 +154,8 @@ Catches bugs in LEB128/ZigZag encoders at byte-count thresholds. Fixed-width imp
 | `Bytes_Write_OffsetPlusCountExceedsBuffer_ThrowsArgumentException` | `offset + count > buffer.Length` → `ArgumentException`. |
 | `Bytes_Write_ZeroCount_NullBuffer_StillThrowsArgumentNullException` | Null check precedes the count=0 no-op shortcut. |
 | `Bytes_Read_NullBuffer_*` / `Read_NegativeOffset_*` / `Read_NegativeCount_*` / `Read_Overflow_*` | Mirror set of argument-validation tests for `ReadBytes`. |
-| `Bytes_Read_BeyondEnd_ThrowsEndOfStreamException` | Writing 2 bytes and reading 4 must throw `EndOfStreamException`. |
+| `Bytes_Read_BeyondEnd_TypeSafe_ThrowsInvalidDataException` | Writing 2 bytes then `ReadBytes(4)` when type safety is **enabled** throws `InvalidDataException` immediately (count mismatch detected from the type tag). Skipped for `NotSupported`. |
+| `Bytes_Read_BeyondEnd_WeakSafety_ThrowsEndOfStreamException` | Writing 2 bytes then `ReadBytes(4)` when type safety is **disabled** throws `EndOfStreamException`. Skipped for `Mandatory`. |
 
 ---
 
@@ -195,11 +210,20 @@ Skipped for `NotSupported` (sections unavailable).
 
 ---
 
-## File: `Check_IWriter_IReader.TypeSafety.cs` — Type safety & weak safety (35 tests)
+## File: `Check_IWriter_IReader.TypeSafety.cs` — Type safety & weak safety (42 tests)
 
-Tests 1–30 require `typeSafety = true`. Tests 31–35 require `typeSafety = false`.
+### Helpers
 
-### Type-safe mismatch tests (each writes type A, flushes/fetches, reads type B → `InvalidDataException`)
+| Helper | Purpose |
+|---|---|
+| `EnableTypeSafety(writer, reader)` | Enables type safety on both objects. `Assert.Ignore` for `NotSupported`; no-op for `Mandatory`; calls `TrySetTypeSafety(true)` for `Supported`. |
+| `EnsureTypeSafetyDisabled(writer, reader)` | Disables type safety on both objects. No-op for `NotSupported`; `Assert.Ignore` for `Mandatory`; calls `TrySetTypeSafety(false)` for `Supported`. |
+
+### Type-safe mode tests
+Run for `Mandatory` (always enabled) and `Supported` (explicitly enabled via `TrySetTypeSafety(true)`).
+Skipped for `NotSupported` (type safety unavailable).
+
+#### Mismatch tests (each writes type A, flushes/fetches, reads type B → `InvalidDataException`)
 
 | Test | Write type → Read type |
 |---|---|
@@ -240,19 +264,22 @@ Tests 1–30 require `typeSafety = true`. Tests 31–35 require `typeSafety = fa
 | `TypeSafety_WriteFloat_ReadBytes_ThrowsImmediately` | `WriteFloat` → `ReadBytes` |
 | `TypeSafety_WriteBytes5_ReadBytes3_ThrowsImmediately` | count mismatch (5 written, 3 read) → throws at `ReadBytes` |
 | `TypeSafety_WriteBytes3_ReadBytes7_ThrowsImmediately` | count mismatch (3 written, 7 read) |
-| `TypeSafety_WriteBytes0_ReadBytes1_ThrowsImmediately` | 0 bytes written, 1 expected |
-| `TypeSafety_WriteBytes1_ReadBytes0_ThrowsImmediately` | 1 byte written, 0 expected |
+| `TypeSafety_WriteBytes0_ReadBytes1_ThrowsImmediately` | `WriteBytes(0)` is a no-op (no tag written); `ReadBytes(1)` reads from empty stream → `EndOfStreamException` |
+| `TypeSafety_WriteBytes1_ReadBytes2_ThrowsImmediately` | 1 byte written, 2 expected → `InvalidDataException` |
 | `TypeSafety_WriteBytes_ReadBytes_SameCount_NoThrow` | matching counts → no exception (sanity) |
-| `TypeSafety_MismatchIsImmediate_NotDeferredToEndSection` | Confirms the exception fires on `Read*()`, not on `EndSection()`. Requires sections (`Supported` or `Mandatory`). |
+| `TypeSafety_MismatchIsImmediate_NotDeferredToEndSection` | Confirms the exception fires on `Read*()`, not on `EndSection()`. Requires sections (`Supported` or `Mandatory`). For `Supported` TypeSafety, the weak-safety counterpart is `WeakSafety_MismatchInsideSection_NoInvalidDataException`. |
 
-### Weak-safety tests (`typeSafety = false`)
+### Weak-safety mode tests
+Run for `NotSupported` (always disabled) and `Supported` (explicitly disabled via `TrySetTypeSafety(false)`).
+Skipped for `Mandatory` (type safety cannot be disabled).
 
 | Test | Sections required | Description |
 |---|---|---|
-| `WeakSafety_Sections_UnderConsumption_EndSectionReturnsFalse` | `Supported` or `Mandatory` | Unconsumed bytes → `EndSection()` returns `false`. |
-| `WeakSafety_Sections_OverConsumption_ThrowsEndOfStream` | `Supported` or `Mandatory` | Over-reading inside section → `EndOfStreamException`. |
-| `WeakSafety_Sections_ExactConsumption_EndSectionReturnsTrue` | `Supported` or `Mandatory` | Exact read → `EndSection()` returns `true`. |
-| `WeakSafety_NoSections_ReadBeyondEnd_Throws` | `NotSupported` only | Reading past stream end without sections → `EndOfStreamException`. |
+| `WeakSafety_Sections_UnderConsumption_EndSectionReturnsFalse` | `Supported` or `Mandatory` sections | Unconsumed bytes → `EndSection()` returns `false`. |
+| `WeakSafety_Sections_OverConsumption_ThrowsEndOfStream` | `Supported` or `Mandatory` sections | Over-reading inside section → `EndOfStreamException`. |
+| `WeakSafety_Sections_ExactConsumption_EndSectionReturnsTrue` | `Supported` or `Mandatory` sections | Exact read → `EndSection()` returns `true`. |
+| `WeakSafety_NoSections_ReadBeyondEnd_Throws` | `NotSupported` sections only | Reading past stream end without sections → `EndOfStreamException`. |
+| `WeakSafety_MismatchInsideSection_NoInvalidDataException` | `Supported` or `Mandatory` sections | A type mismatch inside a section does **NOT** throw `InvalidDataException` (mismatches are undetected). Counterpart to `TypeSafety_MismatchIsImmediate_NotDeferredToEndSection`. |
 
 ---
 
@@ -305,11 +332,10 @@ attempt the operation → `InvalidOperationException`.
 | `Errors_PostComplete_WriteBytes_Throws` | `WriteBytes` |
 | `Errors_PostComplete_BeginSection_Throws` | `BeginSection` |
 | `Errors_PostComplete_EndSection_Throws` | `EndSection` |
-| `Errors_PostComplete_TrySetSectionUsage_Throws` | `TrySetSectionUsage` |
+| `Errors_PostComplete_TrySetSectionUsageTrue_Throws` | `TrySetSectionUsage(true)` after complete |
+| `Errors_PostComplete_TrySetSectionUsageFalse_Throws` | `TrySetSectionUsage(false)` after complete — even "disabling" throws once completed |
 | `Errors_PostComplete_Flush_Throws` | `Flush` |
 | `Errors_PostComplete_Complete_SecondCallThrows` | Second `Complete()` call |
-| `Errors_PostComplete_TrySetSectionUsageTrue_Throws` | `TrySetSectionUsage(true)` after complete (complement to the false variant below) |
-| `Errors_PostComplete_TrySetSectionUsageFalse_Throws` | `TrySetSectionUsage(false)` after complete — even "disabling" throws once completed |
 
 ### TrySetSectionUsage after activity
 
@@ -344,6 +370,8 @@ attempt the operation → `InvalidOperationException`.
 ## Cross-references
 
 - `Sections_Enabled_Flush_WithOpenSection_ThrowsInvalidOp` and `Errors_Sections_Enabled_Flush_WithOpenSection_Throws` test the same invariant from different angles (sections file vs errors file).
-- `WeakSafety_*` tests mirror the `Sections_Enabled_*` tests but target the `typeSafety=false` path.
+- `TypeSafety_MismatchIsImmediate_NotDeferredToEndSection` and `WeakSafety_MismatchInsideSection_NoInvalidDataException` are counterparts: the first confirms mismatch is immediate in type-safe mode; the second confirms mismatches are **not** detected in weak-safety mode. For `Supported` implementations, both tests run.
+- `WeakSafety_*` tests mirror the `Sections_Enabled_*` tests but target the weak-safety (type safety disabled) path. They run for `NotSupported` and `Supported` TypeSafety implementations; `Mandatory` is skipped.
 - `MultiCycle_FetchBlocksUntilFlush` and `MultiCycle_FetchUnblockedByComplete` are only meaningful for streaming (non-in-memory) implementations.
 - For `SectionsSupport = Supported`, both the disabled and enabled test groups execute, providing full coverage of both modes via `TrySetSectionUsage`.
+- For `TypeSafetySupport = Supported`, both the type-safe and weak-safety test groups execute, providing full coverage of both modes via `TrySetTypeSafety`.

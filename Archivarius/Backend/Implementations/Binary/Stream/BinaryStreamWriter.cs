@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,10 +9,9 @@ namespace Archivarius.BinaryBackend
     {
         private readonly Stream _stream;
         
-        
         public CapabilityState SectionsSupport => CapabilityState.NotSupported;
         public CapabilityState TypeSafetySupport => CapabilityState.NotSupported;
-        public CapabilityState PartialFlushSupport => CapabilityState.NotSupported;
+        public CapabilityState FlushSupport => CapabilityState.NotSupported;
         
         public Stream BaseStream => _stream;
 
@@ -38,6 +38,11 @@ namespace Archivarius.BinaryBackend
             }
 
             return true;
+        }
+        
+        public bool TrySetTypeSafety(bool enabled)
+        {
+            throw new NotImplementedException();
         }
 
         public void BeginSection()

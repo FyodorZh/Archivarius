@@ -12,7 +12,7 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_SingleByte_RoundTrip()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] src = { 0xAB };
             byte[] dst = new byte[1];
             writer.WriteBytes(src, 0, 1);
@@ -24,7 +24,7 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_MultipleBytes_RoundTrip()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] src = { 1, 2, 3, 4, 5 };
             byte[] dst = new byte[5];
             writer.WriteBytes(src, 0, 5);
@@ -37,7 +37,7 @@ namespace Archivarius.Tests
         public async Task Bytes_WithNonZeroWriteOffset_CorrectSliceTransmitted()
         {
             // Write bytes [2..4] of an 8-byte buffer (offset=2, count=3).
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] src = { 0, 10, 20, 30, 40, 50, 60, 70 };
             byte[] dst = new byte[3];
             writer.WriteBytes(src, 2, 3);
@@ -50,7 +50,7 @@ namespace Archivarius.Tests
         public async Task Bytes_WithNonZeroReadOffset_BytesPlacedAtCorrectPosition()
         {
             // Read into dst[2..4]; dst[0] and dst[5] must remain untouched.
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] src = { 10, 20, 30 };
             byte[] dst = new byte[6];    // [0]=0, [1]=0, read into [2..4], [5]=0
             writer.WriteBytes(src, 0, 3);
@@ -68,7 +68,7 @@ namespace Archivarius.Tests
         public async Task Bytes_ZeroCount_Write_IsNoop()
         {
             // WriteBytes with count=0 adds nothing to the stream; the subsequent ReadInt works.
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] dummy = { 99 };
             writer.WriteBytes(dummy, 0, 0);   // no-op
             writer.WriteInt(42);
@@ -80,7 +80,7 @@ namespace Archivarius.Tests
         public async Task Bytes_ZeroCount_Read_IsNoop()
         {
             // ReadBytes with count=0 consumes nothing; the subsequent ReadInt works.
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(77);
             await FlushFetch(writer, reader);
             byte[] dst = new byte[4];
@@ -92,7 +92,7 @@ namespace Archivarius.Tests
         public async Task Bytes_LargeBuffer_RoundTrip()
         {
             const int size = 100 * 1024;
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] src = new byte[size];
             for (int i = 0; i < size; i++) src[i] = (byte)(i * 7 % 256);
             byte[] dst = new byte[size];
@@ -105,7 +105,7 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_TwoConsecutivePairs_BothCorrect()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] src1 = { 1, 2, 3 };
             byte[] src2 = { 10, 20, 30, 40 };
             writer.WriteBytes(src1, 0, 3);
@@ -122,7 +122,7 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_AllZeroContent_RoundTrip()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] src = new byte[32];  // all zeros
             byte[] dst = new byte[32];
             writer.WriteBytes(src, 0, 32);
@@ -134,7 +134,7 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_AllMaxByteContent_RoundTrip()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] src = new byte[32];
             Array.Fill(src, (byte)0xFF);
             byte[] dst = new byte[32];
@@ -147,7 +147,7 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_AlternatingPattern_RoundTrip()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] src = new byte[64];
             for (int i = 0; i < src.Length; i++) src[i] = (i % 2 == 0) ? (byte)0xAA : (byte)0x55;
             byte[] dst = new byte[64];
@@ -161,7 +161,7 @@ namespace Archivarius.Tests
         public async Task Bytes_DoesNotOverwriteBeyondOffsetPlusCount()
         {
             // Guard bytes at dst[0] and dst[count+1] must not change.
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             byte[] src = { 7, 8, 9 };
             byte[] dst = { 0xFF, 0, 0, 0, 0xFF };   // guard bytes at positions 0 and 4
             writer.WriteBytes(src, 0, 3);
@@ -179,28 +179,28 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_Write_NullBuffer_ThrowsArgumentNullException()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             Assert.Throws<ArgumentNullException>(() => writer.WriteBytes(null!, 0, 0));
         }
 
         [Test, Category("Bytes")]
         public async Task Bytes_Write_NegativeOffset_ThrowsArgumentOutOfRangeException()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             Assert.Throws<ArgumentOutOfRangeException>(() => writer.WriteBytes(new byte[4], -1, 2));
         }
 
         [Test, Category("Bytes")]
         public async Task Bytes_Write_NegativeCount_ThrowsArgumentOutOfRangeException()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             Assert.Throws<ArgumentOutOfRangeException>(() => writer.WriteBytes(new byte[4], 0, -1));
         }
 
         [Test, Category("Bytes")]
         public async Task Bytes_Write_OffsetPlusCountExceedsBuffer_ThrowsArgumentException()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             Assert.Throws<ArgumentException>(() => writer.WriteBytes(new byte[4], 2, 3));
         }
 
@@ -208,7 +208,7 @@ namespace Archivarius.Tests
         public async Task Bytes_Write_ZeroCount_NullBuffer_StillThrowsArgumentNullException()
         {
             // Null check must happen even if count == 0 (the zero-count no-op does not bypass null guard).
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             Assert.Throws<ArgumentNullException>(() => writer.WriteBytes(null!, 0, 0));
         }
 
@@ -217,7 +217,7 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_Read_NullBuffer_ThrowsArgumentNullException()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1); // ensure data exists
             await FlushFetch(writer, reader);
             Assert.Throws<ArgumentNullException>(() => reader.ReadBytes(null!, 0, 0));
@@ -226,7 +226,7 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_Read_NegativeOffset_ThrowsArgumentOutOfRangeException()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             Assert.Throws<ArgumentOutOfRangeException>(() => reader.ReadBytes(new byte[4], -1, 2));
@@ -235,7 +235,7 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_Read_NegativeCount_ThrowsArgumentOutOfRangeException()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             Assert.Throws<ArgumentOutOfRangeException>(() => reader.ReadBytes(new byte[4], 0, -1));
@@ -244,7 +244,7 @@ namespace Archivarius.Tests
         [Test, Category("Bytes")]
         public async Task Bytes_Read_OffsetPlusCountExceedsBuffer_ThrowsArgumentException()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             Assert.Throws<ArgumentException>(() => reader.ReadBytes(new byte[4], 2, 3));
@@ -252,22 +252,38 @@ namespace Archivarius.Tests
 
         // ── End-of-stream for ReadBytes ───────────────────────────────────────────
 
+        /// <summary>
+        /// Writing 2 bytes then calling ReadBytes(4) when type safety is enabled must throw
+        /// <see cref="InvalidDataException"/> immediately (count mismatch detected from the type tag).
+        /// </summary>
         [Test, Category("Bytes")]
-        public async Task Bytes_Read_BeyondEnd_ThrowsEndOfStreamException()
+        public async Task Bytes_Read_BeyondEnd_TypeSafe_ThrowsInvalidDataException()
         {
-            var (writer, reader, typeSafety) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
+            EnableTypeSafety(writer, reader);
             // Write 2 bytes but try to read 4
             writer.WriteBytes(new byte[] { 1, 2 }, 0, 2);
             await FlushFetch(writer, reader);
             byte[] dst = new byte[4];
-            if (typeSafety)
-            {
-                Assert.Throws<InvalidDataException>(() => reader.ReadBytes(dst, 0, 4));
-            }
-            else
-            {
-                Assert.Throws<EndOfStreamException>(() => reader.ReadBytes(dst, 0, 4));
-            }
+            Assert.Throws<InvalidDataException>(() => reader.ReadBytes(dst, 0, 4),
+                "ReadBytes(4) when only 2 bytes were written must throw InvalidDataException immediately (type safety).");
+        }
+
+        /// <summary>
+        /// Writing 2 bytes then calling ReadBytes(4) in weak-safety mode must throw
+        /// <see cref="EndOfStreamException"/> when the stream runs out of data.
+        /// </summary>
+        [Test, Category("Bytes")]
+        public async Task Bytes_Read_BeyondEnd_WeakSafety_ThrowsEndOfStreamException()
+        {
+            var (writer, reader) = await GetWriterReaderPair();
+            EnsureTypeSafetyDisabled(writer, reader);
+            // Write 2 bytes but try to read 4
+            writer.WriteBytes(new byte[] { 1, 2 }, 0, 2);
+            await FlushFetch(writer, reader);
+            byte[] dst = new byte[4];
+            Assert.Throws<EndOfStreamException>(() => reader.ReadBytes(dst, 0, 4),
+                "ReadBytes(4) when only 2 bytes were written must throw EndOfStreamException (weak safety).");
         }
     }
 }

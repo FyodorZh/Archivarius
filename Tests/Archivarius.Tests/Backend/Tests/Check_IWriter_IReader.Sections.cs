@@ -20,7 +20,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Disabled_DataIntegrityPreserved_BeginEndAreNoop()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnsureSectionsDisabled(writer, reader);
 
             writer.BeginSection();
@@ -37,7 +37,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Disabled_EndSection_ReturnsTrue()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnsureSectionsDisabled(writer, reader);
 
             writer.WriteInt(1);
@@ -53,7 +53,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Disabled_Flush_WithOpenSection_DoesNotThrow()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnsureSectionsDisabled(writer, reader);
 
             writer.BeginSection();
@@ -66,7 +66,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Disabled_Complete_WithOpenSection_DoesThrow()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnsureSectionsDisabled(writer, reader);
 
             writer.BeginSection();
@@ -78,7 +78,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Disabled_NestedTwoLevels_Works()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnsureSectionsDisabled(writer, reader);
 
             writer.BeginSection();    // L1
@@ -96,7 +96,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Disabled_Writer_EndSection_WithoutBeginSection_Throws()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             Assert.Throws<InvalidOperationException>(() => writer.EndSection());
         }
 
@@ -104,7 +104,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Disabled_Reader_EndSection_WithoutBeginSection_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             Assert.Throws<InvalidOperationException>(() => reader.EndSection());
@@ -119,7 +119,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_EmptySection_ReturnsTrue()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -134,7 +134,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_SingleValue_FullConsumption_ReturnsTrue()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -151,7 +151,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_MultipleValues_FullConsumption_ReturnsTrue()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -176,7 +176,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_PartialConsumption_EndSection_ReturnsFalse()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -195,7 +195,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_PartialConsumption_DataAfterSection_StillReadable()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -216,7 +216,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_OverConsumption_ThrowsEndOfStreamException()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -237,7 +237,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_OverConsumption_ExceptionImmediateNotDeferred()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -259,7 +259,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_NestedSections_BothFullyConsumed_BothReturnTrue()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();         // outer
@@ -286,7 +286,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_NestedSections_InnerPartial_OuterFullyConsumed()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();         // outer
@@ -311,7 +311,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_NestedSections_ThreeLevels_AllFull()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -335,7 +335,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_MultipleSequentialSections_AllCorrect()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             for (int i = 0; i < 5; i++)
@@ -359,7 +359,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_Flush_WithOpenSection_ThrowsInvalidOp()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -373,7 +373,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_Complete_WithOpenSection_ThrowsInvalidOp()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -385,7 +385,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_Writer_EndSection_WithoutBeginSection_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
             Assert.Throws<InvalidOperationException>(() => writer.EndSection());
         }
@@ -394,7 +394,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_Reader_EndSection_WithoutBeginSection_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
@@ -411,7 +411,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_LargeSection_FullConsumption()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             const int count = 1000;
@@ -431,7 +431,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_TrySetSectionUsage_AfterDataWritten_ReturnsFalse()
         {
-            var (writer, _, _) = await GetWriterReaderPair();
+            var (writer, _) = await GetWriterReaderPair();
             writer.WriteInt(1);
             // Now it's too late to change section mode
             Assert.That(writer.TrySetSectionUsage(false), Is.False,
@@ -442,7 +442,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_TrySetSectionUsage_AfterDataRead_ReturnsFalse()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await FlushFetch(writer, reader);
             reader.ReadInt();
@@ -454,7 +454,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Reader_BeginSection_WhenIsCompleted_Throws()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader); // data fetch
@@ -473,7 +473,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_ReadBytes_BeyondSectionBoundary_ThrowsEndOfStream()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             // Write a section containing exactly 2 bytes
@@ -495,7 +495,7 @@ namespace Archivarius.Tests
         [Test, Category("Sections")]
         public async Task Sections_Enabled_Fetch_WithOpenSection_ThrowsInvalidOp()
         {
-            var (writer, reader, _) = await GetWriterReaderPair();
+            var (writer, reader) = await GetWriterReaderPair();
             EnableSections(writer, reader);
 
             writer.BeginSection();
