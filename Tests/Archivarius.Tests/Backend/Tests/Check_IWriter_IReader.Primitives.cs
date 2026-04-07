@@ -12,7 +12,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             write(writer, value);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(read(reader), Is.EqualTo(value));
         }
 
@@ -207,7 +207,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteFloat(-0f);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             float result = reader.ReadFloat();
             // Verify the bit pattern is preserved (-0f ≠ +0f at the bit level)
             Assert.That(BitConverter.SingleToUInt32Bits(result),
@@ -220,7 +220,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteFloat(float.NaN);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(float.IsNaN(reader.ReadFloat()), Is.True, "NaN must round-trip as NaN.");
         }
 
@@ -229,7 +229,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteFloat(float.PositiveInfinity);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(reader.ReadFloat(), Is.EqualTo(float.PositiveInfinity));
         }
 
@@ -238,7 +238,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteFloat(float.NegativeInfinity);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(reader.ReadFloat(), Is.EqualTo(float.NegativeInfinity));
         }
 
@@ -273,7 +273,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteDouble(-0d);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             double result = reader.ReadDouble();
             Assert.That(BitConverter.DoubleToUInt64Bits(result),
                 Is.EqualTo(BitConverter.DoubleToUInt64Bits(-0d)),
@@ -285,7 +285,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteDouble(double.NaN);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(double.IsNaN(reader.ReadDouble()), Is.True, "NaN must round-trip as NaN.");
         }
 
@@ -294,7 +294,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteDouble(double.PositiveInfinity);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(reader.ReadDouble(), Is.EqualTo(double.PositiveInfinity));
         }
 
@@ -303,7 +303,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteDouble(double.NegativeInfinity);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(reader.ReadDouble(), Is.EqualTo(double.NegativeInfinity));
         }
 
@@ -417,7 +417,7 @@ namespace Archivarius.Tests
             writer.WriteArray(new byte[] { 1, 2, 3 });
             writer.WriteArray(null);
 
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             Assert.That(reader.ReadBool(),    Is.EqualTo(true));
             Assert.That(reader.ReadByte(),    Is.EqualTo((byte)0xFF));
@@ -446,7 +446,7 @@ namespace Archivarius.Tests
             const int count = 100;
             for (int i = 0; i < count; i++)
                 writer.WriteInt(i);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             for (int i = 0; i < count; i++)
                 Assert.That(reader.ReadInt(), Is.EqualTo(i), $"Mismatch at index {i}");
         }
@@ -463,7 +463,7 @@ namespace Archivarius.Tests
             writer.WriteArray(null);
             writer.WriteString("");
 
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             Assert.That(reader.ReadString(), Is.EqualTo("first"));
             Assert.That(reader.ReadArray(),  Is.EqualTo(new byte[] { 10, 20 }));

@@ -27,7 +27,7 @@ namespace Archivarius.Tests
             writer.WriteInt(100);
             writer.WriteInt(200);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             // Reader reads without matching BeginSection — must work if sections are truly disabled
             Assert.That(reader.ReadInt(), Is.EqualTo(100));
             Assert.That(reader.ReadInt(), Is.EqualTo(200));
@@ -41,25 +41,12 @@ namespace Archivarius.Tests
             EnsureSectionsDisabled(writer, reader);
 
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.BeginSection();
             reader.ReadInt();
             bool result = reader.EndSection();
             Assert.That(result, Is.True,
                 "EndSection() must return true when sections are disabled (no boundary tracking).");
-        }
-
-        /// <summary>Flush() with an open section must NOT throw when sections are disabled.</summary>
-        [Test, Category("Sections")]
-        public async Task Sections_Disabled_Flush_WithOpenSection_DoesNotThrow()
-        {
-            var (writer, reader) = await GetWriterReaderPair();
-            EnsureSectionsDisabled(writer, reader);
-
-            writer.BeginSection();
-            writer.WriteInt(42);
-            // Flush while section is open — no throw expected when sections are disabled
-            Assert.DoesNotThrowAsync(async () => await writer.Flush());
         }
 
         /// <summary>Complete() with an open section must throw InvalidOperationException (LIFO nesting is always enforced).</summary>
@@ -87,7 +74,7 @@ namespace Archivarius.Tests
             writer.EndSection();      // L2
             writer.WriteInt(8);
             writer.EndSection();      // L1
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(reader.ReadInt(), Is.EqualTo(7));
             Assert.That(reader.ReadInt(), Is.EqualTo(8));
         }
@@ -106,7 +93,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.Throws<InvalidOperationException>(() => reader.EndSection());
         }
 
@@ -124,7 +111,7 @@ namespace Archivarius.Tests
 
             writer.BeginSection();
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             bool ok = reader.EndSection();
@@ -140,7 +127,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             writer.WriteInt(123);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             Assert.That(reader.ReadInt(), Is.EqualTo(123));
@@ -159,7 +146,7 @@ namespace Archivarius.Tests
             writer.WriteInt(2);
             writer.WriteInt(3);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             Assert.That(reader.ReadInt(), Is.EqualTo(1));
@@ -183,7 +170,7 @@ namespace Archivarius.Tests
             writer.WriteInt(10);
             writer.WriteInt(20);   // will NOT be read
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             Assert.That(reader.ReadInt(), Is.EqualTo(10));
@@ -203,7 +190,7 @@ namespace Archivarius.Tests
             writer.WriteInt(20);  // skipped inside section
             writer.EndSection();
             writer.WriteInt(999); // written outside section
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             reader.ReadInt();     // consume 10
@@ -222,7 +209,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             writer.WriteInt(42);   // 4 bytes in section
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             Assert.That(reader.ReadInt(), Is.EqualTo(42));
@@ -243,7 +230,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             writer.WriteInt(1);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             reader.ReadInt();
@@ -269,7 +256,7 @@ namespace Archivarius.Tests
             writer.EndSection();           // inner
             writer.WriteInt(30);
             writer.EndSection();           // outer
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();         // outer
             Assert.That(reader.ReadInt(), Is.EqualTo(10));
@@ -296,7 +283,7 @@ namespace Archivarius.Tests
             writer.EndSection();           // inner
             writer.WriteInt(3);
             writer.EndSection();           // outer
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();         // outer
             reader.BeginSection();         // inner
@@ -321,7 +308,7 @@ namespace Archivarius.Tests
             writer.EndSection();
             writer.EndSection();
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             reader.BeginSection();
@@ -344,7 +331,7 @@ namespace Archivarius.Tests
                 writer.WriteInt(i * 10);
                 writer.EndSection();
             }
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             for (int i = 0; i < 5; i++)
             {
@@ -353,20 +340,6 @@ namespace Archivarius.Tests
                 bool ok = reader.EndSection();
                 Assert.That(ok, Is.True, $"Section {i} must be fully consumed.");
             }
-        }
-
-        /// <summary>Flush() with an open section (sections enabled) must throw InvalidOperationException.</summary>
-        [Test, Category("Sections")]
-        public async Task Sections_Enabled_Flush_WithOpenSection_ThrowsInvalidOp()
-        {
-            var (writer, reader) = await GetWriterReaderPair();
-            EnableSections(writer, reader);
-
-            writer.BeginSection();
-            writer.WriteInt(1);
-            Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await writer.Flush(),
-                "Flush() with an open section (sections enabled) must throw.");
         }
 
         /// <summary>Complete() with an open section (sections enabled) must throw InvalidOperationException.</summary>
@@ -378,7 +351,9 @@ namespace Archivarius.Tests
 
             writer.BeginSection();
             writer.WriteInt(1);
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await writer.Complete());
+            Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await writer.Complete(),
+                "Complete() with an open section (sections enabled) must throw.");
         }
 
         /// <summary>Writer: EndSection without BeginSection throws even when sections are enabled.</summary>
@@ -400,7 +375,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             writer.WriteInt(1);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             reader.ReadInt();
@@ -418,7 +393,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             for (int i = 0; i < count; i++) writer.WriteInt(i);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             for (int i = 0; i < count; i++)
@@ -444,7 +419,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadInt();
             Assert.That(reader.TrySetSectionUsage(false), Is.False,
                 "TrySetSectionUsage must return false after data has been read.");
@@ -480,7 +455,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             writer.WriteBytes(new byte[] { 0xAA, 0xBB }, 0, 2);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             // Trying to read 3 bytes when only 2 are available in the section
@@ -501,7 +476,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             writer.WriteInt(1);
             writer.EndSection();
-            await FlushFetch(writer, reader);  // first cycle — read the section header etc.
+            await CompleteFetch(writer, reader);  // first cycle — read the section header etc.
 
             // Open a section on the reader side, then try to call Fetch() while it's open
             reader.BeginSection();

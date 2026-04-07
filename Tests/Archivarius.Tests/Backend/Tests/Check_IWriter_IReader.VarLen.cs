@@ -18,7 +18,7 @@ namespace Archivarius.Tests
             var (writer, reader) = await GetWriterReaderPair();
             foreach (var v in values)
                 write(writer, v);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             foreach (var v in values)
                 Assert.That(read(reader), Is.EqualTo(v), $"Round-trip mismatch for value {v}");
         }
@@ -194,7 +194,7 @@ namespace Archivarius.Tests
             var (writer, reader) = await GetWriterReaderPair();
             foreach (var v in values)
                 writer.WriteFloat(v);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             foreach (var v in values)
             {
@@ -237,7 +237,7 @@ namespace Archivarius.Tests
             var (writer, reader) = await GetWriterReaderPair();
             foreach (var v in values)
                 writer.WriteDouble(v);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             foreach (var v in values)
             {
@@ -283,7 +283,7 @@ namespace Archivarius.Tests
                 var (writer, reader) = await GetWriterReaderPair();
                 string s = new string('A', len);
                 writer.WriteString(s);
-                await FlushFetch(writer, reader);
+                await CompleteFetch(writer, reader);
                 Assert.That(reader.ReadString(), Is.EqualTo(s),
                     $"String of length {len} failed round-trip.");
             }
@@ -297,7 +297,7 @@ namespace Archivarius.Tests
             var (writer, reader) = await GetWriterReaderPair();
             string s = new string('\u4E2D', 43);
             writer.WriteString(s);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(reader.ReadString(), Is.EqualTo(s));
         }
 
@@ -313,7 +313,7 @@ namespace Archivarius.Tests
                 byte[] arr = new byte[len];
                 for (int i = 0; i < len; i++) arr[i] = (byte)(i % 256);
                 writer.WriteArray(arr);
-                await FlushFetch(writer, reader);
+                await CompleteFetch(writer, reader);
                 Assert.That(reader.ReadArray(), Is.EqualTo(arr),
                     $"Array of length {len} failed round-trip.");
             }
@@ -330,7 +330,7 @@ namespace Archivarius.Tests
                 for (int i = 0; i < count; i++) src[i] = (byte)(i % 256);
                 byte[] dst = new byte[count];
                 writer.WriteBytes(src, 0, count);
-                await FlushFetch(writer, reader);
+                await CompleteFetch(writer, reader);
                 reader.ReadBytes(dst, 0, count);
                 Assert.That(dst, Is.EqualTo(src), $"WriteBytes/ReadBytes with count={count} failed.");
             }

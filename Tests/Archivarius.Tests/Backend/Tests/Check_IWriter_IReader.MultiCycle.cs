@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
@@ -5,6 +6,37 @@ namespace Archivarius.Tests
 {
     public abstract partial class Check_IWriter_IReader
     {
+        // ── Sections ───────────────────────────────────────────────────────────────
+        
+        /// <summary>Flush() with an open section (sections enabled) must throw InvalidOperationException.</summary>
+        [Test, Category("MultiCycle"), Category("Flush")]
+        public async Task Sections_Enabled_Flush_WithOpenSection_ThrowsInvalidOp()
+        {
+            var (writer, reader) = await GetWriterReaderPair();
+            if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
+            EnableSections(writer, reader);
+
+            writer.BeginSection();
+            writer.WriteInt(1);
+            Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await writer.Flush(),
+                "Flush() with an open section (sections enabled) must throw.");
+        }
+
+        /// <summary>Flush() with an open section must NOT throw when sections are disabled.</summary>
+        [Test, Category("MultiCycle"), Category("Flush")]
+        public async Task Sections_Disabled_Flush_WithOpenSection_DoesNotThrow()
+        {
+            var (writer, reader) = await GetWriterReaderPair();
+            if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
+            EnsureSectionsDisabled(writer, reader);
+
+            writer.BeginSection();
+            writer.WriteInt(42);
+            // Flush while section is open — no throw expected when sections are disabled
+            Assert.DoesNotThrowAsync(async () => await writer.Flush());
+        }
+        
         // ── Single Flush/Fetch cycle ──────────────────────────────────────────────
 
         [Test, Category("MultiCycle")]
@@ -12,7 +44,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(12345);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(reader.ReadInt(), Is.EqualTo(12345));
         }
 
@@ -20,10 +52,11 @@ namespace Archivarius.Tests
         /// Flush() with no data still counts as one cycle.
         /// Fetch() after an empty Flush() must return true (no-data flushes are valid).
         /// </summary>
-        [Test, Category("MultiCycle")]
+        [Test, Category("MultiCycle"), Category("Flush")]
         public async Task MultiCycle_EmptyFlush_FetchReturnsTrue()
         {
             var (writer, reader) = await GetWriterReaderPair();
+            if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
             // Flush with no data written
             await writer.Flush();
             bool ok = await FetchWithTimeout(reader);
@@ -32,10 +65,11 @@ namespace Archivarius.Tests
 
         // ── Two-cycle ────────────────────────────────────────────────────────────
 
-        [Test, Category("MultiCycle")]
+        [Test, Category("MultiCycle"), Category("Flush")]
         public async Task MultiCycle_TwoCycles_EachCycleDataCorrect()
         {
             var (writer, reader) = await GetWriterReaderPair();
+            if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
 
             // Cycle 1
             writer.WriteInt(1);
@@ -50,10 +84,11 @@ namespace Archivarius.Tests
 
         // ── Five-cycle ───────────────────────────────────────────────────────────
 
-        [Test, Category("MultiCycle")]
+        [Test, Category("MultiCycle"), Category("Flush")]
         public async Task MultiCycle_FiveCycles_AllDataCorrect()
         {
             var (writer, reader) = await GetWriterReaderPair();
+            if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
             for (int i = 0; i < 5; i++)
             {
                 writer.WriteInt(i * 100);
@@ -85,7 +120,7 @@ namespace Archivarius.Tests
         }
 
         /// <summary>Explicit Flush() before Complete() requires two Fetch() calls to drain.</summary>
-        [Test, Category("MultiCycle")]
+        [Test, Category("MultiCycle"), Category("Flush")]
         public async Task MultiCycle_ExplicitFlushThenComplete_TwoFetchesBeforeTerminal()
         {
             var (writer, reader) = await GetWriterReaderPair();
@@ -137,7 +172,7 @@ namespace Archivarius.Tests
 
         // ── Multiple empty flushes ───────────────────────────────────────────────
 
-        [Test, Category("MultiCycle")]
+        [Test, Category("MultiCycle"), Category("Flush")]
         public async Task MultiCycle_MultipleEmptyFlushes_AllFetchesReturnTrue()
         {
             var (writer, reader) = await GetWriterReaderPair();
@@ -151,10 +186,11 @@ namespace Archivarius.Tests
 
         // ── Interleaved read/write ────────────────────────────────────────────────
 
-        [Test, Category("MultiCycle")]
+        [Test, Category("MultiCycle"), Category("Flush")]
         public async Task MultiCycle_DifferentTypesEachCycle_AllCorrect()
         {
             var (writer, reader) = await GetWriterReaderPair();
+            if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
 
             writer.WriteInt(42);
             await FlushFetch(writer, reader);
@@ -173,12 +209,13 @@ namespace Archivarius.Tests
             Assert.That(reader.ReadDouble(), Is.EqualTo(3.14));
         }
 
-        [Test, Category("MultiCycle")]
+        [Test, Category("MultiCycle"), Category("Flush")]
         public async Task MultiCycle_LargeDataEachCycle_Correct()
         {
             const int cycles = 3;
             const int bytesPerCycle = 50 * 1024;
             var (writer, reader) = await GetWriterReaderPair();
+            if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
 
             for (int c = 0; c < cycles; c++)
             {
@@ -221,10 +258,11 @@ namespace Archivarius.Tests
         /// For streaming implementations, Fetch() must block until Flush() delivers data.
         /// For in-memory implementations the result must still be correct.
         /// </summary>
-        [Test, Category("MultiCycle")]
+        [Test, Category("MultiCycle"), Category("Flush")]
         public async Task MultiCycle_ConcurrentFetchAndFlush_DataCorrect()
         {
             var (writer, reader) = await GetWriterReaderPair();
+            if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
             writer.WriteInt(99999);
 
             // Start Fetch *before* Flush
@@ -245,10 +283,11 @@ namespace Archivarius.Tests
         /// For streaming implementations, Fetch() called before Flush() must block
         /// (not complete immediately). Verifies the blocking invariant with a 100ms delay.
         /// </summary>
-        [Test, Category("MultiCycle")]
+        [Test, Category("MultiCycle"), Category("Flush")]
         public async Task MultiCycle_FetchBlocksUntilFlush()
         {
             var (writer, reader) = await GetWriterReaderPair();
+            if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
             writer.WriteInt(42);
 
             // Start Fetch before Flush

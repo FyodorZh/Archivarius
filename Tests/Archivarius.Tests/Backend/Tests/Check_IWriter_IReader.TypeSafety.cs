@@ -29,7 +29,7 @@ namespace Archivarius.Tests
             EnableTypeSafety(writer, reader);
 
             write(writer, writeValue);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             Assert.Throws<InvalidDataException>(
                 () => wrongRead(reader),
@@ -188,7 +188,7 @@ namespace Archivarius.Tests
             EnableTypeSafety(writer, reader);
 
             writer.WriteBytes(new byte[] { 0, 0, 0, 0 }, 0, 4);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             Assert.Throws<InvalidDataException>(() => reader.ReadInt(),
                 "WriteBytes followed by ReadInt() must throw immediately (type mismatch).");
@@ -201,7 +201,7 @@ namespace Archivarius.Tests
             EnableTypeSafety(writer, reader);
 
             writer.WriteBytes(new byte[] { 0, 0, 0, 0 }, 0, 4);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             Assert.Throws<InvalidDataException>(() => reader.ReadFloat());
         }
@@ -214,7 +214,7 @@ namespace Archivarius.Tests
             EnableTypeSafety(writer, reader);
 
             writer.WriteInt(42);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             byte[] dst = new byte[4];
             Assert.Throws<InvalidDataException>(() => reader.ReadBytes(dst, 0, 4),
@@ -228,7 +228,7 @@ namespace Archivarius.Tests
             EnableTypeSafety(writer, reader);
 
             writer.WriteFloat(1.5f);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             byte[] dst = new byte[4];
             Assert.Throws<InvalidDataException>(() => reader.ReadBytes(dst, 0, 4));
@@ -247,7 +247,7 @@ namespace Archivarius.Tests
             EnableTypeSafety(writer, reader);
 
             writer.WriteBytes(new byte[5], 0, 5);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             byte[] dst = new byte[5];
             bool threw = false;
@@ -266,7 +266,7 @@ namespace Archivarius.Tests
             EnableTypeSafety(writer, reader);
 
             writer.WriteBytes(new byte[3], 0, 3);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             byte[] dst = new byte[10];
             Assert.Throws<InvalidDataException>(() => reader.ReadBytes(dst, 0, 7));
@@ -283,7 +283,7 @@ namespace Archivarius.Tests
             EnableTypeSafety(writer, reader);
 
             writer.WriteBytes(new byte[1], 0, 0);  // explicitly zero bytes — no-op, no tag written
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             byte[] dst = new byte[1];
             Assert.Throws<EndOfStreamException>(() => reader.ReadBytes(dst, 0, 1));
@@ -296,7 +296,7 @@ namespace Archivarius.Tests
             EnableTypeSafety(writer, reader);
 
             writer.WriteBytes(new byte[] { 42 }, 0, 1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             byte[] dst = new byte[4];
             Assert.Throws<InvalidDataException>(() => reader.ReadBytes(dst, 0, 2));
@@ -312,7 +312,7 @@ namespace Archivarius.Tests
             byte[] src = { 1, 2, 3, 4, 5 };
             byte[] dst = new byte[5];
             writer.WriteBytes(src, 0, 5);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.DoesNotThrow(() => reader.ReadBytes(dst, 0, 5));
             Assert.That(dst, Is.EqualTo(src));
         }
@@ -336,7 +336,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             writer.WriteInt(42);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
 
@@ -370,7 +370,7 @@ namespace Archivarius.Tests
             writer.WriteInt(1);
             writer.WriteInt(2);  // will not be consumed
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             reader.ReadInt();   // consume only one
@@ -392,7 +392,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             writer.WriteInt(42);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             reader.ReadInt();
@@ -411,7 +411,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             writer.WriteInt(7);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             reader.ReadInt();
@@ -432,7 +432,7 @@ namespace Archivarius.Tests
                 Assert.Ignore("This test targets section-less weak-safety (SectionsSupport must be NotSupported).");
 
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadInt();  // consume the only int
 
             Assert.Throws<EndOfStreamException>(() => reader.ReadInt(),
@@ -457,7 +457,7 @@ namespace Archivarius.Tests
             writer.BeginSection();
             writer.WriteInt(42);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
 
             reader.BeginSection();
             bool threwInvalidData = false;

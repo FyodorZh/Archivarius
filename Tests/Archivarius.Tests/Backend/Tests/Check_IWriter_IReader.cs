@@ -75,6 +75,17 @@ namespace Archivarius.Tests
             Assert.That(ok, Is.True, "Fetch() must return true after a matching Flush().");
         }
 
+        /// <summary>
+        /// Awaits <see cref="IWriter.Complete"/> then awaits <see cref="IReader.Fetch"/> with a
+        /// 5-second timeout. Asserts that Fetch returns <see langword="true"/>.
+        /// </summary>
+        protected static async Task CompleteFetch(IWriter writer, IReader reader)
+        {
+            await writer.Complete();
+            bool ok = await reader.Fetch().AsTask().WaitAsync(TestTimeout);
+            Assert.That(ok, Is.True, "Fetch() must return true after a matching Complete().");
+        }
+
         /// <summary>Awaits <see cref="IReader.Fetch"/> with a 5-second timeout.</summary>
         protected static Task<bool> FetchWithTimeout(IReader reader)
             => reader.Fetch().AsTask().WaitAsync(TestTimeout);
@@ -350,7 +361,7 @@ namespace Archivarius.Tests
         /// <summary>IsCompleted flips to true only once Fetch() returns false.</summary>
         [Test, Category("Defaults")]
         public async Task Defaults_IsCompleted_TrueAfterTerminalFetch()
-        {
+        { // something wrong here!!!
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
             await writer.Complete();
@@ -367,7 +378,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.Throws<InvalidOperationException>(() => reader.EndSection());
         }
 
@@ -401,7 +412,7 @@ namespace Archivarius.Tests
             writer.WriteInt(42);
             writer.WriteInt(99);
             writer.EndSection();
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             // Reader reads without any section calls — if sections injected a length header,
             // ReadInt() would return the header bytes instead of 42.
             Assert.That(reader.ReadInt(), Is.EqualTo(42));
@@ -426,7 +437,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.BeginSection();
             reader.EndSection();
             Assert.Throws<InvalidOperationException>(() => reader.EndSection());

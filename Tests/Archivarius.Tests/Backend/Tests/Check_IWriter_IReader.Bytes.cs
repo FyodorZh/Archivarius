@@ -16,7 +16,7 @@ namespace Archivarius.Tests
             byte[] src = { 0xAB };
             byte[] dst = new byte[1];
             writer.WriteBytes(src, 0, 1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadBytes(dst, 0, 1);
             Assert.That(dst, Is.EqualTo(src));
         }
@@ -28,7 +28,7 @@ namespace Archivarius.Tests
             byte[] src = { 1, 2, 3, 4, 5 };
             byte[] dst = new byte[5];
             writer.WriteBytes(src, 0, 5);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadBytes(dst, 0, 5);
             Assert.That(dst, Is.EqualTo(src));
         }
@@ -41,7 +41,7 @@ namespace Archivarius.Tests
             byte[] src = { 0, 10, 20, 30, 40, 50, 60, 70 };
             byte[] dst = new byte[3];
             writer.WriteBytes(src, 2, 3);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadBytes(dst, 0, 3);
             Assert.That(dst, Is.EqualTo(new byte[] { 20, 30, 40 }));
         }
@@ -54,7 +54,7 @@ namespace Archivarius.Tests
             byte[] src = { 10, 20, 30 };
             byte[] dst = new byte[6];    // [0]=0, [1]=0, read into [2..4], [5]=0
             writer.WriteBytes(src, 0, 3);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadBytes(dst, 2, 3);
             Assert.That(dst[0], Is.EqualTo(0), "Byte before offset must not be touched.");
             Assert.That(dst[1], Is.EqualTo(0), "Byte before offset must not be touched.");
@@ -72,7 +72,7 @@ namespace Archivarius.Tests
             byte[] dummy = { 99 };
             writer.WriteBytes(dummy, 0, 0);   // no-op
             writer.WriteInt(42);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.That(reader.ReadInt(), Is.EqualTo(42));
         }
 
@@ -82,7 +82,7 @@ namespace Archivarius.Tests
             // ReadBytes with count=0 consumes nothing; the subsequent ReadInt works.
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(77);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             byte[] dst = new byte[4];
             reader.ReadBytes(dst, 0, 0);      // no-op
             Assert.That(reader.ReadInt(), Is.EqualTo(77));
@@ -97,7 +97,7 @@ namespace Archivarius.Tests
             for (int i = 0; i < size; i++) src[i] = (byte)(i * 7 % 256);
             byte[] dst = new byte[size];
             writer.WriteBytes(src, 0, size);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadBytes(dst, 0, size);
             Assert.That(dst, Is.EqualTo(src));
         }
@@ -110,7 +110,7 @@ namespace Archivarius.Tests
             byte[] src2 = { 10, 20, 30, 40 };
             writer.WriteBytes(src1, 0, 3);
             writer.WriteBytes(src2, 0, 4);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             byte[] dst1 = new byte[3];
             byte[] dst2 = new byte[4];
             reader.ReadBytes(dst1, 0, 3);
@@ -126,7 +126,7 @@ namespace Archivarius.Tests
             byte[] src = new byte[32];  // all zeros
             byte[] dst = new byte[32];
             writer.WriteBytes(src, 0, 32);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadBytes(dst, 0, 32);
             Assert.That(dst, Is.EqualTo(src));
         }
@@ -139,7 +139,7 @@ namespace Archivarius.Tests
             Array.Fill(src, (byte)0xFF);
             byte[] dst = new byte[32];
             writer.WriteBytes(src, 0, 32);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadBytes(dst, 0, 32);
             Assert.That(dst, Is.EqualTo(src));
         }
@@ -152,7 +152,7 @@ namespace Archivarius.Tests
             for (int i = 0; i < src.Length; i++) src[i] = (i % 2 == 0) ? (byte)0xAA : (byte)0x55;
             byte[] dst = new byte[64];
             writer.WriteBytes(src, 0, 64);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadBytes(dst, 0, 64);
             Assert.That(dst, Is.EqualTo(src));
         }
@@ -165,7 +165,7 @@ namespace Archivarius.Tests
             byte[] src = { 7, 8, 9 };
             byte[] dst = { 0xFF, 0, 0, 0, 0xFF };   // guard bytes at positions 0 and 4
             writer.WriteBytes(src, 0, 3);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadBytes(dst, 1, 3);
             Assert.That(dst[0], Is.EqualTo(0xFF), "Guard byte before range must not change.");
             Assert.That(dst[4], Is.EqualTo(0xFF), "Guard byte after range must not change.");
@@ -219,7 +219,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1); // ensure data exists
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.Throws<ArgumentNullException>(() => reader.ReadBytes(null!, 0, 0));
         }
 
@@ -228,7 +228,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.Throws<ArgumentOutOfRangeException>(() => reader.ReadBytes(new byte[4], -1, 2));
         }
 
@@ -237,7 +237,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.Throws<ArgumentOutOfRangeException>(() => reader.ReadBytes(new byte[4], 0, -1));
         }
 
@@ -246,7 +246,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             Assert.Throws<ArgumentException>(() => reader.ReadBytes(new byte[4], 2, 3));
         }
 
@@ -263,7 +263,7 @@ namespace Archivarius.Tests
             EnableTypeSafety(writer, reader);
             // Write 2 bytes but try to read 4
             writer.WriteBytes(new byte[] { 1, 2 }, 0, 2);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             byte[] dst = new byte[4];
             Assert.Throws<InvalidDataException>(() => reader.ReadBytes(dst, 0, 4),
                 "ReadBytes(4) when only 2 bytes were written must throw InvalidDataException immediately (type safety).");
@@ -280,7 +280,7 @@ namespace Archivarius.Tests
             EnsureTypeSafetyDisabled(writer, reader);
             // Write 2 bytes but try to read 4
             writer.WriteBytes(new byte[] { 1, 2 }, 0, 2);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             byte[] dst = new byte[4];
             Assert.Throws<EndOfStreamException>(() => reader.ReadBytes(dst, 0, 4),
                 "ReadBytes(4) when only 2 bytes were written must throw EndOfStreamException (weak safety).");

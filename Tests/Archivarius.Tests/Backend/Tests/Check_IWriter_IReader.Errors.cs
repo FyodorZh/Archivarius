@@ -195,7 +195,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadInt();
             Assert.That(reader.TrySetSectionUsage(false), Is.False,
                 "TrySetSectionUsage must return false after any data has been read.");
@@ -240,7 +240,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.BeginSection();
             reader.EndSection();
             Assert.Throws<InvalidOperationException>(() => reader.EndSection());
@@ -280,7 +280,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteInt(1);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadInt();
             // No more data — next read must throw
             Assert.Throws<EndOfStreamException>(() => reader.ReadInt(),
@@ -292,7 +292,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteString("x");
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadString();
             Assert.Throws<EndOfStreamException>(() => reader.ReadString());
         }
@@ -302,7 +302,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteBool(true);
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadBool();
             Assert.Throws<EndOfStreamException>(() => reader.ReadBool());
         }
@@ -312,7 +312,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             writer.WriteArray(new byte[] { 1 });
-            await FlushFetch(writer, reader);
+            await CompleteFetch(writer, reader);
             reader.ReadArray();
             Assert.Throws<EndOfStreamException>(() => reader.ReadArray());
         }
