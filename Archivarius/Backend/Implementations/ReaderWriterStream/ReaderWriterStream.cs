@@ -21,7 +21,7 @@ namespace Archivarius
 
         public CapabilityState SectionsSupport => CapabilityState.NotSupported;
         public CapabilityState TypeSafetySupport => CapabilityState.Mandatory;
-        public CapabilityState FlushSupport => CapabilityState.NotSupported;
+        public bool FlushSupport => false;
         
         public bool IsCompleted => false;
 

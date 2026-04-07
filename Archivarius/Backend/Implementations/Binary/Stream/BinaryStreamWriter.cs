@@ -11,7 +11,7 @@ namespace Archivarius.BinaryBackend
         
         public CapabilityState SectionsSupport => CapabilityState.NotSupported;
         public CapabilityState TypeSafetySupport => CapabilityState.NotSupported;
-        public CapabilityState FlushSupport => CapabilityState.NotSupported;
+        public bool FlushSupport => false;
         
         public Stream BaseStream => _stream;
 
