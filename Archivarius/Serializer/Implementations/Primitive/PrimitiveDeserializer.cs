@@ -5,111 +5,108 @@ namespace Archivarius
 {
     public class PrimitiveDeserializer : IPrimitiveSerializer
     {
-        protected readonly IReader _reader;
+        protected readonly IReaderBackend _reader;
         
         public bool IsWriter => false;
-        public ILowLevelReader Reader => _reader;
+        public ILowLevelReader Reader => _reader.Reader;
         public ILowLevelWriter Writer => throw new InvalidOperationException();
 
-        public PrimitiveDeserializer(IReader reader)
+        public PrimitiveDeserializer(IReaderBackend reader)
         {
             _reader = reader;
         }
 
         public void Add(ref bool value)
         {
-            value = _reader.ReadBool();
+            value = _reader.Reader.ReadBool();
         }
 
         public void Add(ref byte value)
         {
-            value = _reader.ReadByte();
+            value = _reader.Reader.ReadByte();
         }
 
         public void Add(ref sbyte value)
         {
-            var uValue = _reader.ReadByte();
+            var uValue = _reader.Reader.ReadByte();
             value = unchecked((sbyte)uValue);
         }
 
         public void Add(ref char value)
         {
-            value = _reader.ReadChar();
+            value = _reader.Reader.ReadChar();
         }
 
         public void Add(ref short value)
         {
-            value = _reader.ReadShort();
+            value = _reader.Reader.ReadShort();
         }
 
         public void Add(ref ushort value)
         {
-            var sValue = _reader.ReadShort();
-            value = unchecked((ushort)sValue);
+            value = _reader.Reader.ReadUShort();
         }
 
         public void Add(ref int value)
         {
-            value = _reader.ReadInt();
+            value = _reader.Reader.ReadInt();
         }
 
         public void Add(ref uint value)
         {
-            var sValue = _reader.ReadInt();
-            value = unchecked((uint)sValue);
+            value = _reader.Reader.ReadUInt();
         }
 
         public void Add(ref long value)
         {
-            value = _reader.ReadLong();
+            value = _reader.Reader.ReadLong();
         }
 
         public void Add(ref ulong value)
         {
-            var sValue = _reader.ReadLong();
-            value = unchecked((ulong)sValue);
+            value = _reader.Reader.ReadULong();
         }
 
         public void Add(ref float value)
         {
-            value = _reader.ReadFloat();
+            value = _reader.Reader.ReadFloat();
         }
         
         public void Add(ref double value)
         {
-            value = _reader.ReadDouble();
+            value = _reader.Reader.ReadDouble();
         }
         
         public void Add(ref decimal value)
         {
-            value = _reader.ReadDecimal();
+            value = _reader.Reader.ReadDecimal();
         }
 
         public void Add(ref string? value)
         {
-            value = _reader.ReadString();
+            value = _reader.Reader.ReadString();
         }
         
         public void Add(ref byte[]? value)
         {
-            value = _reader.ReadArray();
+            value = _reader.Reader.ReadArray();
         }
 
         public void Add(ref Guid value)
         {
-            GuidToDecimal map = new GuidToDecimal() { Decimal = _reader.ReadDecimal() };
+            GuidToDecimal map = new GuidToDecimal() { Decimal = _reader.Reader.ReadDecimal() };
             value = map.Guid;
         }
         
         public void Add(ref DateTime value)
         {
-            long v = _reader.ReadLong();
+            long v = _reader.Reader.ReadLong();
             value = DateTime.FromBinary(v);
         }
         
         public void Add(ref TimeSpan value)
         {
-            long v = _reader.ReadLong();
+            long v = _reader.Reader.ReadLong();
             value = TimeSpan.FromTicks(v);
         }
     }

@@ -58,7 +58,7 @@ namespace Archivarius.Tests
 
         private class TmpTypeSerializer : ITypeSerializer
         {
-            public void Serialize(IWriter writer, Type type)
+            public void Serialize(ILowLevelWriter writer, Type type)
             {
                 if (type != typeof(C))
                 {
@@ -69,7 +69,7 @@ namespace Archivarius.Tests
 
         private class TmpTypeDeserializer : ITypeDeserializer
         {
-            public Type? Deserialize(IReader reader)
+            public Type? Deserialize(ILowLevelReader reader)
             {
                 return typeof(C);
             }

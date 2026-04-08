@@ -13,7 +13,7 @@ namespace Archivarius.Tests
     {
         // ── VarLen helper ────────────────────────────────────────────────────────
 
-        private async Task RoundTripAll<T>(T[] values, Action<IWriter, T> write, Func<IReader, T> read)
+        private async Task RoundTripAll<T>(T[] values, Action<IWriterBackend, T> write, Func<IReaderBackend, T> read)
         {
             var (writer, reader) = await GetWriterReaderPair();
             foreach (var v in values)
@@ -44,8 +44,8 @@ namespace Archivarius.Tests
                     int.MaxValue - 1, int.MaxValue,
                     int.MinValue + 1, int.MinValue
                 },
-                (w, v) => w.WriteInt(v),
-                r => r.ReadInt());
+                (w, v) => w.Writer.WriteInt(v),
+                r => r.Reader.ReadInt());
 
         // ── UInt ─────────────────────────────────────────────────────────────────
 
@@ -65,8 +65,8 @@ namespace Archivarius.Tests
                     268_435_455u, 268_435_456u,
                     uint.MaxValue - 1u, uint.MaxValue
                 },
-                (w, v) => w.WriteUInt(v),
-                r => r.ReadUInt());
+                (w, v) => w.Writer.WriteUInt(v),
+                r => r.Reader.ReadUInt());
 
         // ── Long ─────────────────────────────────────────────────────────────────
 
@@ -87,8 +87,8 @@ namespace Archivarius.Tests
                     long.MaxValue - 1L, long.MaxValue,
                     long.MinValue + 1L, long.MinValue
                 },
-                (w, v) => w.WriteLong(v),
-                r => r.ReadLong());
+                (w, v) => w.Writer.WriteLong(v),
+                r => r.Reader.ReadLong());
 
         // ── ULong ────────────────────────────────────────────────────────────────
 
@@ -107,8 +107,8 @@ namespace Archivarius.Tests
                     (1uL << 56) - 1uL, 1uL << 56,
                     ulong.MaxValue - 1uL, ulong.MaxValue
                 },
-                (w, v) => w.WriteULong(v),
-                r => r.ReadULong());
+                (w, v) => w.Writer.WriteULong(v),
+                r => r.Reader.ReadULong());
 
         // ── Short ────────────────────────────────────────────────────────────────
 
@@ -124,8 +124,8 @@ namespace Archivarius.Tests
                     short.MaxValue - 1, short.MaxValue,
                     short.MinValue + 1, short.MinValue
                 },
-                (w, v) => w.WriteShort(v),
-                r => r.ReadShort());
+                 (w, v) => w.Writer.WriteShort(v),
+                 r => r.Reader.ReadShort());
 
         // ── UShort ───────────────────────────────────────────────────────────────
 
@@ -139,8 +139,8 @@ namespace Archivarius.Tests
                     16_383, 16_384,
                     ushort.MaxValue - 1, ushort.MaxValue
                 },
-                (w, v) => w.WriteUShort(v),
-                r => r.ReadUShort());
+                 (w, v) => w.Writer.WriteUShort(v),
+                 r => r.Reader.ReadUShort());
 
         // ── Byte ─────────────────────────────────────────────────────────────────
 
@@ -148,8 +148,8 @@ namespace Archivarius.Tests
         public Task VarLen_Byte_KeyBoundaryValues()
             => RoundTripAll(
                 new byte[] { 0, 1, 63, 64, 127, 128, 254, 255 },
-                (w, v) => w.WriteByte(v),
-                r => r.ReadByte());
+                (w, v) => w.Writer.WriteByte(v),
+                r => r.Reader.ReadByte());
 
         // ── SByte ────────────────────────────────────────────────────────────────
 
@@ -157,8 +157,8 @@ namespace Archivarius.Tests
         public Task VarLen_SByte_KeyBoundaryValues()
             => RoundTripAll(
                 new sbyte[] { sbyte.MinValue, -65, -64, -1, 0, 63, 64, sbyte.MaxValue },
-                (w, v) => w.WriteSByte(v),
-                r => r.ReadSByte());
+                (w, v) => w.Writer.WriteSByte(v),
+                r => r.Reader.ReadSByte());
 
         // ── Char ─────────────────────────────────────────────────────────────────
 
@@ -166,8 +166,8 @@ namespace Archivarius.Tests
         public Task VarLen_Char_KeyBoundaryValues()
             => RoundTripAll(
                 new char[] { '\0', '\x7F', '\x80', '\xFF', '\u0100', '\u7FFF', '\u8000', char.MaxValue },
-                (w, v) => w.WriteChar(v),
-                r => r.ReadChar());
+                (w, v) => w.Writer.WriteChar(v),
+                r => r.Reader.ReadChar());
 
         // ── Float bit patterns ───────────────────────────────────────────────────
 
@@ -193,12 +193,12 @@ namespace Archivarius.Tests
 
             var (writer, reader) = await GetWriterReaderPair();
             foreach (var v in values)
-                writer.WriteFloat(v);
+                writer.Writer.WriteFloat(v);
             await CompleteFetch(writer, reader);
 
             foreach (var v in values)
             {
-                float result = reader.ReadFloat();
+                float result = reader.Reader.ReadFloat();
                 if (float.IsNaN(v))
                 {
                     Assert.That(float.IsNaN(result), Is.True, "NaN must round-trip as NaN.");
@@ -236,12 +236,12 @@ namespace Archivarius.Tests
 
             var (writer, reader) = await GetWriterReaderPair();
             foreach (var v in values)
-                writer.WriteDouble(v);
+                writer.Writer.WriteDouble(v);
             await CompleteFetch(writer, reader);
 
             foreach (var v in values)
             {
-                double result = reader.ReadDouble();
+                double result = reader.Reader.ReadDouble();
                 if (double.IsNaN(v))
                 {
                     Assert.That(double.IsNaN(result), Is.True, "NaN must round-trip as NaN.");
@@ -268,8 +268,8 @@ namespace Archivarius.Tests
                     79228162514264337593543950335m,   // max value without fractional
                     1.0m, 1.00m, 1.000m,              // same value, different scale (may differ)
                 },
-                (w, v) => w.WriteDecimal(v),
-                r => r.ReadDecimal());
+                (w, v) => w.Writer.WriteDecimal(v),
+                r => r.Reader.ReadDecimal());
 
         // ── String length boundaries ─────────────────────────────────────────────
 
@@ -282,9 +282,9 @@ namespace Archivarius.Tests
             {
                 var (writer, reader) = await GetWriterReaderPair();
                 string s = new string('A', len);
-                writer.WriteString(s);
+                writer.Writer.WriteString(s);
                 await CompleteFetch(writer, reader);
-                Assert.That(reader.ReadString(), Is.EqualTo(s),
+                Assert.That(reader.Reader.ReadString(), Is.EqualTo(s),
                     $"String of length {len} failed round-trip.");
             }
         }
@@ -296,9 +296,9 @@ namespace Archivarius.Tests
             // (3-byte UTF-8 chars): 43 × '中' = 43 × 3 bytes = 129 bytes
             var (writer, reader) = await GetWriterReaderPair();
             string s = new string('\u4E2D', 43);
-            writer.WriteString(s);
+            writer.Writer.WriteString(s);
             await CompleteFetch(writer, reader);
-            Assert.That(reader.ReadString(), Is.EqualTo(s));
+            Assert.That(reader.Reader.ReadString(), Is.EqualTo(s));
         }
 
         // ── Array/Bytes length boundaries ────────────────────────────────────────
@@ -312,9 +312,9 @@ namespace Archivarius.Tests
                 var (writer, reader) = await GetWriterReaderPair();
                 byte[] arr = new byte[len];
                 for (int i = 0; i < len; i++) arr[i] = (byte)(i % 256);
-                writer.WriteArray(arr);
+                writer.Writer.WriteArray(arr);
                 await CompleteFetch(writer, reader);
-                Assert.That(reader.ReadArray(), Is.EqualTo(arr),
+                Assert.That(reader.Reader.ReadArray(), Is.EqualTo(arr),
                     $"Array of length {len} failed round-trip.");
             }
         }
@@ -329,9 +329,9 @@ namespace Archivarius.Tests
                 byte[] src = new byte[count];
                 for (int i = 0; i < count; i++) src[i] = (byte)(i % 256);
                 byte[] dst = new byte[count];
-                writer.WriteBytes(src, 0, count);
+                writer.Writer.WriteBytes(src, 0, count);
                 await CompleteFetch(writer, reader);
-                reader.ReadBytes(dst, 0, count);
+                reader.Reader.ReadBytes(dst, 0, count);
                 Assert.That(dst, Is.EqualTo(src), $"WriteBytes/ReadBytes with count={count} failed.");
             }
         }

@@ -40,15 +40,15 @@ namespace Archivarius.Tests
                 true);
         }
 
-        private void DoTest<TWriter>(Func<TWriter> getWriter, Func<TWriter, IReader> getReader, bool useSections)
-            where TWriter : IWriter
+        private void DoTest<TWriter>(Func<TWriter> getWriter, Func<TWriter, IReaderBackend> getReader, bool useSections)
+            where TWriter : IWriterBackend
         {
             DoTest(getWriter, getReader, useSections, true);
             DoTest(getWriter, getReader, useSections, false);
         }
 
-        private void DoTest<TWriter>(Func<TWriter> getWriter, Func<TWriter, IReader> getReader, bool useSections, bool usePolymorphism)
-            where TWriter : IWriter
+        private void DoTest<TWriter>(Func<TWriter> getWriter, Func<TWriter, IReaderBackend> getReader, bool useSections, bool usePolymorphism)
+            where TWriter : IWriterBackend
         {
             var dataWriter = getWriter();
             GraphSerializer writer = usePolymorphism ? new GraphSerializer(dataWriter, new TypenameBasedTypeSerializer(), null, useSections)

@@ -41,15 +41,15 @@ namespace Archivarius
         /// </list>
         /// </value>
         /// <remarks>
-        /// <see cref="IReader"/> and <see cref="IWriter"/> always expose the same value for
+        /// <see cref="IReaderBackend"/> and <see cref="IWriterBackend"/> always expose the same value for
         /// this property — it is an implementation-defined constant.
         /// </remarks>
         CapabilityState TypeSafetySupport { get; }
         
         /// <summary>
         /// Attempts to enable or disable type-safety.
-        /// When type-safety is enabled, every <see cref="IWriter"/> implementation writes additional
-        /// type info so <see cref="IWriter"/> can detect type mismatches when reading.
+        /// When type-safety is enabled, every <see cref="IWriterBackend"/> implementation writes additional
+        /// type info so <see cref="IWriterBackend"/> can detect type mismatches when reading.
         /// When a mismatch is detected, the reader must throw an exception.
         /// When type-safety is disabled, no type info is written, and type mismatches are not detected, which may lead to undefined behavior.
         /// </summary>
@@ -64,7 +64,7 @@ namespace Archivarius
         /// <remarks>
         /// <para>
         /// Must be called before any data is read or written to the stream.
-        /// The paired <see cref="IReader"/> and <see cref="IWriter"/> must be configured with the same value.
+        /// The paired <see cref="IReaderBackend"/> and <see cref="IWriterBackend"/> must be configured with the same value.
         /// </para>
         /// <para>
         /// An implementation that does not support type-safety must still accept

@@ -22,7 +22,7 @@ namespace Archivarius
         /// Construct polymorphic serializer 
         /// </summary>
         public HierarchicalSerializer(
-            IWriter writer, 
+            IWriterBackend writer, 
             ITypeSerializer typeSerializer, 
             ISerializerExtensionsFactory? factory = null,
             bool useAntiCorruptionSections = true,
@@ -46,7 +46,7 @@ namespace Archivarius
             Prepare(useAntiCorruptionSections, defaultTypeSetVersion, defaultTypeSet);
         }
 
-        public HierarchicalSerializer(IWriter writer, bool useAntiCorruptionSections = true)
+        public HierarchicalSerializer(IWriterBackend writer, bool useAntiCorruptionSections = true)
             : base(writer)
         {
             _staticTypeWriter = _mainTypeWriter = new TrivialTypeWriter();
@@ -77,7 +77,7 @@ namespace Archivarius
                 return;
             }
             
-            if (_mainTypeWriter is not TrivialTypeWriter typeWriter)
+            if (_mainTypeWriter is not TrivialTypeWriter _)
             {
                 throw new InvalidOperationException($"Wrong TypeWriter type '{_mainTypeWriter.GetType()}'");
             }
@@ -96,13 +96,13 @@ namespace Archivarius
             //byte protocolTypeId = 1; // First protocol (versions till 0.1.0-dev6)
             byte protocolTypeId = 2;  // Added 'useAntiCorruptionSections' option
             
-            _writer.WriteByte(protocolTypeId);
-            _writer.WriteBool(useAntiCorruptionSections);
+            _writer.Writer.WriteByte(protocolTypeId);
+            _writer.Writer.WriteBool(useAntiCorruptionSections);
         }
 
         private void PostPrepareHeader()
         {
-            _writer.WriteByte(0); // RESERVED
+            _writer.Writer.WriteByte(0); // RESERVED
             _version = 0;
             
             _versionStack.Clear();
@@ -126,7 +126,7 @@ namespace Archivarius
             _versionStack.Push(_version);
             _version = value.Version;
 
-            _writer.WriteByte(_version);
+            _writer.Writer.WriteByte(_version);
             value.Serialize(this);
 
             _version = _versionStack.Pop();
@@ -171,7 +171,7 @@ namespace Archivarius
                 _versionStack.Push(_version);
                 _version = versionedData.Version;
 
-                _writer.WriteByte(_version);
+                _writer.Writer.WriteByte(_version);
                 value.Serialize(this);
 
                 _version = _versionStack.Pop();
@@ -184,7 +184,7 @@ namespace Archivarius
         
         private interface ITypeWriter
         {
-            void WriteType<T>(IWriter writer, ref T? value);
+            void WriteType<T>(IWriterBackend writer, ref T? value);
         }
 
         private class PolymorphicTypeWriter : ITypeWriter
@@ -199,7 +199,7 @@ namespace Archivarius
                 _typeSerializer = typeSerializer;
             }
 
-            public void Prepare(IWriter writer, int defaultTypeSetVersion, IReadOnlyList<Type>? defaultTypeSet)
+            public void Prepare(IWriterBackend writer, int defaultTypeSetVersion, IReadOnlyList<Type>? defaultTypeSet)
             {
                 _typeMap.Clear();
                 _nextDynamicTypeId = 1;
@@ -211,14 +211,14 @@ namespace Archivarius
                     }
                 }
                 
-                writer.WriteInt(defaultTypeSet != null ? defaultTypeSetVersion : -1);
+                writer.Writer.WriteInt(defaultTypeSet != null ? defaultTypeSetVersion : -1);
             }
             
-            public void WriteType<T>(IWriter writer, ref T? value)
+            public void WriteType<T>(IWriterBackend writer, ref T? value)
             {
                 if (value == null)
                 {
-                    writer.WriteShort(0);
+                    writer.Writer.WriteShort(0);
                     return;
                 }
                 
@@ -240,23 +240,23 @@ namespace Archivarius
                     }
 
                     _typeMap.Add(type, typeId);
-                    writer.WriteShort(typeId);
-                    _typeSerializer.Serialize(writer, type);
+                    writer.Writer.WriteShort(typeId);
+                    _typeSerializer.Serialize(writer.Writer, type);
                 }
                 else
                 {
-                    writer.WriteShort(typeId);
+                    writer.Writer.WriteShort(typeId);
                 }
             }
         }
 
         private class TrivialTypeWriter : ITypeWriter
         {
-            public void WriteType<T>(IWriter writer, ref T? value)
+            public void WriteType<T>(IWriterBackend writer, ref T? value)
             {
                 if (value == null)
                 {
-                    writer.WriteByte(0);
+                    writer.Writer.WriteByte(0);
                 }
                 else
                 {
@@ -264,7 +264,7 @@ namespace Archivarius
                     {
                         throw new InvalidOperationException($"Polymorphic serialization used. {value.GetType()} over {typeof(T)}");
                     }
-                    writer.WriteByte(1);
+                    writer.Writer.WriteByte(1);
                 }
             }
         }

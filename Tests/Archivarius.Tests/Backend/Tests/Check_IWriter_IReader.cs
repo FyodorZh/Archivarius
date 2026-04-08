@@ -1,12 +1,11 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace Archivarius.Tests
 {
     /// <summary>
-    /// Abstract NUnit fixture that verifies the full <see cref="IWriter"/>/<see cref="IReader"/> contract.
+    /// Abstract NUnit fixture that verifies the full <see cref="IWriterBackend"/>/<see cref="IReaderBackend"/> contract.
     /// Concrete subclasses supply a fresh connected pair for each test via <see cref="GetWriterReaderPair"/>.
     /// </summary>
     /// <remarks>
@@ -47,7 +46,7 @@ namespace Archivarius.Tests
         /// <summary>
         /// Produces a fresh writer/reader pair for a single test.
         /// The writer and reader must be connected: data flushed by the writer becomes
-        /// available to the reader after the matching <see cref="IReader.Fetch"/> call.
+        /// available to the reader after the matching <see cref="IReaderBackend.Fetch"/> call.
         /// </summary>
         /// <remarks>
         /// Capability flags (<see cref="IAnyBackend.SectionsSupport"/>,
@@ -55,7 +54,7 @@ namespace Archivarius.Tests
         /// corresponding properties on the returned objects.
         /// Both writer and reader always return the same value for each property.
         /// </remarks>
-        protected abstract Task<(IWriter writer, IReader reader)>
+        protected abstract Task<(IWriterBackend writer, IReaderBackend reader)>
             GetWriterReaderPair();
 
         // ── Shared constants ─────────────────────────────────────────────────────
@@ -65,10 +64,10 @@ namespace Archivarius.Tests
         // ── Shared helpers ───────────────────────────────────────────────────────
 
         /// <summary>
-        /// Awaits <see cref="IWriter.Flush"/> then awaits <see cref="IReader.Fetch"/> with a
+        /// Awaits <see cref="IWriterBackend.Flush"/> then awaits <see cref="IReaderBackend.Fetch"/> with a
         /// 5-second timeout. Asserts that Fetch returns <see langword="true"/>.
         /// </summary>
-        protected static async Task FlushFetch(IWriter writer, IReader reader)
+        protected static async Task FlushFetch(IWriterBackend writer, IReaderBackend reader)
         {
             await writer.Flush();
             bool ok = await reader.Fetch().AsTask().WaitAsync(TestTimeout);
@@ -76,18 +75,18 @@ namespace Archivarius.Tests
         }
 
         /// <summary>
-        /// Awaits <see cref="IWriter.Complete"/> then awaits <see cref="IReader.Fetch"/> with a
+        /// Awaits <see cref="IWriterBackend.Complete"/> then awaits <see cref="IReaderBackend.Fetch"/> with a
         /// 5-second timeout. Asserts that Fetch returns <see langword="true"/>.
         /// </summary>
-        protected static async Task CompleteFetch(IWriter writer, IReader reader)
+        protected static async Task CompleteFetch(IWriterBackend writer, IReaderBackend reader)
         {
             await writer.Complete();
             bool ok = await reader.Fetch().AsTask().WaitAsync(TestTimeout);
             Assert.That(ok, Is.True, "Fetch() must return true after a matching Complete().");
         }
 
-        /// <summary>Awaits <see cref="IReader.Fetch"/> with a 5-second timeout.</summary>
-        protected static Task<bool> FetchWithTimeout(IReader reader)
+        /// <summary>Awaits <see cref="IReaderBackend.Fetch"/> with a 5-second timeout.</summary>
+        protected static Task<bool> FetchWithTimeout(IReaderBackend reader)
             => reader.Fetch().AsTask().WaitAsync(TestTimeout);
 
         /// <summary>
@@ -104,7 +103,7 @@ namespace Archivarius.Tests
         /// </list>
         /// Must be called before any data is written or read.
         /// </summary>
-        protected static void EnableSections(IWriter writer, IReader reader)
+        protected static void EnableSections(IWriterBackend writer, IReaderBackend reader)
         {
             switch (writer.SectionsSupport)
             {
@@ -138,7 +137,7 @@ namespace Archivarius.Tests
         /// </list>
         /// Must be called before any data is written or read.
         /// </summary>
-        protected static void EnsureSectionsDisabled(IWriter writer, IReader reader)
+        protected static void EnsureSectionsDisabled(IWriterBackend writer, IReaderBackend reader)
         {
             switch (writer.SectionsSupport)
             {
@@ -171,7 +170,7 @@ namespace Archivarius.Tests
         /// </list>
         /// Must be called before any data is written or read.
         /// </summary>
-        protected static void EnableTypeSafety(IWriter writer, IReader reader)
+        protected static void EnableTypeSafety(IWriterBackend writer, IReaderBackend reader)
         {
             switch (writer.TypeSafetySupport)
             {
@@ -205,7 +204,7 @@ namespace Archivarius.Tests
         /// </list>
         /// Must be called before any data is written or read.
         /// </summary>
-        protected static void EnsureTypeSafetyDisabled(IWriter writer, IReader reader)
+        protected static void EnsureTypeSafetyDisabled(IWriterBackend writer, IReaderBackend reader)
         {
             switch (writer.TypeSafetySupport)
             {
@@ -339,7 +338,7 @@ namespace Archivarius.Tests
         public async Task Defaults_Fetch_ReturnsTrueAfterComplete()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await writer.Complete();
             bool first = await FetchWithTimeout(reader);
             Assert.That(first, Is.True, "First Fetch() after Complete() must return true.");
@@ -350,10 +349,10 @@ namespace Archivarius.Tests
         public async Task Defaults_Fetch_ReturnsFalseAfterDataConsumedAndComplete()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
-            reader.ReadInt();
+            reader.Reader.ReadInt();
             bool second = await FetchWithTimeout(reader);
             Assert.That(second, Is.False, "Fetch() after Complete() and data consumed must return false.");
         }
@@ -363,10 +362,10 @@ namespace Archivarius.Tests
         public async Task Defaults_IsCompleted_TrueAfterTerminalFetch()
         { // something wrong here!!!
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
-            reader.ReadInt();
+            reader.Reader.ReadInt();
             Assert.That(reader.IsCompleted, Is.False, "IsCompleted must be false before the terminal Fetch.");
             await FetchWithTimeout(reader);
             Assert.That(reader.IsCompleted, Is.True);
@@ -377,7 +376,7 @@ namespace Archivarius.Tests
         public async Task Defaults_Reader_EndSection_WithoutBeginSection_ThrowsInvalidOp()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await CompleteFetch(writer, reader);
             Assert.Throws<InvalidOperationException>(() => reader.EndSection());
         }
@@ -409,14 +408,14 @@ namespace Archivarius.Tests
 
             // Writer: BeginSection (no-op), write two ints, EndSection (no-op)
             writer.BeginSection();
-            writer.WriteInt(42);
-            writer.WriteInt(99);
+            writer.Writer.WriteInt(42);
+            writer.Writer.WriteInt(99);
             writer.EndSection();
             await CompleteFetch(writer, reader);
             // Reader reads without any section calls — if sections injected a length header,
             // ReadInt() would return the header bytes instead of 42.
-            Assert.That(reader.ReadInt(), Is.EqualTo(42));
-            Assert.That(reader.ReadInt(), Is.EqualTo(99));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(42));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(99));
         }
 
         /// <summary>
@@ -427,7 +426,7 @@ namespace Archivarius.Tests
         {
             var (writer, _) = await GetWriterReaderPair();
             writer.BeginSection();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             writer.EndSection();
             Assert.Throws<InvalidOperationException>(() => writer.EndSection());
         }
@@ -436,7 +435,7 @@ namespace Archivarius.Tests
         public async Task Defaults_Reader_ExtraEndSection_AfterBalancedPair_Throws()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await CompleteFetch(writer, reader);
             reader.BeginSection();
             reader.EndSection();

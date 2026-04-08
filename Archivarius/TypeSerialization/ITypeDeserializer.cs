@@ -4,6 +4,6 @@ namespace Archivarius
 {
     public interface ITypeDeserializer
     {
-        Type? Deserialize(IReader reader);
+        Type? Deserialize(ILowLevelReader reader);
     }
 }

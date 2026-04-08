@@ -11,14 +11,14 @@ namespace Archivarius.Tests
         // Helper: drive the writer to a "completed" state and return it.
         // ────────────────────────────────────────────────────────────────────────
 
-        private async Task<(IWriter writer, IReader reader)> GetCompletedWriter()
+        private async Task<(IWriterBackend writer, IReaderBackend reader)> GetCompletedWriter()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await writer.Complete();
             // Drain reader to avoid blocking transports
             bool got = await FetchWithTimeout(reader);
-            if (got) reader.ReadInt();
+            if (got) reader.Reader.ReadInt();
             return (writer, reader);
         }
 
@@ -30,112 +30,112 @@ namespace Archivarius.Tests
         public async Task Errors_PostComplete_WriteBool_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteBool(true));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteBool(true));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteByte_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteByte(0));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteByte(0));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteSByte_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteSByte(0));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteSByte(0));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteChar_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteChar('a'));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteChar('a'));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteShort_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteShort(0));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteShort(0));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteUShort_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteUShort(0));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteUShort(0));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteInt_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteInt(0));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteInt(0));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteUInt_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteUInt(0));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteUInt(0));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteLong_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteLong(0));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteLong(0));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteULong_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteULong(0));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteULong(0));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteFloat_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteFloat(0f));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteFloat(0f));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteDouble_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteDouble(0d));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteDouble(0d));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteDecimal_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteDecimal(0m));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteDecimal(0m));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteString_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteString("x"));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteString("x"));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteArray_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteArray(new byte[] { 1 }));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteArray(new byte[] { 1 }));
         }
 
         [Test, Category("Errors")]
         public async Task Errors_PostComplete_WriteBytes_Throws()
         {
             var (writer, _) = await GetCompletedWriter();
-            Assert.Throws<InvalidOperationException>(() => writer.WriteBytes(new byte[] { 1 }, 0, 1));
+            Assert.Throws<InvalidOperationException>(() => writer.Writer.WriteBytes(new byte[] { 1 }, 0, 1));
         }
 
         // ── Post-complete control operations ──────────────────────────────────────
@@ -185,7 +185,7 @@ namespace Archivarius.Tests
         public async Task Errors_TrySetSectionUsage_AfterDataWritten_ReturnsFalse()
         {
             var (writer, _) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             Assert.That(writer.TrySetSectionUsage(false), Is.False,
                 "TrySetSectionUsage must return false after any data has been written.");
         }
@@ -194,9 +194,9 @@ namespace Archivarius.Tests
         public async Task Errors_TrySetSectionUsage_AfterDataRead_ReturnsFalse()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await CompleteFetch(writer, reader);
-            reader.ReadInt();
+            reader.Reader.ReadInt();
             Assert.That(reader.TrySetSectionUsage(false), Is.False,
                 "TrySetSectionUsage must return false after any data has been read.");
         }
@@ -229,7 +229,7 @@ namespace Archivarius.Tests
         {
             var (writer, _) = await GetWriterReaderPair();
             writer.BeginSection();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             writer.EndSection();
             Assert.Throws<InvalidOperationException>(() => writer.EndSection(),
                 "EndSection() called one time too many must throw.");
@@ -239,7 +239,7 @@ namespace Archivarius.Tests
         public async Task Errors_Reader_ExtraEndSection_AfterAllClosed_Throws()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await CompleteFetch(writer, reader);
             reader.BeginSection();
             reader.EndSection();
@@ -254,7 +254,7 @@ namespace Archivarius.Tests
             EnableSections(writer, reader);
 
             writer.BeginSection();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             Assert.ThrowsAsync<InvalidOperationException>(async () => await writer.Flush(),
                 "Flush() inside an open section (sections enabled) must throw.");
         }
@@ -267,7 +267,7 @@ namespace Archivarius.Tests
             EnableSections(writer, reader);
 
             writer.BeginSection();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             Assert.ThrowsAsync<InvalidOperationException>(async () => await writer.Complete());
         }
 
@@ -279,11 +279,11 @@ namespace Archivarius.Tests
         public async Task Errors_Read_BeyondStreamEnd_ReadInt_Throws()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await CompleteFetch(writer, reader);
-            reader.ReadInt();
+            reader.Reader.ReadInt();
             // No more data — next read must throw
-            Assert.Throws<EndOfStreamException>(() => reader.ReadInt(),
+            Assert.Throws<EndOfStreamException>(() => reader.Reader.ReadInt(),
                 "ReadInt() with no available data must throw EndOfStreamException.");
         }
 
@@ -291,30 +291,30 @@ namespace Archivarius.Tests
         public async Task Errors_Read_BeyondStreamEnd_ReadString_Throws()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteString("x");
+            writer.Writer.WriteString("x");
             await CompleteFetch(writer, reader);
-            reader.ReadString();
-            Assert.Throws<EndOfStreamException>(() => reader.ReadString());
+            reader.Reader.ReadString();
+            Assert.Throws<EndOfStreamException>(() => reader.Reader.ReadString());
         }
 
         [Test, Category("Errors")]
         public async Task Errors_Read_BeyondStreamEnd_ReadBool_Throws()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteBool(true);
+            writer.Writer.WriteBool(true);
             await CompleteFetch(writer, reader);
-            reader.ReadBool();
-            Assert.Throws<EndOfStreamException>(() => reader.ReadBool());
+            reader.Reader.ReadBool();
+            Assert.Throws<EndOfStreamException>(() => reader.Reader.ReadBool());
         }
 
         [Test, Category("Errors")]
         public async Task Errors_Read_BeyondStreamEnd_ReadArray_Throws()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteArray(new byte[] { 1 });
+            writer.Writer.WriteArray(new byte[] { 1 });
             await CompleteFetch(writer, reader);
-            reader.ReadArray();
-            Assert.Throws<EndOfStreamException>(() => reader.ReadArray());
+            reader.Reader.ReadArray();
+            Assert.Throws<EndOfStreamException>(() => reader.Reader.ReadArray());
         }
 
         /// <summary>BeginSection() on a completed reader (IsCompleted=true) must throw.</summary>
@@ -322,10 +322,10 @@ namespace Archivarius.Tests
         public async Task Errors_Reader_BeginSection_WhenIsCompleted_Throws()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
-            reader.ReadInt();
+            reader.Reader.ReadInt();
             await FetchWithTimeout(reader);  // terminal → IsCompleted = true
 
             Assert.That(reader.IsCompleted, Is.True);
@@ -358,11 +358,11 @@ namespace Archivarius.Tests
         public async Task Errors_PostComplete_TrySetSectionUsageFalse_Throws()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await writer.Complete();
             // Drain to unblock transport if needed
             bool got = await FetchWithTimeout(reader);
-            if (got) reader.ReadInt();
+            if (got) reader.Reader.ReadInt();
 
             Assert.Throws<InvalidOperationException>(() => writer.TrySetSectionUsage(false),
                 "All operations on a completed writer must throw InvalidOperationException.");

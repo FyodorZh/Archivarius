@@ -17,7 +17,7 @@ namespace Archivarius.TypeSerializers
             return _ids;
         }
 
-        protected override void WriteId(IWriter writer, string id)
+        protected override void WriteId(ILowLevelWriter writer, string id)
         {
             writer.WriteString(id);
         }

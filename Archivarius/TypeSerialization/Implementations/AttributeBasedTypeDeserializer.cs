@@ -12,7 +12,7 @@ namespace Archivarius.TypeSerializers
 
         protected abstract List<TId> GetTmpList();
         protected abstract bool GetTypeId(Type type, out TId id);
-        protected abstract TId ReadId(IReader reader);
+        protected abstract TId ReadId(ILowLevelReader reader);
         protected abstract Type? GetSystemTypeById(TId id);
 
         public AttributeBasedTypeDeserializer<TId> Add(params Assembly[] assemblies)
@@ -72,7 +72,7 @@ namespace Archivarius.TypeSerializers
             }
         }
 
-        public Type? Deserialize(IReader reader)
+        public Type? Deserialize(ILowLevelReader reader)
         {
             byte version = reader.ReadByte();
             switch (version)

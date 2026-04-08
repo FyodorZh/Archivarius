@@ -44,14 +44,14 @@ namespace Archivarius
         /// </list>
         /// </value>
         /// <remarks>
-        /// <see cref="IReader"/> and <see cref="IWriter"/> always expose the same value for
+        /// <see cref="IReaderBackend"/> and <see cref="IWriterBackend"/> always expose the same value for
         /// this property — it is an implementation-defined constant.
         /// </remarks>
         CapabilityState SectionsSupport { get; }
 
         /// <summary>
         /// Attempts to enable or disable logical section markers.
-        /// When sections are enabled, every <see cref="IWriter.BeginSection"/>/<see cref="IWriter.EndSection"/>
+        /// When sections are enabled, every <see cref="IWriterBackend.BeginSection"/>/<see cref="IWriterBackend.EndSection"/>
         /// pair embeds a byte-length header that allows detection and skipping of unknown or added
         /// fields, providing forward and backward compatibility.
         /// </summary>
@@ -66,7 +66,7 @@ namespace Archivarius
         /// <remarks>
         /// <para>
         /// Must be called before any data is read or written to the stream.
-        /// The paired <see cref="IReader"/> and <see cref="IWriter"/> must be configured with the same value.
+        /// The paired <see cref="IReaderBackend"/> and <see cref="IWriterBackend"/> must be configured with the same value.
         /// </para>
         /// <para>
         /// An implementation that does not support sections must still accept
@@ -104,7 +104,7 @@ namespace Archivarius
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The writer or reader has already been completed, or the writer/reader has already
-        /// been completed via <see cref="IWriter.Complete"/> or <see cref="IReader.IsCompleted"/>.
+        /// been completed via <see cref="IWriterBackend.Complete"/> or <see cref="IReaderBackend.IsCompleted"/>.
         /// </exception>
         void BeginSection();
 

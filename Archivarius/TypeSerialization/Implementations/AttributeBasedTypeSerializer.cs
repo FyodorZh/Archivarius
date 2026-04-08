@@ -6,11 +6,11 @@ namespace Archivarius
     public abstract class AttributeBasedTypeSerializer<TId> : ITypeSerializer
     {
         protected abstract List<TId> GetTmpList();
-        protected abstract void WriteId(IWriter writer, TId id);
+        protected abstract void WriteId(ILowLevelWriter writer, TId id);
         protected abstract TId GetTypeId(Type type);
         
         
-        public void Serialize(IWriter writer, Type type)
+        public void Serialize(ILowLevelWriter writer, Type type)
         {
             var ids = GetTmpList();
             EncodeTypeRecursive(ids, type);

@@ -6,7 +6,7 @@ namespace Archivarius
 {
     public interface IHierarchicalDeserializer_ParamsView
     {
-        public IReader Source { get; }
+        public IReaderBackend Source { get; }
         public bool AutoPrepare { get; }
         public IConstructorFactory? ObjectConstructorFactory { get; }
         public bool? IsPolymorphic { get; }
@@ -57,7 +57,7 @@ namespace Archivarius
         IHierarchicalDeserializer_MonomorphicParams, IHierarchicalDeserializer_PolymorphicParams,
         IHierarchicalDeserializer_MonomorphicParamsView, IHierarchicalDeserializer_PolymorphicParamsView
     {
-        public IReader Source { get; }
+        public IReaderBackend Source { get; }
         public bool AutoPrepare { get; private set; } = true;
         public IConstructorFactory? ObjectConstructorFactory { get; private set; }
         public bool? IsPolymorphic { get; private set; }
@@ -70,7 +70,7 @@ namespace Archivarius
 
         public Func<int, IReadOnlyList<Type>>? DefaultTypeSetProvider { get; private set; }
 
-        internal HierarchicalDeserializer_Params(IReader source)
+        internal HierarchicalDeserializer_Params(IReaderBackend source)
         {
             Source = source;
         }

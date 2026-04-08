@@ -21,7 +21,7 @@ namespace Archivarius
 
         public byte Version => _version;
 
-        public static IHierarchicalDeserializer_Params From(IReader source)
+        public static IHierarchicalDeserializer_Params From(IReaderBackend source)
         {
             return new HierarchicalDeserializer_Params(source);
         }
@@ -71,7 +71,7 @@ namespace Archivarius
         }
         
         protected HierarchicalDeserializer(
-            IReader reader, 
+            IReaderBackend reader, 
             ITypeDeserializer typeDeserializer, 
             ISerializerExtensionsFactory? factory = null,
             Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null,
@@ -100,7 +100,7 @@ namespace Archivarius
             }
         }
 
-        protected HierarchicalDeserializer(IReader reader, bool autoPrepare = true)
+        protected HierarchicalDeserializer(IReaderBackend reader, bool autoPrepare = true)
             : base(reader)
         {
             _constructorFactory = new DefaultCtorTypeConstructorFactory();
@@ -147,7 +147,7 @@ namespace Archivarius
 
         private void PrepareHeader()
         {
-            byte protocolTypeId = _reader.ReadByte();
+            byte protocolTypeId = _reader.Reader.ReadByte();
             bool useAntiCorruptionSections;
             switch (protocolTypeId)
             {
@@ -155,7 +155,7 @@ namespace Archivarius
                     useAntiCorruptionSections = true;
                     break;
                 case 2:
-                    useAntiCorruptionSections = _reader.ReadBool();
+                    useAntiCorruptionSections = _reader.Reader.ReadBool();
                     break;
                 default:
                     throw new InvalidOperationException();
@@ -169,7 +169,7 @@ namespace Archivarius
 
         private void PostPrepareHeader()
         {
-            byte x = _reader.ReadByte();
+            byte x = _reader.Reader.ReadByte();
             switch (x) // RESERVED
             {
                 case 0:
@@ -197,7 +197,7 @@ namespace Archivarius
         public void AddVersionedStruct<T>(ref T value)
             where T : struct, IDataStruct, IVersionedData
         {
-            var version = _reader.ReadByte();
+            var version = _reader.Reader.ReadByte();
             _versions.Push(_version);
             _version = version;
             value.Serialize(this);
@@ -270,7 +270,7 @@ namespace Archivarius
             bool hasVersion = value is IVersionedData;
             if (hasVersion)
             {
-                byte version = _reader.ReadByte();
+                byte version = _reader.Reader.ReadByte();
                 _versions.Push(_version);
                 _version = version;
             }
@@ -292,7 +292,7 @@ namespace Archivarius
 
         private interface ITypeReader
         {
-            IConstructor? GetConstructor<T>(IReader reader);
+            IConstructor? GetConstructor<T>(IReaderBackend reader);
         }
 
         private class PolymorphicTypeReader : ITypeReader
@@ -311,9 +311,9 @@ namespace Archivarius
                 _constructorFactory = constructorFactory;
             }
 
-            public void Prepare(IReader reader, Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null)
+            public void Prepare(IReaderBackend reader, Func<int, IReadOnlyList<Type>>? defaultTypeSetProvider = null)
             {
-                int defaultTypeSetVersion = reader.ReadInt();
+                int defaultTypeSetVersion = reader.Reader.ReadInt();
 
                 _typeMap.Clear();
                 _defaultTypeMap.Clear();
@@ -332,9 +332,9 @@ namespace Archivarius
                 }
             }
 
-            public IConstructor? GetConstructor<T>(IReader reader)
+            public IConstructor? GetConstructor<T>(IReaderBackend reader)
             {
-                int flag = reader.ReadShort();
+                int flag = reader.Reader.ReadShort();
                 if (flag == 0) // NULL
                 {
                     return null;
@@ -352,7 +352,7 @@ namespace Archivarius
                     IConstructor? dynamicTypeCtor = _typeMap[typeId];
                     if (dynamicTypeCtor == null)
                     {
-                        var type = _typeDeserializer.Deserialize(reader);
+                        var type = _typeDeserializer.Deserialize(reader.Reader);
                         dynamicTypeCtor = type != null ? _constructorFactory.Build(type) : NullConstructor.Instance;
                         _typeMap[typeId] = dynamicTypeCtor;
 
@@ -384,9 +384,9 @@ namespace Archivarius
                 _constructorFactory = constructorFactory;
             }
             
-            public IConstructor? GetConstructor<T>(IReader reader)
+            public IConstructor? GetConstructor<T>(IReaderBackend reader)
             {
-                switch (reader.ReadByte())
+                switch (reader.Reader.ReadByte())
                 {
                     case 0:
                         return null;

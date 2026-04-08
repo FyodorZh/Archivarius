@@ -22,6 +22,8 @@ namespace Archivarius
         public CapabilityState SectionsSupport => CapabilityState.NotSupported;
         public CapabilityState TypeSafetySupport => CapabilityState.Mandatory;
         public bool FlushSupport => false;
+        public ILowLevelReader Reader => this;
+        public ILowLevelWriter Writer => this;
         
         public bool IsCompleted => false;
 
@@ -143,7 +145,7 @@ namespace Archivarius
             throw new NotImplementedException();
         }
 
-        ValueTask IWriter.Flush()
+        ValueTask IWriterBackend.Flush()
         {
             return default;
         }
@@ -153,7 +155,7 @@ namespace Archivarius
             return default;
         }
 
-        ValueTask<bool> IReader.Fetch()
+        ValueTask<bool> IReaderBackend.Fetch()
         {
             return default;
         }

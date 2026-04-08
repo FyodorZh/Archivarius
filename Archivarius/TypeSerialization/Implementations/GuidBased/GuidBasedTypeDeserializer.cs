@@ -24,7 +24,7 @@ namespace Archivarius.TypeSerializers
             return attribute != null;
         }
 
-        protected override string ReadId(IReader reader)
+        protected override string ReadId(ILowLevelReader reader)
         {
             return reader.ReadString() ?? "null";
         }

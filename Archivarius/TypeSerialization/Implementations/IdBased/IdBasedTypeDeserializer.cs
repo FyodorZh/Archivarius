@@ -24,7 +24,7 @@ namespace Archivarius
             return attribute != null;
         }
 
-        protected override ushort ReadId(IReader reader)
+        protected override ushort ReadId(ILowLevelReader reader)
         {
             return reader.ReadUShort();
         }

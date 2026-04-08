@@ -13,12 +13,12 @@ namespace Archivarius
 
         private readonly List<InstanceInfo> _instances = new List<InstanceInfo>();
 
-        public GraphDeserializer(IReader reader, ITypeDeserializer typeDeserializer, ISerializerExtensionsFactory? factory = null)
+        public GraphDeserializer(IReaderBackend reader, ITypeDeserializer typeDeserializer, ISerializerExtensionsFactory? factory = null)
             : base(reader, typeDeserializer, factory)
         {
         }
         
-        public GraphDeserializer(IReader reader)
+        public GraphDeserializer(IReaderBackend reader)
             : base(reader)
         {
         }
@@ -26,7 +26,7 @@ namespace Archivarius
         protected override T? DeserializeClass<T>(IConstructor ctor)
             where T : class
         {
-            int instanceId = _reader.ReadInt();
+            int instanceId = _reader.Reader.ReadInt();
             while (instanceId >= _instances.Count)
             {
                 _instances.Add(new InstanceInfo());

@@ -4,6 +4,6 @@ namespace Archivarius
 {
     public interface ITypeSerializer
     {
-        void Serialize(IWriter writer, Type type);
+        void Serialize(ILowLevelWriter writer, Type type);
     }
 }

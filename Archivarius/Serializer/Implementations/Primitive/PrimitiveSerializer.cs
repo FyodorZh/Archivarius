@@ -5,111 +5,109 @@ namespace Archivarius
 {
     public class PrimitiveSerializer : IPrimitiveSerializer
     {
-        protected readonly IWriter _writer;
+        protected readonly IWriterBackend _writer;
 
         public bool IsWriter => true;
         public ILowLevelReader Reader => throw new InvalidOperationException();
-        public ILowLevelWriter Writer => _writer;
+        public ILowLevelWriter Writer => _writer.Writer;
 
-        public PrimitiveSerializer(IWriter writer)
+        public PrimitiveSerializer(IWriterBackend writer)
         {
             _writer = writer;
         }
 
         public void Add(ref bool value)
         {
-            _writer.WriteBool(value);
+            _writer.Writer.WriteBool(value);
         }
 
         public void Add(ref byte value)
         {
-            _writer.WriteByte(value);
+            _writer.Writer.WriteByte(value);
         }
 
         public void Add(ref sbyte value)
         {
             byte uValue = unchecked((byte)value);
-            _writer.WriteByte(uValue);
+            _writer.Writer.WriteByte(uValue);
         }
 
         public void Add(ref char value)
         {
-            _writer.WriteChar(value);
+            _writer.Writer.WriteChar(value);
         }
 
         public void Add(ref short value)
         {
-            _writer.WriteShort(value);
+            _writer.Writer.WriteShort(value);
         }
 
         public void Add(ref ushort value)
         {
-            _writer.WriteShort(unchecked((short)value));
+            _writer.Writer.WriteUShort(value);
         }
 
         public void Add(ref int value)
         {
-            _writer.WriteInt(value);
+            _writer.Writer.WriteInt(value);
         }
 
         public void Add(ref uint value)
         {
-            int sValue = unchecked((int)value);
-            _writer.WriteInt(sValue);
+            _writer.Writer.WriteUInt(value);
         }
 
         public void Add(ref long value)
         {
-            _writer.WriteLong(value);
+            _writer.Writer.WriteLong(value);
         }
 
         public void Add(ref ulong value)
         {
-            long sValue = unchecked((long)value);
-            _writer.WriteLong(sValue);
+            _writer.Writer.WriteULong(value);
         }
 
         public void Add(ref float value)
         {
-            _writer.WriteFloat(value);
+            _writer.Writer.WriteFloat(value);
         }
 
         public void Add(ref double value)
         {
-            _writer.WriteDouble(value);
+            _writer.Writer.WriteDouble(value);
         }
         
         public void Add(ref decimal value)
         {
-            _writer.WriteDecimal(value);
+            _writer.Writer.WriteDecimal(value);
         }
 
         public void Add(ref string? value)
         {
-            _writer.WriteString(value);
+            _writer.Writer.WriteString(value);
         }
         
         public void Add(ref byte[]? value)
         {
-            _writer.WriteArray(value);
+            _writer.Writer.WriteArray(value);
         }
 
         public void Add(ref Guid value)
         {
             GuidToDecimal map = new GuidToDecimal() { Guid = value };
-            _writer.WriteDecimal(map.Decimal);
+            _writer.Writer.WriteDecimal(map.Decimal);
         }
         
         public void Add(ref DateTime value)
         {
             long v = value.ToBinary();
-            _writer.WriteLong(v);
+            _writer.Writer.WriteLong(v);
         }
         
         public void Add(ref TimeSpan value)
         {
             long v = value.Ticks;
-            _writer.WriteLong(v);
+            _writer.Writer.WriteLong(v);
         }
     }
 }

@@ -83,9 +83,10 @@ namespace Archivarius.Tests
             };
         }
 
-        private void Check(IReadOnlyCollection<object?> objects, Func<IWriter> getWriter, Func<IWriter, IReader> getReader)
+        private void Check(IReadOnlyCollection<object?> objects, Func<IWriterBackend> getWriter, Func<IWriterBackend, IReaderBackend> getReader)
         {
-            IWriter writer = getWriter();
+            var writerBackend = getWriter();
+            var writer = writerBackend.Writer;
 
             foreach (var obj in objects)
             {
@@ -148,7 +149,8 @@ namespace Archivarius.Tests
                 }
             }
 
-            IReader reader = getReader(writer);
+            IReaderBackend readerBackend = getReader(writerBackend);
+            var reader = readerBackend.Reader;
 
             foreach (var obj in objects)
             {

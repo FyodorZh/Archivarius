@@ -12,6 +12,7 @@ namespace Archivarius.JsonBackend
         public CapabilityState SectionsSupport => CapabilityState.Mandatory;
         public CapabilityState TypeSafetySupport => CapabilityState.Supported;
         public bool FlushSupport => false;
+        public ILowLevelWriter Writer => this;
 
         public JsonWriter()
         {

@@ -6,13 +6,13 @@ namespace Archivarius
     {
         private readonly Dictionary<object, int> _instanceMap = new Dictionary<object, int>(new ReferenceComparer());
 
-        public GraphSerializer(IWriter writer, ITypeSerializer typeSerializer, ISerializerExtensionsFactory? factory = null,
+        public GraphSerializer(IWriterBackend writer, ITypeSerializer typeSerializer, ISerializerExtensionsFactory? factory = null,
             bool useAntiCorruptionSections = true)
             : base(writer, typeSerializer, factory, useAntiCorruptionSections)
         {
         }
 
-        public GraphSerializer(IWriter writer, bool useAntiCorruptionSections)
+        public GraphSerializer(IWriterBackend writer, bool useAntiCorruptionSections)
             : base(writer, useAntiCorruptionSections)
         {
         }
@@ -27,7 +27,7 @@ namespace Archivarius
                 needToSerialize = true;
             }
 
-            _writer.WriteInt(instanceId);
+            _writer.Writer.WriteInt(instanceId);
 
             if (needToSerialize)
             {

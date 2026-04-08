@@ -19,7 +19,8 @@ namespace Archivarius.BinaryBackend
         public CapabilityState SectionsSupport => CapabilityState.NotSupported;
         public CapabilityState TypeSafetySupport => CapabilityState.NotSupported;
         public bool FlushSupport => false;
-        
+        public ILowLevelReader Reader => this;
+
         public bool IsCompleted => false;
 
         public BinaryReader(byte[] buffer, int count = -1)

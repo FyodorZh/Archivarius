@@ -15,6 +15,7 @@ namespace Archivarius.JsonBackend
         public CapabilityState SectionsSupport => CapabilityState.Mandatory;
         public CapabilityState TypeSafetySupport => CapabilityState.Supported;
         public bool FlushSupport => false;
+        public ILowLevelReader Reader => this;
 
         public bool IsCompleted => false;
 

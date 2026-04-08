@@ -17,7 +17,7 @@ namespace Archivarius.Tests
             EnableSections(writer, reader);
 
             writer.BeginSection();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             Assert.ThrowsAsync<InvalidOperationException>(
                 async () => await writer.Flush(),
                 "Flush() with an open section (sections enabled) must throw.");
@@ -32,7 +32,7 @@ namespace Archivarius.Tests
             EnsureSectionsDisabled(writer, reader);
 
             writer.BeginSection();
-            writer.WriteInt(42);
+            writer.Writer.WriteInt(42);
             // Flush while section is open — no throw expected when sections are disabled
             Assert.DoesNotThrowAsync(async () => await writer.Flush());
         }
@@ -43,9 +43,9 @@ namespace Archivarius.Tests
         public async Task MultiCycle_SingleFlushFetch_DataReadable()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(12345);
+            writer.Writer.WriteInt(12345);
             await CompleteFetch(writer, reader);
-            Assert.That(reader.ReadInt(), Is.EqualTo(12345));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(12345));
         }
 
         /// <summary>
@@ -72,14 +72,14 @@ namespace Archivarius.Tests
             if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
 
             // Cycle 1
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await FlushFetch(writer, reader);
-            Assert.That(reader.ReadInt(), Is.EqualTo(1));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(1));
 
             // Cycle 2
-            writer.WriteInt(2);
+            writer.Writer.WriteInt(2);
             await FlushFetch(writer, reader);
-            Assert.That(reader.ReadInt(), Is.EqualTo(2));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(2));
         }
 
         // ── Five-cycle ───────────────────────────────────────────────────────────
@@ -91,9 +91,9 @@ namespace Archivarius.Tests
             if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
             for (int i = 0; i < 5; i++)
             {
-                writer.WriteInt(i * 100);
+                writer.Writer.WriteInt(i * 100);
                 await FlushFetch(writer, reader);
-                Assert.That(reader.ReadInt(), Is.EqualTo(i * 100), $"Mismatch at cycle {i}");
+                Assert.That(reader.Reader.ReadInt(), Is.EqualTo(i * 100), $"Mismatch at cycle {i}");
             }
         }
 
@@ -107,12 +107,12 @@ namespace Archivarius.Tests
         public async Task MultiCycle_Complete_CountsAsOneFlush_NoExplicitFlush()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(777);
+            writer.Writer.WriteInt(777);
             await writer.Complete();   // one implicit flush
 
             bool first = await FetchWithTimeout(reader);
             Assert.That(first, Is.True, "First Fetch() after Complete() must return true.");
-            Assert.That(reader.ReadInt(), Is.EqualTo(777));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(777));
 
             bool second = await FetchWithTimeout(reader);
             Assert.That(second, Is.False, "Second Fetch() after Complete() must return false.");
@@ -126,18 +126,18 @@ namespace Archivarius.Tests
             var (writer, reader) = await GetWriterReaderPair();
 
             // Cycle 1 — explicit flush
-            writer.WriteInt(10);
+            writer.Writer.WriteInt(10);
             await writer.Flush();
             bool fetch1 = await FetchWithTimeout(reader);
             Assert.That(fetch1, Is.True);
-            Assert.That(reader.ReadInt(), Is.EqualTo(10));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(10));
 
             // Cycle 2 — complete (counts as a second flush)
-            writer.WriteInt(20);
+            writer.Writer.WriteInt(20);
             await writer.Complete();
             bool fetch2 = await FetchWithTimeout(reader);
             Assert.That(fetch2, Is.True);
-            Assert.That(reader.ReadInt(), Is.EqualTo(20));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(20));
 
             // Terminal cycle
             bool terminal = await FetchWithTimeout(reader);
@@ -151,7 +151,7 @@ namespace Archivarius.Tests
         public async Task MultiCycle_IsCompleted_FalseAfterDataFetch()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
             Assert.That(reader.IsCompleted, Is.False,
@@ -162,10 +162,10 @@ namespace Archivarius.Tests
         public async Task MultiCycle_IsCompleted_TrueAfterTerminalFetch()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(1);
+            writer.Writer.WriteInt(1);
             await writer.Complete();
             await FetchWithTimeout(reader);
-            reader.ReadInt();
+            reader.Reader.ReadInt();
             await FetchWithTimeout(reader);
             Assert.That(reader.IsCompleted, Is.True);
         }
@@ -192,21 +192,21 @@ namespace Archivarius.Tests
             var (writer, reader) = await GetWriterReaderPair();
             if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
 
-            writer.WriteInt(42);
+            writer.Writer.WriteInt(42);
             await FlushFetch(writer, reader);
-            Assert.That(reader.ReadInt(), Is.EqualTo(42));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(42));
 
-            writer.WriteString("hello");
+            writer.Writer.WriteString("hello");
             await FlushFetch(writer, reader);
-            Assert.That(reader.ReadString(), Is.EqualTo("hello"));
+            Assert.That(reader.Reader.ReadString(), Is.EqualTo("hello"));
 
-            writer.WriteBool(true);
+            writer.Writer.WriteBool(true);
             await FlushFetch(writer, reader);
-            Assert.That(reader.ReadBool(), Is.True);
+            Assert.That(reader.Reader.ReadBool(), Is.True);
 
-            writer.WriteDouble(3.14);
+            writer.Writer.WriteDouble(3.14);
             await FlushFetch(writer, reader);
-            Assert.That(reader.ReadDouble(), Is.EqualTo(3.14));
+            Assert.That(reader.Reader.ReadDouble(), Is.EqualTo(3.14));
         }
 
         [Test, Category("MultiCycle"), Category("Flush")]
@@ -221,9 +221,9 @@ namespace Archivarius.Tests
             {
                 byte[] src = new byte[bytesPerCycle];
                 for (int i = 0; i < bytesPerCycle; i++) src[i] = (byte)((c * 7 + i) % 256);
-                writer.WriteArray(src);
+                writer.Writer.WriteArray(src);
                 await FlushFetch(writer, reader);
-                byte[]? result = reader.ReadArray();
+                byte[]? result = reader.Reader.ReadArray();
                 Assert.That(result, Is.EqualTo(src), $"Large data mismatch on cycle {c}.");
             }
         }
@@ -263,7 +263,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
-            writer.WriteInt(99999);
+            writer.Writer.WriteInt(99999);
 
             // Start Fetch *before* Flush
             var fetchTask = reader.Fetch().AsTask();
@@ -276,7 +276,7 @@ namespace Archivarius.Tests
 
             bool ok = await fetchTask.WaitAsync(TestTimeout);
             Assert.That(ok, Is.True, "Fetch() must return true after Flush().");
-            Assert.That(reader.ReadInt(), Is.EqualTo(99999));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(99999));
         }
 
         /// <summary>
@@ -288,7 +288,7 @@ namespace Archivarius.Tests
         {
             var (writer, reader) = await GetWriterReaderPair();
             if (!writer.FlushSupport) Assert.Ignore("Flush not supported.");
-            writer.WriteInt(42);
+            writer.Writer.WriteInt(42);
 
             // Start Fetch before Flush
             var fetchTask = reader.Fetch().AsTask();
@@ -304,7 +304,7 @@ namespace Archivarius.Tests
 
             bool ok = await fetchTask.WaitAsync(TestTimeout);
             Assert.That(ok, Is.True);
-            Assert.That(reader.ReadInt(), Is.EqualTo(42));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(42));
         }
 
         /// <summary>
@@ -314,7 +314,7 @@ namespace Archivarius.Tests
         public async Task MultiCycle_FetchUnblockedByComplete()
         {
             var (writer, reader) = await GetWriterReaderPair();
-            writer.WriteInt(555);
+            writer.Writer.WriteInt(555);
 
             var fetchTask = reader.Fetch().AsTask();
             await Task.Delay(100);
@@ -325,7 +325,7 @@ namespace Archivarius.Tests
 
             bool ok = await fetchTask.WaitAsync(TestTimeout);
             Assert.That(ok, Is.True);
-            Assert.That(reader.ReadInt(), Is.EqualTo(555));
+            Assert.That(reader.Reader.ReadInt(), Is.EqualTo(555));
         }
     }
 }

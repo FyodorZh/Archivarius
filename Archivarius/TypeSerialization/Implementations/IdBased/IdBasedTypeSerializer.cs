@@ -16,7 +16,7 @@ namespace Archivarius
             return _ids;
         }
         
-        protected override void WriteId(IWriter writer, ushort id)
+        protected override void WriteId(ILowLevelWriter writer, ushort id)
         {
             writer.WriteUShort(id);
         }

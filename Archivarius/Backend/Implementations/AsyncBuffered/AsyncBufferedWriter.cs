@@ -16,6 +16,7 @@ namespace Archivarius.AsyncBackend
         public CapabilityState SectionsSupport => CapabilityState.NotSupported;
         public CapabilityState TypeSafetySupport => CapabilityState.NotSupported;
         public bool FlushSupport => false;
+        public ILowLevelWriter Writer => this;
 
         public AsyncBufferedWriter(Func<IByteQueueReader, ValueTask> asyncWriter)
         {
