@@ -8,7 +8,7 @@
         <Description>Serialization library</Description>
         <Company>FyodorZh</Company>
         <Product>Archivarius.Tools</Product>
-        <Version>0.2.5-dev.0</Version>
+        <Version>0.2.6-dev.0</Version>
         <Title>Archivarius.Tools</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <LangVersion>9</LangVersion>
@@ -27,11 +27,15 @@
     
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <DocumentationFile>bin\Release\netstandard2.0\Archivarius.Tools.xml</DocumentationFile>
+        <NoWarn>1701;1702;1591</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <DebugType>portable</DebugType>
+        <DocumentationFile>bin\Debug\netstandard2.0\Archivarius.Tools.xml</DocumentationFile>
+        <NoWarn>1701;1702;1591</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

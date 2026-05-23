@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <Authors>Fyodor Zhmaev</Authors>
         <Company>FyodorZh</Company>
-        <Version>0.2.3-dev.0</Version>
+        <Version>0.2.4-dev.0</Version>
         <Title>Archivarius.Json</Title>
         <PackageReadmeFile>nuget.readme.md</PackageReadmeFile>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -25,11 +25,15 @@
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <DocumentationFile>bin\Release\netstandard2.0\Archivarius.Json.xml</DocumentationFile>
+      <NoWarn>1701;1702;1591</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <DebugType>portable</DebugType>
+      <DocumentationFile>bin\Debug\netstandard2.0\Archivarius.Json.xml</DocumentationFile>
+      <NoWarn>1701;1702;1591</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

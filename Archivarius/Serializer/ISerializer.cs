@@ -42,6 +42,9 @@ namespace Archivarius
     {
     }
 
+    /// <summary>
+    /// Serializer for data structures
+    /// </summary>
     public interface ISerializer : IPrimitiveSerializer
     {
         byte Version { get; }
